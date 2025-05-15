@@ -41,6 +41,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Handle user object inside wrapper if needed
       const userData = data.user || data;
       queryClient.setQueryData(["/api/user"], userData);
+      
+      // Speichere die Benutzer-ID im localStorage für den Zugriff nach der Abmeldung
+      localStorage.setItem("currentUserId", userData.id.toString());
+      console.log("Benutzer-ID im localStorage gespeichert:", userData.id);
+      
       toast({
         title: "Erfolgreich angemeldet",
         description: `Willkommen zurück, ${userData.username}!`,
@@ -84,8 +89,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
+      
+      // Behalte die currentUserId im localStorage, damit wir
+      // auch nach dem Ausloggen noch auf Daten zugreifen können
+      // (wird nicht gelöscht)
+      
       toast({
         title: "Erfolgreich abgemeldet",
+        description: "Sie können weiterhin Trades ansehen."
       });
     },
     onError: (error: Error) => {

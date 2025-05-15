@@ -6,6 +6,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Überprüfen, ob wir in einer Render-Umgebung sind
+export function isRender(): boolean {
+  // Prüfen ob wir im Browser sind
+  if (typeof window === 'undefined') return false;
+  
+  // Prüfen ob die Domain auf .onrender.com endet
+  return window.location.hostname.endsWith('.onrender.com') || 
+         window.location.hostname.includes('render');
+}
+
 export function formatDate(date: Date | string): string {
   const dateObj = typeof date === "string" ? new Date(date) : date;
   return format(dateObj, "yyyy-MM-dd");
