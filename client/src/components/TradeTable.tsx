@@ -387,7 +387,7 @@ export default function TradeTable({ trades = [], isLoading, onTradeSelect, onFi
       
       // Prüfe, ob das Datum bereits ein Date-Objekt ist oder ein String
       if (typeof trade.date === 'string') {
-        const dateString = trade.date;
+        const dateString = trade.date as string;
         // Überprüfe, ob das Format MM/DD/YYYY ist (wie in 04/29/2025)
         if (dateString && /^\d{2}\/\d{2}\/\d{4}/.test(dateString)) {
           // Das Datum ist im Format MM/DD/YYYY
@@ -1793,7 +1793,10 @@ export default function TradeTable({ trades = [], isLoading, onTradeSelect, onFi
                     e.preventDefault(); // Verhindert das Standard-Kontextmenü
                     setTradeToDelete(trade);
                     setDeleteDialogOpen(true);
+                    console.log("Rechtsklick auf Trade erkannt - ID:", trade.id);
                   }}
+                  data-id={trade.id}
+                  data-action="delete-on-rightclick"
                 >
                   <td className="p-3 text-xs">
                     <div className="flex flex-col">
