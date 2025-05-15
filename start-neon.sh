@@ -14,6 +14,6 @@ set -a
 source .env.neon
 set +a
 
-# Starte die Anwendung
+# Starte die Anwendung im Entwicklungsmodus mit tsx
 echo "Starte Trading Journal mit Neon PostgreSQL Datenbankverbindung..."
-node server.js
+npx tsx server/index.ts

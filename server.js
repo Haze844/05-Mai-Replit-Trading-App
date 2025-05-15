@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import cors from 'cors';
 import session from 'express-session';
 import passport from 'passport';
-import { setupAuth } from './server/auth.js';
+import { setupAuth } from './server/auth.js'; // Import mit korrekter Dateiendung
 import { registerRoutes } from './server/routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
