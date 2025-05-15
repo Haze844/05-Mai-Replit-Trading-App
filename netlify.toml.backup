@@ -1,0 +1,33 @@
+# Diese Konfiguration wird nicht mehr verwendet, da die Anwendung auf Render migriert wurde.
+# Siehe RENDER-DEPLOYMENT.md für Details zur aktuellen Deployment-Methode.
+
+[build]
+  command = "npm install && node build-for-netlify.js && cd client && find ./src/components/ui -type f -name '*.tsx' -exec sed -i -e '1s/\"use client\"/\\/\\/\"use client\"/' {} \\; && npx vite build --outDir ../dist/public"
+  publish = "dist/public"
+  functions = "netlify/functions"
+  
+[build.environment]
+  NODE_VERSION = "20"
+  DATABASE_URL = "postgresql://neondb_owner:npg_ti1JZUlyRjd7@ep-dry-voice-a2on7g63-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/debug"
+  to = "/.netlify/functions/api/debug"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = true

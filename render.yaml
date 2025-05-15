@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: trading-journal
+    env: node
+    repo: https://github.com/Haze844/TradingJournall.git
+    branch: main
+    buildCommand: npm install --include=dev && node render-build.js
+    startCommand: >
+      node --max-old-space-size=256 setup-db.js &&
+      node --max-old-space-size=256 render-patch.cjs &&
+      node --max-old-space-size=256 dist/index.mjs
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: RENDER
+        value: "true"
+      - key: SESSION_SECRET
+        generateValue: true
