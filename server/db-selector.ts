@@ -39,13 +39,19 @@ export function selectDatabaseConnection(): DatabaseModule {
     return renderInternalDb as DatabaseModule;
   }
   
-  // Wir verwenden nur noch die Render-interne Datenbank oder lokale Datenbank
+  // Wenn die Umgebungsvariable DATABASE_PROVIDER auf 'neon' gesetzt ist, verwende Neon-Datenbank
+  if (provider === 'neon') {
+    logger.info('Verwende Neon PostgreSQL-Datenbank');
+    return localDb as unknown as DatabaseModule; // Wir verwenden die localDb-Konfiguration für Neon
+  }
+  
+  // Wir verwenden standardmäßig die Render-interne Datenbank oder lokale Datenbank
   if (isRender || provider === 'render_internal') {
     logger.info('Verwende Render-interne Datenbank als Fallback');
     return renderInternalDb as DatabaseModule;
   } else {
     logger.info('Verwende lokale Datenbank');
-    return localDb as DatabaseModule;
+    return localDb as unknown as DatabaseModule;
   }
 }
 
