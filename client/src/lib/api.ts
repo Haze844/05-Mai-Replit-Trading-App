@@ -9,7 +9,22 @@ export const getQueryFn = ({ on401 = "throw" }: GetQueryFnOptions = {}) => {
     const endpoint = queryKey[0];
 
     try {
-      const response = await fetch(endpoint, {
+      // Füge userId als Parameter hinzu, wenn wir nicht authentifiziert sind
+      // Das hilft beim Zugriff auf Trades nach dem Logout
+      const currentUser = localStorage.getItem("currentUserId");
+      let url = endpoint;
+      
+      // Nur für bestimmte Endpunkte userId anhängen
+      if (currentUser && 
+          (endpoint === "/api/trades" || 
+           endpoint.startsWith("/api/trades/") || 
+           endpoint === "/api/settings")) {
+        const separator = endpoint.includes("?") ? "&" : "?";
+        url = `${endpoint}${separator}userId=${currentUser}`;
+        console.log("Verwende userId für API-Aufruf:", url);
+      }
+      
+      const response = await fetch(url, {
         credentials: "include", // ✅ <-- wichtig für Cookies wie tj_sid
         headers: {
           "Content-Type": "application/json",
