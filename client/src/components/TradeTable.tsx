@@ -1789,6 +1789,11 @@ export default function TradeTable({ trades = [], isLoading, onTradeSelect, onFi
                   key={trade.id} 
                   className="border-b border-border hover:bg-muted/50 cursor-pointer" 
                   onClick={() => onTradeSelect(trade)}
+                  onContextMenu={(e) => {
+                    e.preventDefault(); // Verhindert das Standard-Kontextmenü
+                    setTradeToDelete(trade);
+                    setDeleteDialogOpen(true);
+                  }}
                 >
                   <td className="p-3 text-xs">
                     <div className="flex flex-col">
