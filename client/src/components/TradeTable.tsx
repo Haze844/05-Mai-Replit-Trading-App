@@ -90,7 +90,15 @@ interface TradeTableProps {
 // Options for Liquidation Entry dropdown
 const timeframeOptions = ['M1', 'M5', 'M15', 'H1'];
 
-export default function TradeTable({ trades = [], isLoading, onTradeSelect, onFilteredTradesChange, onActiveFiltersChange }: TradeTableProps) {
+export default function TradeTable({ 
+  trades = [], 
+  isLoading, 
+  onTradeSelect, 
+  onFilteredTradesChange, 
+  onActiveFiltersChange,
+  showColoredRows = false,
+  showUserColumn = false
+}: TradeTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const tradesPerPage = 20;
   const [tradeToDelete, setTradeToDelete] = useState<Trade | null>(null);
@@ -1789,8 +1797,8 @@ export default function TradeTable({ trades = [], isLoading, onTradeSelect, onFi
               currentTrades.map((trade) => (
                 <tr 
                   key={trade.id} 
-                  className="border-b border-border hover:bg-muted/50 cursor-pointer" 
-                  onClick={() => onTradeSelect(trade)}
+                  className={`border-b border-border hover:bg-muted/50 cursor-pointer ${showColoredRows && trade.userColor ? trade.userColor : ''}`} 
+                  onClick={() => onTradeSelect ? onTradeSelect(trade) : null}
                   onContextMenu={(e) => {
                     e.preventDefault(); // Verhindert das Standard-Kontextmenü
                     setTradeToDelete(trade);
