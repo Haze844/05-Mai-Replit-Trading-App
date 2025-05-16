@@ -20,7 +20,7 @@ import { Separator } from '@/components/ui/separator';
 
 // Farben für Benutzerunterscheidung
 const USER_COLORS = {
-  admin: 'bg-blue-500/10',
+  admin: 'bg-blue-500/10', // Admin-Farbmarkierung (Jasper)
   mo: 'bg-green-500/10'
 };
 
@@ -118,7 +118,7 @@ export default function TradeCompare() {
         id: `admin-${trade.id}`, // Eindeutige ID für die Tabelle
         originalId: trade.id,    // Original-ID für API-Anfragen beibehalten
         userColor: USER_COLORS.admin,
-        userName: 'Admin'
+        userName: 'Jasper'
       }));
 
       // Mo-Trades Farbmarkierung und Benutzerinfo hinzufügen
@@ -319,7 +319,7 @@ export default function TradeCompare() {
         <div className="flex justify-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-blue-500/50"></div>
-            <span>Admin</span>
+            <span>Jasper</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
