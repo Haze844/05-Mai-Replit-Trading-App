@@ -438,9 +438,9 @@ export default function SimpleHome() {
                 />
               </div>
               
-              {/* TradeCompare-Komponente direkt einbinden */}
+              {/* TradeCompare-Komponente direkt einbinden mit Key für Neuladen beim Tab-Wechsel */}
               <div className="w-full">
-                <TradeCompare />
+                <TradeCompare key={`compare-${trades.length}`} />
               </div>
             </div>
           </div>

@@ -21,17 +21,46 @@ export default function TradeCompare() {
   // State für aktive Filter
   const [activeFilters, setActiveFilters] = useState({});
 
-  // Admin-Trades abrufen
-  const { data: adminTrades = [], isLoading: isLoadingAdmin } = useQuery<any[], Error>({
-    queryKey: ['/api/users/1/trades'],
-    retry: false
+  // Admin-Trades abrufen (den gleichen queryKey wie in SimpleHome verwenden, aber immer neu laden)
+  const { data: adminTrades = [], isLoading: isLoadingAdmin, refetch: refetchAdmin } = useQuery<any[], Error>({
+    queryKey: ['/api/trades', 1, {}],
+    queryFn: async () => {
+      const queryParams = new URLSearchParams();
+      queryParams.append("userId", "1"); // Admin-ID
+      
+      const response = await fetch(`/api/trades?${queryParams.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch admin trades");
+      }
+      return response.json();
+    },
+    refetchOnMount: true,
+    staleTime: 0
   });
 
-  // Mo-Trades abrufen
-  const { data: moTrades = [], isLoading: isLoadingMo } = useQuery<any[], Error>({
-    queryKey: ['/api/users/2/trades'],
-    retry: false
+  // Mo-Trades abrufen (den gleichen queryKey wie in SimpleHome verwenden, aber immer neu laden)
+  const { data: moTrades = [], isLoading: isLoadingMo, refetch: refetchMo } = useQuery<any[], Error>({
+    queryKey: ['/api/trades', 2, {}],
+    queryFn: async () => {
+      const queryParams = new URLSearchParams();
+      queryParams.append("userId", "2"); // Mo-ID
+      
+      const response = await fetch(`/api/trades?${queryParams.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch mo trades");
+      }
+      return response.json();
+    },
+    refetchOnMount: true,
+    staleTime: 0
   });
+  
+  // Beim Mounten der Komponente Daten neu laden
+  useEffect(() => {
+    // Trades zu Beginn einmal neu laden
+    refetchAdmin();
+    refetchMo();
+  }, []);
 
   // Daten aufbereiten, wenn sie geladen sind
   useEffect(() => {
