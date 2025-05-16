@@ -35,28 +35,22 @@ export default function TradeCompare() {
   
   // Statistik-Berechnungen für die angezeigten Trades
   const tradeStats = useMemo(() => {
-    const filteredTrades = combinedTrades.filter(trade => {
-      // Wenn aktive Filter vorhanden sind, diese anwenden
-      if (Object.keys(activeFilters).length > 0) {
-        // Hier könnten weitere Filter-Logiken angewendet werden
-        return true; // Vereinfacht für das Beispiel
-      }
-      return true;
-    });
+    // Verwende die gefilterten Trades für die Statistik-Berechnung
+    const tradesToUse = filteredTrades.length > 0 ? filteredTrades : combinedTrades;
     
-    const count = filteredTrades.length;
-    const wins = filteredTrades.filter(t => t.isWin === true).length;
-    const losses = filteredTrades.filter(t => t.isWin === false).length;
+    const count = tradesToUse.length;
+    const wins = tradesToUse.filter(t => t.isWin === true).length;
+    const losses = tradesToUse.filter(t => t.isWin === false).length;
     const winRate = count > 0 ? (wins / count) * 100 : 0;
     
     // Berechne Gesamt-P/L und Average RR
-    const totalPL = filteredTrades.reduce((sum, trade) => {
+    const totalPL = tradesToUse.reduce((sum, trade) => {
       return sum + (trade.profitLoss || 0);
     }, 0);
     
     // Berechne das durchschnittliche Risk-Reward-Verhältnis
     // Aus rrAchieved oder dem Verhältnis zwischen rrPotential und rrAchieved
-    const avgRR = filteredTrades.reduce((sum, trade) => {
+    const avgRR = tradesToUse.reduce((sum, trade) => {
       return sum + (trade.rrAchieved || 0);
     }, 0) / (count || 1);
     
@@ -68,7 +62,7 @@ export default function TradeCompare() {
       totalPL,
       avgRR
     };
-  }, [combinedTrades, activeFilters]);
+  }, [combinedTrades, filteredTrades, activeFilters]);
 
   // Jasper-Trades abrufen (den gleichen queryKey wie in SimpleHome verwenden, aber immer neu laden)
   const { data: adminTrades = [], isLoading: isLoadingAdmin, refetch: refetchAdmin } = useQuery<any[], Error>({
@@ -169,6 +163,8 @@ export default function TradeCompare() {
       });
 
       setCombinedTrades(allTrades);
+      // Auch die gefilterten Trades initialisieren (alle Trades, da noch keine Filter aktiv)
+      setFilteredTrades(allTrades);
     }
   }, [adminTrades, moTrades, isLoadingAdmin, isLoadingMo]);
 
@@ -180,7 +176,7 @@ export default function TradeCompare() {
     // Hier zusätzlich die Trades filtern, basierend auf den neuen Filtern
     if (!isLoadingAdmin && !isLoadingMo && combinedTrades.length > 0) {
       // Filtern mit den neuen Filtern
-      const filteredTrades = combinedTrades.filter(trade => {
+      const newFilteredTrades = combinedTrades.filter((trade: any) => {
         // Symbol Filter
         if (newFilters.symbol !== 'all' && trade.symbol !== newFilters.symbol) {
           return false;
@@ -226,12 +222,15 @@ export default function TradeCompare() {
           }
         }
         
-        // User Filter
+        // User Filter - benutzt 'userName' als optionale Property
         if (newFilters.user && newFilters.user !== 'all') {
-          if (newFilters.user === 'jasper' && trade.userName !== 'Jasper') {
+          // Typensicherer Ansatz, da 'userName' nicht im Trade-Interface ist
+          const tradeWithUserName = trade as any; // Expliziter Cast zu any
+          
+          if (newFilters.user === 'jasper' && tradeWithUserName.userName !== 'Jasper') {
             return false;
           }
-          if (newFilters.user === 'mo' && trade.userName !== 'Mo') {
+          if (newFilters.user === 'mo' && tradeWithUserName.userName !== 'Mo') {
             return false;
           }
         }
@@ -239,7 +238,11 @@ export default function TradeCompare() {
         return true;
       });
       
-      console.log(`TradeCompare - Trades nach Filterung: ${filteredTrades.length} von ${combinedTrades.length}`);
+      console.log(`TradeCompare - Trades nach Filterung: ${newFilteredTrades.length} von ${combinedTrades.length}`);
+      setFilteredTrades(newFilteredTrades);
+    } else {
+      // Wenn keine Trades oder noch geladen wird, setze gefilterte Trades gleich den kombinierten Trades
+      setFilteredTrades(combinedTrades);
     }
   };
 
@@ -376,11 +379,12 @@ export default function TradeCompare() {
 
             <TabsContent value="table" className="p-0 m-0">
               <TradeTable 
-                trades={combinedTrades as any} 
+                trades={(filteredTrades.length > 0 ? filteredTrades : combinedTrades) as any} 
                 isLoading={isLoadingAdmin || isLoadingMo}
                 showColoredRows={true}
                 showUserColumn={true}
                 onActiveFiltersChange={(filters) => {
+                  console.log("TradeTable sendet Filter zurück an TradeCompare:", filters);
                   // Nur aktualisieren, wenn Filter sich tatsächlich geändert haben
                   if (JSON.stringify(filters) !== JSON.stringify(activeFilters)) {
                     setActiveFilters(filters);
