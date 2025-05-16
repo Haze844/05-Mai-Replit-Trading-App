@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, WheelEvent } from "react";
+import { useEffect, useState, useRef, WheelEvent, MouseEvent } from "react";
 import { X, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +13,9 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
   const [imageError, setImageError] = useState(false);
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -26,6 +29,11 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
     // Animation starten
     setIsVisible(true);
     setImageError(false);
+    
+    // Zurücksetzen der Position und Skalierung beim Öffnen
+    setScale(1);
+    setRotation(0);
+    setPosition({ x: 0, y: 0 });
     
     // Verhindere Scrolling des Body während Modal offen ist
     document.body.style.overflow = 'hidden';
@@ -73,11 +81,43 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
     setScale(newScale);
   };
   
+  // Maus-Down-Event für Drag-Start
+  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+    // Nur mit linker Maustaste und wenn skaliert ist
+    if (e.button !== 0 || scale <= 1) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+  };
+  
+  // Maus-Move-Event für Drag
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const newX = e.clientX - dragStart.x;
+    const newY = e.clientY - dragStart.y;
+    
+    // Limitiere die Bewegung basierend auf dem Zoom-Level
+    const maxOffset = (scale - 1) * 200; // Ungefährer Wert, kann angepasst werden
+    const limitedX = Math.min(Math.max(newX, -maxOffset), maxOffset);
+    const limitedY = Math.min(Math.max(newY, -maxOffset), maxOffset);
+    
+    setPosition({ x: limitedX, y: limitedY });
+  };
+  
+  // Maus-Up-Event für Drag-Ende
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+  
   // Funktion zum Zurücksetzen des Zooms
   const resetZoom = (e: React.MouseEvent) => {
     e.stopPropagation();
     setScale(1);
     setRotation(0);
+    setPosition({ x: 0, y: 0 });
   };
   
   // Funktion zum gezielten Zoom-In
@@ -92,6 +132,10 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
     e.stopPropagation();
     const newScale = Math.max(scale - 0.25, 0.5);
     setScale(newScale);
+    // Wenn wir unter 1.0 Zoom gehen, setze Position zurück
+    if (newScale <= 1) {
+      setPosition({ x: 0, y: 0 });
+    }
   };
   
   // Funktion zum Rotieren
@@ -156,32 +200,53 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
         </Button>
       </div>
 
+      {/* Hinweis zum Ziehen des Bildes */}
+      {scale > 1 && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white text-xs px-3 py-1.5 rounded-full z-[1001] whitespace-nowrap">
+          Bild ziehen zum Verschieben des Ausschnitts
+        </div>
+      )}
+
       {/* Inhalt des Modals */}
       <div 
-        className="w-full h-full flex items-center justify-center p-4 overflow-hidden"
+        className={`w-full h-full flex items-center justify-center p-4 overflow-hidden ${isDragging ? 'cursor-grabbing' : scale > 1 ? 'cursor-grab' : 'cursor-zoom-in'}`}
         ref={containerRef}
         onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
       >
         {isTradingViewLink && !imageError ? (
           // Wenn es ein TradingView-Link ist, versuche iframe oder Bild
           <>
             {/* Für TradingView Links, versuche ein Bild zu zeigen */}
-            <img 
-              ref={imageRef}
-              src={getDisplayUrl()} 
-              alt="TradingView Chart" 
-              className="max-w-full max-h-full object-contain cursor-zoom-in" 
+            <div 
+              className="relative max-w-full max-h-full" 
               style={{ 
-                transform: `scale(${scale}) rotate(${rotation}deg)`,
-                transition: 'transform 0.2s ease-out'
+                transformOrigin: 'center',
+                cursor: isDragging ? 'grabbing' : scale > 1 ? 'grab' : 'zoom-in'
               }}
               onClick={(e) => {
-                e.stopPropagation();
-                // Bei Klick auf das Bild zoomen statt schließen
-                zoomIn(e);
+                if (scale <= 1) {
+                  e.stopPropagation();
+                  zoomIn(e);
+                }
               }}
-              onError={handleImageError}
-            />
+            >
+              <img 
+                ref={imageRef}
+                src={getDisplayUrl()} 
+                alt="TradingView Chart" 
+                className="max-w-full max-h-full object-contain" 
+                style={{ 
+                  transform: `scale(${scale}) rotate(${rotation}deg) translate(${position.x / scale}px, ${position.y / scale}px)`,
+                  transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+                }}
+                onError={handleImageError}
+                draggable={false}
+              />
+            </div>
 
             {/* Fallback-Info */}
             {imageError && (
@@ -202,22 +267,32 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
           </>
         ) : (
           // Normales Bild anzeigen
-          <img 
-            ref={imageRef}
-            src={getDisplayUrl()} 
-            alt="Vollbild Ansicht" 
-            className="max-w-full max-h-full object-contain cursor-zoom-in" 
+          <div 
+            className="relative max-w-full max-h-full" 
             style={{ 
-              transform: `scale(${scale}) rotate(${rotation}deg)`,
-              transition: 'transform 0.2s ease-out'
+              transformOrigin: 'center',
+              cursor: isDragging ? 'grabbing' : scale > 1 ? 'grab' : 'zoom-in'
             }}
             onClick={(e) => {
-              e.stopPropagation();
-              // Bei Klick auf das Bild zoomen statt schließen
-              zoomIn(e);
+              if (scale <= 1) {
+                e.stopPropagation();
+                zoomIn(e);
+              }
             }}
-            onError={handleImageError}
-          />
+          >
+            <img 
+              ref={imageRef}
+              src={getDisplayUrl()} 
+              alt="Vollbild Ansicht" 
+              className="max-w-full max-h-full object-contain" 
+              style={{ 
+                transform: `scale(${scale}) rotate(${rotation}deg) translate(${position.x / scale}px, ${position.y / scale}px)`,
+                transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+              }}
+              onError={handleImageError}
+              draggable={false}
+            />
+          </div>
         )}
 
         {/* Allgemeiner Fallback für Bildfehler */}
