@@ -64,3 +64,24 @@ export const getQueryFn = ({ on401 = "throw" }: GetQueryFnOptions = {}) => {
     }
   };
 };
+
+// Spezielle Funktion zum Abrufen von Trades für einen bestimmten Benutzer
+export async function fetchTradesForUser(userId: number) {
+  try {
+    const response = await fetch(`/api/trades?userId=${userId}`, {
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch trades for user ${userId}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Error fetching trades for user ${userId}:`, error);
+    return [];
+  }
+}

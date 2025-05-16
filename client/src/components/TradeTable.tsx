@@ -80,9 +80,11 @@ import { useToast } from "@/hooks/use-toast";
 interface TradeTableProps {
   trades: Trade[];
   isLoading: boolean;
-  onTradeSelect: (trade: Trade) => void;
+  onTradeSelect?: (trade: Trade) => void;
   onFilteredTradesChange?: (filteredTrades: Trade[]) => void;
   onActiveFiltersChange?: (activeFilters: any) => void; // Hinzugefügt für Heatmap-Kommunikation
+  showColoredRows?: boolean; // Farbmarkierung für Benutzerzeilen anzeigen
+  showUserColumn?: boolean; // Spalte mit Benutzernamen anzeigen
 }
 
 // Options for Liquidation Entry dropdown
