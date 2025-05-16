@@ -107,10 +107,17 @@ export default function SimpleImageViewer({ imageUrl, onClose }: SimpleImageView
   // Wenn kein Bild vorhanden, nichts anzeigen
   if (!imageUrl) return null;
 
+  // Stoppt Klickereignisse, damit sie nicht an die dahinterliegenden Elemente weitergegeben werden
+  const handleContainerClick = (e: React.MouseEvent) => {
+    // Verhindert Klick-Bubbling zum Trade-Details-Fenster (Elternelement)
+    e.stopPropagation();
+    onClose();
+  };
+
   return (
     <div 
       className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"
-      onClick={onClose}
+      onClick={handleContainerClick}
       ref={containerRef}
     >
       <div 
