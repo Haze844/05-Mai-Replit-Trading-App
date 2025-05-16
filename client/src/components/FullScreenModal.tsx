@@ -152,7 +152,13 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
     <div 
       className={`fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-black/95 transition-opacity duration-300
                  ${isVisible ? 'opacity-100' : 'opacity-0'}`}
-      onClick={onClose}
+      onClick={(e) => {
+        // Schließe das Modal nur, wenn direkt auf den Hintergrund geklickt wird
+        // Vermeide das Schließen, wenn auf das Bild oder die Steuerelemente geklickt wird
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
     >
       {/* Schließen-Button oben rechts */}
       <Button 
@@ -216,6 +222,10 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onClick={(e) => {
+          // Verhindere, dass Klicks auf den Container das Modal schließen
+          e.stopPropagation();
+        }}
       >
         {isTradingViewLink && !imageError ? (
           // Wenn es ein TradingView-Link ist, versuche iframe oder Bild
@@ -228,8 +238,11 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
                 cursor: isDragging ? 'grabbing' : scale > 1 ? 'grab' : 'zoom-in'
               }}
               onClick={(e) => {
+                // Verhindere Ereignis-Bubbling
+                e.stopPropagation();
+                
+                // Bei nicht gezoomtem Bild, zoomen
                 if (scale <= 1) {
-                  e.stopPropagation();
                   zoomIn(e);
                 }
               }}
@@ -274,8 +287,11 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
               cursor: isDragging ? 'grabbing' : scale > 1 ? 'grab' : 'zoom-in'
             }}
             onClick={(e) => {
+              // Verhindere Ereignis-Bubbling
+              e.stopPropagation();
+              
+              // Bei nicht gezoomtem Bild, zoomen
               if (scale <= 1) {
-                e.stopPropagation();
                 zoomIn(e);
               }
             }}
