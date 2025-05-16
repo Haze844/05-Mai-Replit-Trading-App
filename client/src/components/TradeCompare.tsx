@@ -266,6 +266,15 @@ export default function TradeCompare() {
         </div>
       </div>
 
+      {/* Filter-Bar Komponente */}
+      <div className="mb-4">
+        <FilterBar 
+          onFilterChange={handleFilterChange} 
+          initialFilters={{}} 
+          showUserFilter={true} 
+        />
+      </div>
+
       <Card className="bg-black/50 border-primary/20 overflow-hidden">
         <CardHeader className="pb-0">
           <div className="flex items-center justify-between mb-2">
@@ -294,7 +303,12 @@ export default function TradeCompare() {
                 isLoading={isLoadingAdmin || isLoadingMo}
                 showColoredRows={true}
                 showUserColumn={true}
-                onActiveFiltersChange={(filters) => setActiveFilters(filters)}
+                onActiveFiltersChange={(filters) => {
+                  // Nur aktualisieren, wenn Filter sich tatsächlich geändert haben
+                  if (JSON.stringify(filters) !== JSON.stringify(activeFilters)) {
+                    setActiveFilters(filters);
+                  }
+                }}
               />
             </TabsContent>
           </Tabs>
