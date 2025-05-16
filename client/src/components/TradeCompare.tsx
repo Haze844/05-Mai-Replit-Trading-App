@@ -68,16 +68,16 @@ export default function TradeCompare() {
     };
   }, [combinedTrades, activeFilters]);
 
-  // Admin-Trades abrufen (den gleichen queryKey wie in SimpleHome verwenden, aber immer neu laden)
+  // Jasper-Trades abrufen (den gleichen queryKey wie in SimpleHome verwenden, aber immer neu laden)
   const { data: adminTrades = [], isLoading: isLoadingAdmin, refetch: refetchAdmin } = useQuery<any[], Error>({
     queryKey: ['/api/trades', 1, {}],
     queryFn: async () => {
       const queryParams = new URLSearchParams();
-      queryParams.append("userId", "1"); // Admin-ID
+      queryParams.append("userId", "1"); // Jasper-ID
       
       const response = await fetch(`/api/trades?${queryParams.toString()}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch admin trades");
+        throw new Error("Failed to fetch Jasper trades");
       }
       return response.json();
     },
@@ -112,13 +112,13 @@ export default function TradeCompare() {
   // Daten aufbereiten, wenn sie geladen sind
   useEffect(() => {
     if (!isLoadingAdmin && !isLoadingMo) {
-      // Admin-Trades Farbmarkierung und Benutzerinfo hinzufügen
-      // Ein eindeutiger Key für jeden Trade wird durch Präfix "admin-" erzeugt
+      // Jasper-Trades Farbmarkierung und Benutzerinfo hinzufügen
+      // Ein eindeutiger Key für jeden Trade wird durch Präfix "jasper-" erzeugt
       const formattedAdminTrades = adminTrades.map(trade => ({
         ...trade,
-        id: `admin-${trade.id}`, // Eindeutige ID für die Tabelle
+        id: `jasper-${trade.id}`, // Eindeutige ID für die Tabelle
         originalId: trade.id,    // Original-ID für API-Anfragen beibehalten
-        userColor: USER_COLORS.admin,
+        userColor: USER_COLORS.jasper,
         userName: 'Jasper'
       }));
 
