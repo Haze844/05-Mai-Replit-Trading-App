@@ -66,15 +66,21 @@ export default function TradeCompare() {
   useEffect(() => {
     if (!isLoadingAdmin && !isLoadingMo) {
       // Admin-Trades Farbmarkierung und Benutzerinfo hinzufügen
+      // Ein eindeutiger Key für jeden Trade wird durch Präfix "admin-" erzeugt
       const formattedAdminTrades = adminTrades.map(trade => ({
         ...trade,
+        id: `admin-${trade.id}`, // Eindeutige ID für die Tabelle
+        originalId: trade.id,    // Original-ID für API-Anfragen beibehalten
         userColor: USER_COLORS.admin,
         userName: 'Admin'
       }));
 
       // Mo-Trades Farbmarkierung und Benutzerinfo hinzufügen
+      // Ein eindeutiger Key für jeden Trade wird durch Präfix "mo-" erzeugt
       const formattedMoTrades = moTrades.map(trade => ({
         ...trade,
+        id: `mo-${trade.id}`,    // Eindeutige ID für die Tabelle
+        originalId: trade.id,    // Original-ID für API-Anfragen beibehalten
         userColor: USER_COLORS.mo,
         userName: 'Mo'
       }));
