@@ -1,6 +1,6 @@
 import { Maximize } from "lucide-react";
-import { useImageViewer } from "./GlobalImageViewer";
 import { Button } from "@/components/ui/button";
+import { showImage } from "./StandaloneImageViewer";
 
 interface ImagePreviewProps {
   image: string;
@@ -8,13 +8,10 @@ interface ImagePreviewProps {
 }
 
 export default function ImagePreview({ image, alt }: ImagePreviewProps) {
-  // Verwende den globalen Image Viewer
-  const { openImage } = useImageViewer();
-
-  // Debug-Funktion zum Testen der Bild-Öffnung
+  // Funktion zum Öffnen des Bildes im eigenständigen Viewer
   const handleOpenImage = () => {
     console.log("ImagePreview: Bild wird geöffnet", image);
-    openImage(image);
+    showImage(image, alt);
   };
 
   return (
