@@ -21,6 +21,12 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '@/components/ui/popover';
+import { 
+  setupTypes, 
+  sessionTypes, 
+  simpleTrendTypes, 
+  accountTypeValues 
+} from "@shared/schema";
 
 export interface FilterBarProps {
   onFilterChange: (filters: any) => void;
@@ -36,13 +42,13 @@ export default function FilterBar({
   initialFilters = {}, 
   showUserFilter = false 
 }: FilterBarProps) {
-  // Filter state
+  // Filter state mit korrekten Defaults
   const [filters, setFilters] = useState({
     symbol: 'all',
     accountType: 'all',
     session: 'all',
     setup: 'all',
-    trend: 'all',
+    entryType: 'all',
     dateFrom: '',
     dateTo: '',
     user: 'all',
@@ -51,21 +57,24 @@ export default function FilterBar({
 
   // Wenn sich Filter ändern, benachrichtige die übergeordnete Komponente
   useEffect(() => {
+    console.log("FilterBar - Filter geändert:", filters);
     onFilterChange(filters);
   }, [filters, onFilterChange]);
 
   // Filter zurücksetzen
   const resetFilters = () => {
-    setFilters({
+    const resetValues = {
       symbol: 'all',
       accountType: 'all',
       session: 'all',
       setup: 'all',
-      trend: 'all',
+      entryType: 'all',
       dateFrom: '',
       dateTo: '',
       user: 'all',
-    });
+    };
+    console.log("FilterBar - Filter zurückgesetzt auf:", resetValues);
+    setFilters(resetValues);
   };
 
   return (
@@ -77,7 +86,10 @@ export default function FilterBar({
             <Label htmlFor="symbol-filter" className="text-xs">Symbol</Label>
             <Select
               value={filters.symbol}
-              onValueChange={(value) => setFilters({...filters, symbol: value})}
+              onValueChange={(value) => {
+                console.log("Symbol-Filter gesetzt auf:", value);
+                setFilters({...filters, symbol: value});
+              }}
             >
               <SelectTrigger id="symbol-filter" className="h-8">
                 <SelectValue placeholder="Symbol" />
@@ -97,16 +109,19 @@ export default function FilterBar({
             <Label htmlFor="account-filter" className="text-xs">Konto</Label>
             <Select
               value={filters.accountType}
-              onValueChange={(value) => setFilters({...filters, accountType: value})}
+              onValueChange={(value) => {
+                console.log("Konto-Filter gesetzt auf:", value);
+                setFilters({...filters, accountType: value});
+              }}
             >
               <SelectTrigger id="account-filter" className="h-8">
                 <SelectValue placeholder="Konto" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Konten</SelectItem>
-                <SelectItem value="PA">PA</SelectItem>
-                <SelectItem value="EVA">EVA</SelectItem>
-                <SelectItem value="EK">EK</SelectItem>
+                {accountTypeValues.map((type) => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -116,18 +131,19 @@ export default function FilterBar({
             <Label htmlFor="session-filter" className="text-xs">Session</Label>
             <Select
               value={filters.session}
-              onValueChange={(value) => setFilters({...filters, session: value})}
+              onValueChange={(value) => {
+                console.log("Session-Filter gesetzt auf:", value);
+                setFilters({...filters, session: value});
+              }}
             >
               <SelectTrigger id="session-filter" className="h-8">
                 <SelectValue placeholder="Session" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Sessions</SelectItem>
-                <SelectItem value="London">London</SelectItem>
-                <SelectItem value="London Neverland">London Neverland</SelectItem>
-                <SelectItem value="NY AM">NY AM</SelectItem>
-                <SelectItem value="NY AM Neverland">NY AM Neverland</SelectItem>
-                <SelectItem value="NY PM">NY PM</SelectItem>
+                {sessionTypes.map((session) => (
+                  <SelectItem key={session} value={session}>{session}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -137,36 +153,41 @@ export default function FilterBar({
             <Label htmlFor="setup-filter" className="text-xs">Setup</Label>
             <Select
               value={filters.setup}
-              onValueChange={(value) => setFilters({...filters, setup: value})}
+              onValueChange={(value) => {
+                console.log("Setup-Filter gesetzt auf:", value);
+                setFilters({...filters, setup: value});
+              }}
             >
               <SelectTrigger id="setup-filter" className="h-8">
                 <SelectValue placeholder="Setup" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Setups</SelectItem>
-                <SelectItem value="Reversal">Reversal</SelectItem>
-                <SelectItem value="Retest">Retest</SelectItem>
-                <SelectItem value="Breakout">Breakout</SelectItem>
-                <SelectItem value="Trendfolge">Trendfolge</SelectItem>
+                {setupTypes.map((setup) => (
+                  <SelectItem key={setup} value={setup}>{setup}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Trend Filter */}
+          {/* Entry-Typ Filter */}
           <div className="min-w-[140px]">
-            <Label htmlFor="trend-filter" className="text-xs">Trend</Label>
+            <Label htmlFor="entry-filter" className="text-xs">Entry-Typ</Label>
             <Select
-              value={filters.trend}
-              onValueChange={(value) => setFilters({...filters, trend: value})}
+              value={filters.entryType}
+              onValueChange={(value) => {
+                console.log("Entry-Typ-Filter gesetzt auf:", value);
+                setFilters({...filters, entryType: value});
+              }}
             >
-              <SelectTrigger id="trend-filter" className="h-8">
-                <SelectValue placeholder="Trend" />
+              <SelectTrigger id="entry-filter" className="h-8">
+                <SelectValue placeholder="Entry-Typ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Trends</SelectItem>
-                <SelectItem value="Bullish">Bullish</SelectItem>
-                <SelectItem value="Bearish">Bearish</SelectItem>
-                <SelectItem value="Neutral">Neutral</SelectItem>
+                <SelectItem value="all">Alle Entries</SelectItem>
+                {simpleTrendTypes.map((type) => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -201,7 +222,10 @@ export default function FilterBar({
                       type="date"
                       className="h-8"
                       value={filters.dateFrom}
-                      onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
+                      onChange={(e) => {
+                        console.log("Datum-Von-Filter gesetzt auf:", e.target.value);
+                        setFilters({...filters, dateFrom: e.target.value});
+                      }}
                     />
                   </div>
                   <div className="grid gap-1">
@@ -211,7 +235,10 @@ export default function FilterBar({
                       type="date"
                       className="h-8"
                       value={filters.dateTo}
-                      onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
+                      onChange={(e) => {
+                        console.log("Datum-Bis-Filter gesetzt auf:", e.target.value);
+                        setFilters({...filters, dateTo: e.target.value});
+                      }}
                     />
                   </div>
                 </div>
@@ -225,14 +252,17 @@ export default function FilterBar({
               <Label htmlFor="user-filter" className="text-xs">Benutzer</Label>
               <Select
                 value={filters.user}
-                onValueChange={(value) => setFilters({...filters, user: value})}
+                onValueChange={(value) => {
+                  console.log("Benutzer-Filter gesetzt auf:", value);
+                  setFilters({...filters, user: value});
+                }}
               >
                 <SelectTrigger id="user-filter" className="h-8">
                   <SelectValue placeholder="Benutzer" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Alle Benutzer</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="jasper">Jasper</SelectItem>
                   <SelectItem value="mo">Mo</SelectItem>
                 </SelectContent>
               </Select>
