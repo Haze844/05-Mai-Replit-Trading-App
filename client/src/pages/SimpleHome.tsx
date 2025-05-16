@@ -14,7 +14,8 @@ import TradeDashboard from "@/components/TradeDashboard";
 import PerformanceHeatmap from "@/components/PerformanceHeatmap";
 import TradingStreakTracker from "@/components/TradingStreakTracker";
 import AccountBalanceProgress from "@/components/AccountBalanceProgress";
-import TradeCompare from "@/components/TradeCompare";
+// Einen relativen Import für TradeCompare verwenden
+import TradeCompare from "../components/TradeCompare";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
