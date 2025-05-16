@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Trade } from '../types/trade';
+import { Trade } from '@shared/schema';
 import TradeTable from './TradeTable';
 import FilterBar from './FilterBar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,13 +22,13 @@ export default function TradeCompare() {
   const [activeFilters, setActiveFilters] = useState({});
 
   // Admin-Trades abrufen
-  const { data: adminTrades = [], isLoading: isLoadingAdmin } = useQuery<Trade[]>({
+  const { data: adminTrades = [], isLoading: isLoadingAdmin } = useQuery<any[], Error>({
     queryKey: ['/api/users/1/trades'],
     retry: false
   });
 
   // Mo-Trades abrufen
-  const { data: moTrades = [], isLoading: isLoadingMo } = useQuery<Trade[]>({
+  const { data: moTrades = [], isLoading: isLoadingMo } = useQuery<any[], Error>({
     queryKey: ['/api/users/2/trades'],
     retry: false
   });
@@ -110,7 +110,7 @@ export default function TradeCompare() {
 
             <TabsContent value="table" className="p-0 m-0">
               <TradeTable 
-                trades={combinedTrades} 
+                trades={combinedTrades as any} 
                 isLoading={isLoadingAdmin || isLoadingMo}
                 showColoredRows={true}
                 showUserColumn={true}
