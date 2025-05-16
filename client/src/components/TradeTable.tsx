@@ -641,6 +641,13 @@ export default function TradeTable({
           <table className="w-full text-xs">
             <thead className="bg-gradient-to-r from-blue-900/20 to-black/30 border-y border-primary/20 sticky top-0 z-10">
               <tr>
+                {showUserColumn && (
+                  <th className="p-3 text-left whitespace-nowrap">
+                    <div className="flex items-center gap-1">
+                      <span>Benutzer</span>
+                    </div>
+                  </th>
+                )}
                 <th className="p-3 text-left whitespace-nowrap">
                   <Popover>
                     <PopoverTrigger asChild>

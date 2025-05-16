@@ -1,178 +1,138 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trade } from "@/types/trade";
-import { fetchTradesForUser } from "@/lib/api";
-import TradeTable from "./TradeTable";
-import FilterBar from "./FilterBar";
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Trade } from '@/types/trade';
+import TradeTable from './TradeTable';
+import FilterBar from './FilterBar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ChevronLeft, BarChart2, Users } from 'lucide-react';
+import { Link } from 'wouter';
+import { Separator } from '@/components/ui/separator';
 
-// Farben für die Benutzer-Unterscheidung
+// Farben für Benutzerunterscheidung
 const USER_COLORS = {
-  admin: "bg-purple-900/20 hover:bg-purple-900/30",
-  mo: "bg-blue-900/20 hover:bg-blue-900/30"
+  admin: 'bg-blue-500/10',
+  mo: 'bg-green-500/10'
 };
 
 export default function TradeCompare() {
-  const [adminTrades, setAdminTrades] = useState<Trade[]>([]);
-  const [moTrades, setMoTrades] = useState<Trade[]>([]);
-  const [filteredTrades, setFilteredTrades] = useState<Trade[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState({});
+  // State für kombinierte Trades
+  const [combinedTrades, setCombinedTrades] = useState<Trade[]>([]);
+  // State für aktive Filter
+  const [activeFilters, setActiveFilters] = useState({});
 
-  // Kombinierte Trades mit Benutzer-Kennzeichnung
-  const combinedTrades = [...adminTrades.map(trade => ({
-    ...trade,
-    userColor: USER_COLORS.admin,
-    userName: "admin"
-  })), ...moTrades.map(trade => ({
-    ...trade,
-    userColor: USER_COLORS.mo,
-    userName: "mo"
-  }))];
+  // Admin-Trades abrufen
+  const { data: adminTrades = [], isLoading: isLoadingAdmin } = useQuery({
+    queryKey: ['/api/users/1/trades'],
+    retry: false
+  });
 
-  // Lade die Trades beider Benutzer
+  // Mo-Trades abrufen
+  const { data: moTrades = [], isLoading: isLoadingMo } = useQuery({
+    queryKey: ['/api/users/2/trades'],
+    retry: false
+  });
+
+  // Daten aufbereiten, wenn sie geladen sind
   useEffect(() => {
-    const loadAllTrades = async () => {
-      setIsLoading(true);
-      try {
-        // Admin Trades laden
-        const adminTradesData = await fetchTradesForUser(1);
-        setAdminTrades(adminTradesData);
-        
-        // Mo Trades laden
-        const moTradesData = await fetchTradesForUser(2);
-        setMoTrades(moTradesData);
-        
-        // Alle Trades kombinieren für die initiale Ansicht
-        setFilteredTrades([
-          ...adminTradesData.map(trade => ({
-            ...trade,
-            userColor: USER_COLORS.admin,
-            userName: "admin"
-          })),
-          ...moTradesData.map(trade => ({
-            ...trade,
-            userColor: USER_COLORS.mo,
-            userName: "mo"
-          }))
-        ]);
-      } catch (error) {
-        console.error("Fehler beim Laden der Trades:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (!isLoadingAdmin && !isLoadingMo) {
+      // Admin-Trades Farbmarkierung und Benutzerinfo hinzufügen
+      const formattedAdminTrades = adminTrades.map(trade => ({
+        ...trade,
+        userColor: USER_COLORS.admin,
+        userName: 'Admin'
+      }));
 
-    loadAllTrades();
-  }, []);
+      // Mo-Trades Farbmarkierung und Benutzerinfo hinzufügen
+      const formattedMoTrades = moTrades.map(trade => ({
+        ...trade,
+        userColor: USER_COLORS.mo,
+        userName: 'Mo'
+      }));
 
-  // Filter-Funktion für kombinierte Trades
-  const applyFilters = (newFilters: any) => {
-    setFilters(newFilters);
-    
-    let filtered = [...combinedTrades];
-    
-    // Filtere nach Datum, falls angegeben
-    if (newFilters.dateFrom) {
-      const fromDate = new Date(newFilters.dateFrom);
-      filtered = filtered.filter(trade => {
-        const tradeDate = new Date(trade.date);
-        return tradeDate >= fromDate;
+      // Trades kombinieren und nach Datum sortieren
+      const allTrades = [...formattedAdminTrades, ...formattedMoTrades].sort((a, b) => {
+        // Datum in umgekehrter Reihenfolge sortieren (neueste zuerst)
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateB - dateA;
       });
+
+      setCombinedTrades(allTrades);
     }
-    
-    if (newFilters.dateTo) {
-      const toDate = new Date(newFilters.dateTo);
-      filtered = filtered.filter(trade => {
-        const tradeDate = new Date(trade.date);
-        return tradeDate <= toDate;
-      });
-    }
-    
-    // Filtere nach Symbol
-    if (newFilters.symbol && newFilters.symbol !== "all") {
-      filtered = filtered.filter(trade => trade.symbol === newFilters.symbol);
-    }
-    
-    // Filtere nach Konto-Typ
-    if (newFilters.accountType && newFilters.accountType !== "all") {
-      filtered = filtered.filter(trade => trade.accountType === newFilters.accountType);
-    }
-    
-    // Filtere nach Session
-    if (newFilters.session && newFilters.session !== "all") {
-      filtered = filtered.filter(trade => trade.session === newFilters.session);
-    }
-    
-    // Filtere nach Setup
-    if (newFilters.setup && newFilters.setup !== "all") {
-      filtered = filtered.filter(trade => trade.setup === newFilters.setup);
-    }
-    
-    // Filtere nach Trend
-    if (newFilters.trend && newFilters.trend !== "all") {
-      filtered = filtered.filter(trade => trade.trend === newFilters.trend);
-    }
-    
-    // Filtere nach spezifischem Benutzer, falls ausgewählt
-    if (newFilters.user && newFilters.user !== "all") {
-      filtered = filtered.filter(trade => trade.userName === newFilters.user);
-    }
-    
-    setFilteredTrades(filtered);
+  }, [adminTrades, moTrades, isLoadingAdmin, isLoadingMo]);
+
+  // Filter-Handler
+  const handleFilterChange = (newFilters: any) => {
+    setActiveFilters(newFilters);
   };
 
   return (
-    <div className="container mx-auto py-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Trade Vergleich</CardTitle>
+    <div className="container mx-auto p-4">
+      <div className="flex items-center gap-2 mb-6">
+        <Link to="/">
+          <ChevronLeft className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
+        </Link>
+        <h1 className="text-2xl font-bold">Trade-Vergleich</h1>
+      </div>
+
+      <Separator className="my-4" />
+
+      <div className="mb-6">
+        <FilterBar 
+          onFilterChange={handleFilterChange} 
+          initialFilters={{}} 
+          showUserFilter={true} 
+        />
+      </div>
+
+      <Card className="bg-black/50 border-primary/20 overflow-hidden">
+        <CardHeader className="pb-0">
+          <div className="flex items-center justify-between mb-2">
+            <CardTitle className="text-xl">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                Trades im Vergleich
+              </div>
+            </CardTitle>
+          </div>
         </CardHeader>
-        
-        <CardContent>
-          {/* Filter-Leiste mit zusätzlichem Benutzer-Filter */}
-          <FilterBar 
-            onFilterChange={applyFilters} 
-            initialFilters={filters}
-            showUserFilter={true} 
-          />
-          
-          <Tabs defaultValue="all" className="mt-4">
-            <TabsList>
-              <TabsTrigger value="all">Alle Trades</TabsTrigger>
-              <TabsTrigger value="admin">Admin Trades</TabsTrigger>
-              <TabsTrigger value="mo">Mo Trades</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="all">
+
+        <CardContent className="p-0">
+          <Tabs defaultValue="table" className="w-full">
+            <div className="px-6 pt-2 border-b border-border">
+              <TabsList className="bg-transparent">
+                <TabsTrigger value="table" className="data-[state=active]:bg-black/20">
+                  Tabelle
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="table" className="p-0 m-0">
               <TradeTable 
-                trades={filteredTrades} 
-                isLoading={isLoading}
+                trades={combinedTrades} 
+                isLoading={isLoadingAdmin || isLoadingMo}
                 showColoredRows={true}
                 showUserColumn={true}
-              />
-            </TabsContent>
-            
-            <TabsContent value="admin">
-              <TradeTable 
-                trades={filteredTrades.filter(trade => trade.userName === "admin")} 
-                isLoading={isLoading}
-                showColoredRows={true}
-                showUserColumn={true}
-              />
-            </TabsContent>
-            
-            <TabsContent value="mo">
-              <TradeTable 
-                trades={filteredTrades.filter(trade => trade.userName === "mo")} 
-                isLoading={isLoading}
-                showColoredRows={true}
-                showUserColumn={true}
+                onActiveFiltersChange={(filters) => setActiveFilters(filters)}
               />
             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
+
+      <div className="mt-6 text-center text-sm text-muted-foreground">
+        <div className="flex justify-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-blue-500/50"></div>
+            <span>Admin</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
+            <span>Mo</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
