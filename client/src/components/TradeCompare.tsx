@@ -277,26 +277,8 @@ export default function TradeCompare() {
       </div>
 
       <Card className="bg-black/50 border-primary/20 overflow-hidden">
-        <CardHeader className="pb-0">
-          <div className="flex items-center justify-between mb-2">
-            <CardTitle className="text-xl">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Trades im Vergleich
-              </div>
-            </CardTitle>
-          </div>
-        </CardHeader>
-
         <CardContent className="p-0">
           <Tabs defaultValue="table" className="w-full">
-            <div className="px-6 pt-2 border-b border-border">
-              <TabsList className="bg-transparent">
-                <TabsTrigger value="table" className="data-[state=active]:bg-black/20">
-                  Tabelle
-                </TabsTrigger>
-              </TabsList>
-            </div>
 
             <TabsContent value="table" className="p-0 m-0">
               <TradeTable 
