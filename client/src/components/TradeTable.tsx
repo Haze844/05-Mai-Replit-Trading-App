@@ -1815,6 +1815,11 @@ export default function TradeTable({
                   data-id={trade.id}
                   data-action="delete-on-rightclick"
                 >
+                  {showUserColumn && (
+                    <td className="p-3 text-xs font-medium">
+                      {trade.userName || '-'}
+                    </td>
+                  )}
                   <td className="p-3 text-xs">
                     <div className="flex flex-col">
                       <span>{formatDate(trade.date)}</span>

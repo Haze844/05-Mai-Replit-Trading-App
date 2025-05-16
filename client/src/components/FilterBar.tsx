@@ -26,6 +26,8 @@ export interface FilterBarProps {
   onFilterChange: (filters: any) => void;
   initialFilters?: any;
   showUserFilter?: boolean;
+  userId?: number;
+  filters?: any;
 }
 
 // Die Komponente für Filterungen

@@ -2,7 +2,7 @@ export interface Trade {
   id: number;
   symbol: string;
   setup?: string;
-  date: string;
+  date: string | Date;
   profitLoss: number;
   trend?: string;
   internalTrend?: string;
@@ -10,6 +10,7 @@ export interface Trade {
   mainTrendM15?: string;
   internalTrendM5?: string;
   entryLevel?: string;
+  entryType?: string;
   structure?: string;
   timeframeEntry?: string;
   liquidation?: string;
@@ -27,7 +28,10 @@ export interface Trade {
   session?: string;
   userId?: number;
   chartUrl?: string;
+  chartImage?: string;
   notes?: string;
+  gptFeedback?: string;
+  isWin?: boolean;
   
   // Für Vergleichsansicht
   userColor?: string;

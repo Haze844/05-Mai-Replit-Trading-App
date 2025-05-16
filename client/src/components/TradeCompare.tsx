@@ -22,13 +22,13 @@ export default function TradeCompare() {
   const [activeFilters, setActiveFilters] = useState({});
 
   // Admin-Trades abrufen
-  const { data: adminTrades = [], isLoading: isLoadingAdmin } = useQuery({
+  const { data: adminTrades = [], isLoading: isLoadingAdmin } = useQuery<Trade[]>({
     queryKey: ['/api/users/1/trades'],
     retry: false
   });
 
   // Mo-Trades abrufen
-  const { data: moTrades = [], isLoading: isLoadingMo } = useQuery({
+  const { data: moTrades = [], isLoading: isLoadingMo } = useQuery<Trade[]>({
     queryKey: ['/api/users/2/trades'],
     retry: false
   });
