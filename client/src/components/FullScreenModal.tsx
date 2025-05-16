@@ -77,8 +77,40 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
     e.stopPropagation();
     
     // Zoom mit Mausrad - nach oben = reinzoomen, nach unten = rauszoomen
-    const delta = e.deltaY * -0.01;
-    const newScale = Math.min(Math.max(0.5, scale + delta), 5); // Begrenze den Zoom zwischen 0.5x und 5x
+    // Extrem sanfter Zoom-Faktor
+    const delta = e.deltaY * -0.0025; // Nochmals halbiert für sehr sanftes Zoomen
+    
+    // Bei kleinem Zoom noch sanfter zoomen
+    const zoomFactor = scale < 1.5 ? 0.5 : 0.8; // Geringere Faktoren für sanfteres Zoomen
+    const adjustedDelta = delta * zoomFactor;
+    
+    // Berechnetes neues Zoom-Level mit Begrenzung
+    const newScale = Math.min(Math.max(0.5, scale + adjustedDelta), 5);
+    
+    // Nur fortfahren, wenn sich das Zoom-Level merklich ändert
+    if (Math.abs(newScale - scale) < 0.001) return;
+    
+    // Zentriere den Zoom auf die Mausposition
+    if (imageRef.current && containerRef.current) {
+      const rect = imageRef.current.getBoundingClientRect();
+      const containerRect = containerRef.current.getBoundingClientRect();
+      
+      // Berechne relative Position im Bild
+      const relX = (e.clientX - rect.left) / rect.width;
+      const relY = (e.clientY - rect.top) / rect.height;
+      
+      // Berechne Offset für Zentrierung
+      const offsetX = (e.clientX - containerRect.left) - containerRect.width / 2;
+      const offsetY = (e.clientY - containerRect.top) - containerRect.height / 2;
+      
+      // Setze neue Position mit extrem sanfter Anpassung
+      const positionAdjustment = 0.025; // Halbiert für noch sanftere Anpassung
+      setPosition({
+        x: position.x - offsetX * positionAdjustment,
+        y: position.y - offsetY * positionAdjustment
+      });
+    }
+    
     setScale(newScale);
   };
   
@@ -87,11 +119,11 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
     e.preventDefault();
     e.stopPropagation();
     
-    // Zoome schneller bei Doppelklick (50% mehr als normaler Zoom)
-    const newScale = Math.min(scale + 0.5, 5);
-    setScale(newScale);
+    // Sanfteres Zoomen beim Doppelklick (30% statt 50%)
+    const zoomIncrement = scale < 1.5 ? 0.3 : 0.4;
+    const newScale = Math.min(scale + zoomIncrement, 5);
     
-    // Optional: Zentriere den Zoom auf die Mausposition
+    // Zentriere den Zoom auf die Mausposition
     if (imageRef.current && containerRef.current) {
       const rect = imageRef.current.getBoundingClientRect();
       const containerRect = containerRef.current.getBoundingClientRect();
@@ -105,11 +137,14 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
       const offsetY = (e.clientY - containerRect.top) - containerRect.height / 2;
       
       // Setze Position so, dass der Punkt unter dem Mauszeiger zentriert wird
+      // Sanftere Anpassung (0.2 statt 0.5)
       setPosition({
-        x: position.x - offsetX * 0.5,
-        y: position.y - offsetY * 0.5
+        x: position.x - offsetX * 0.2,
+        y: position.y - offsetY * 0.2
       });
     }
+    
+    setScale(newScale);
   };
   
   // Maus-Down-Event für Drag-Start und Doppelklick-Erkennung
