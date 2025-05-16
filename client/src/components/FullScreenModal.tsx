@@ -16,6 +16,7 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [lastClickTime, setLastClickTime] = useState(0);
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -81,10 +82,55 @@ export function FullScreenModal({ isOpen, onClose, image }: FullScreenModalProps
     setScale(newScale);
   };
   
-  // Maus-Down-Event für Drag-Start
+  // Double-Click-Handler für schnelles Zoomen
+  const handleDoubleClick = (e: MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Zoome schneller bei Doppelklick (50% mehr als normaler Zoom)
+    const newScale = Math.min(scale + 0.5, 5);
+    setScale(newScale);
+    
+    // Optional: Zentriere den Zoom auf die Mausposition
+    if (imageRef.current && containerRef.current) {
+      const rect = imageRef.current.getBoundingClientRect();
+      const containerRect = containerRef.current.getBoundingClientRect();
+      
+      // Berechne relative Position im Bild
+      const relX = (e.clientX - rect.left) / rect.width;
+      const relY = (e.clientY - rect.top) / rect.height;
+      
+      // Berechne Offset für Zentrierung
+      const offsetX = (e.clientX - containerRect.left) - containerRect.width / 2;
+      const offsetY = (e.clientY - containerRect.top) - containerRect.height / 2;
+      
+      // Setze Position so, dass der Punkt unter dem Mauszeiger zentriert wird
+      setPosition({
+        x: position.x - offsetX * 0.5,
+        y: position.y - offsetY * 0.5
+      });
+    }
+  };
+  
+  // Maus-Down-Event für Drag-Start und Doppelklick-Erkennung
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
-    // Nur mit linker Maustaste und wenn skaliert ist
-    if (e.button !== 0 || scale <= 1) return;
+    // Nur mit linker Maustaste
+    if (e.button !== 0) return;
+    
+    const now = Date.now();
+    
+    // Prüfe auf Doppelklick (Klicks innerhalb von 300ms)
+    if (now - lastClickTime < 300) {
+      handleDoubleClick(e);
+      setLastClickTime(0); // Zurücksetzen, um Triple-Klicks zu verhindern
+      return;
+    }
+    
+    setLastClickTime(now);
+    
+    // Wenn nicht gezoomt, nicht ziehen
+    if (scale <= 1) return;
+    
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
