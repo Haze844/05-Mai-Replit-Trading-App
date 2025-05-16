@@ -205,7 +205,7 @@ export default function ChartImageUpload({ existingImage, onChange }: ChartImage
         <>
           <ImagePreview 
             image={preview} 
-            alt="TradingView Chart" 
+            alt="TradingView Chart"
           />
         </>  
       )}
