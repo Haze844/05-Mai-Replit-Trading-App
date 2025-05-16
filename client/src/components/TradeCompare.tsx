@@ -75,11 +75,16 @@ export default function TradeCompare() {
       const queryParams = new URLSearchParams();
       queryParams.append("userId", "1"); // Jasper-ID
       
+      console.log("TradeCompare - Abfrage Jasper-Trades (userId=1)");
       const response = await fetch(`/api/trades?${queryParams.toString()}`);
       if (!response.ok) {
         throw new Error("Failed to fetch Jasper trades");
       }
-      return response.json();
+      const data = await response.json();
+      console.log(`TradeCompare - Jasper-Trades geladen: ${data.length} Trades`);
+      
+      // Stellen Sie sicher, dass nur Trades mit userId=1 zurückgegeben werden
+      return data.filter((trade: any) => trade.userId === 1);
     },
     refetchOnMount: true,
     staleTime: 0
@@ -92,11 +97,16 @@ export default function TradeCompare() {
       const queryParams = new URLSearchParams();
       queryParams.append("userId", "2"); // Mo-ID
       
+      console.log("TradeCompare - Abfrage Mo-Trades (userId=2)");
       const response = await fetch(`/api/trades?${queryParams.toString()}`);
       if (!response.ok) {
         throw new Error("Failed to fetch mo trades");
       }
-      return response.json();
+      const data = await response.json();
+      console.log(`TradeCompare - Mo-Trades geladen: ${data.length} Trades`);
+      
+      // Stellen Sie sicher, dass nur Trades mit userId=2 zurückgegeben werden
+      return data.filter((trade: any) => trade.userId === 2);
     },
     refetchOnMount: true,
     staleTime: 0
@@ -112,25 +122,41 @@ export default function TradeCompare() {
   // Daten aufbereiten, wenn sie geladen sind
   useEffect(() => {
     if (!isLoadingAdmin && !isLoadingMo) {
+      console.log("TradeCompare - Verfügbare Trades:", { 
+        jasper: adminTrades.length, 
+        mo: moTrades.length
+      });
+
       // Jasper-Trades Farbmarkierung und Benutzerinfo hinzufügen
       // Ein eindeutiger Key für jeden Trade wird durch Präfix "jasper-" erzeugt
-      const formattedAdminTrades = adminTrades.map(trade => ({
-        ...trade,
-        id: `jasper-${trade.id}`, // Eindeutige ID für die Tabelle
-        originalId: trade.id,    // Original-ID für API-Anfragen beibehalten
-        userColor: USER_COLORS.jasper,
-        userName: 'Jasper'
-      }));
+      // Vergewissern, dass die Trades dem richtigen Benutzer gehören (userId === 1)
+      const formattedAdminTrades = adminTrades
+        .filter(trade => trade.userId === 1) // Nur Trades von Jasper (userId 1)
+        .map(trade => ({
+          ...trade,
+          id: `jasper-${trade.id}`, // Eindeutige ID für die Tabelle
+          originalId: trade.id,    // Original-ID für API-Anfragen beibehalten
+          userColor: USER_COLORS.jasper,
+          userName: 'Jasper'
+        }));
 
       // Mo-Trades Farbmarkierung und Benutzerinfo hinzufügen
       // Ein eindeutiger Key für jeden Trade wird durch Präfix "mo-" erzeugt
-      const formattedMoTrades = moTrades.map(trade => ({
-        ...trade,
-        id: `mo-${trade.id}`,    // Eindeutige ID für die Tabelle
-        originalId: trade.id,    // Original-ID für API-Anfragen beibehalten
-        userColor: USER_COLORS.mo,
-        userName: 'Mo'
-      }));
+      // Vergewissern, dass die Trades dem richtigen Benutzer gehören (userId === 2)
+      const formattedMoTrades = moTrades
+        .filter(trade => trade.userId === 2) // Nur Trades von Mo (userId 2)
+        .map(trade => ({
+          ...trade,
+          id: `mo-${trade.id}`,    // Eindeutige ID für die Tabelle
+          originalId: trade.id,    // Original-ID für API-Anfragen beibehalten
+          userColor: USER_COLORS.mo,
+          userName: 'Mo'
+        }));
+
+      console.log("TradeCompare - Formatierte Trades nach Filterung:", { 
+        jasper: formattedAdminTrades.length, 
+        mo: formattedMoTrades.length 
+      });
 
       // Trades kombinieren und nach Datum sortieren
       const allTrades = [...formattedAdminTrades, ...formattedMoTrades].sort((a, b) => {
