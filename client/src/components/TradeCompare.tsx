@@ -20,7 +20,8 @@ import { Separator } from '@/components/ui/separator';
 
 // Farben für Benutzerunterscheidung
 const USER_COLORS = {
-  admin: 'bg-blue-500/10', // Admin-Farbmarkierung (Jasper)
+  admin: 'bg-blue-500/10', // Jasper-Farbmarkierung
+  jasper: 'bg-blue-500/10', // Alternative Namenskonvention
   mo: 'bg-green-500/10'
 };
 

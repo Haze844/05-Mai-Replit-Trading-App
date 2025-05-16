@@ -424,7 +424,7 @@ export default function SimpleHome() {
                   Trade-Vergleich
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Vergleichen Sie Trades zwischen Admin und Mo
+                  Vergleichen Sie Trades zwischen Jasper und Mo
                 </p>
               </div>
               

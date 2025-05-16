@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,13 +25,22 @@ export default function TradeImport({ userId, onImport }: TradeImportProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  
+  // Verwende die Benutzer-ID aus dem Auth-Kontext oder die über Props übergebene ID als Fallback
+  const currentUserId = user?.id || userId;
+  
+  // Debug-Log: Zeige die verwendete User-ID
+  useEffect(() => {
+    console.log("TradeImport verwendet User-ID:", currentUserId, 
+      user?.id ? "(aus Auth-Kontext)" : "(aus Props)");
+  }, [currentUserId, user?.id]);
 
   const importMutation = useMutation({
     mutationFn: async (trades: any[]) => {
-      console.log("Importiere Trades mit userId:", userId);
+      console.log("Importiere Trades mit userId:", currentUserId);
       const res = await apiRequest("POST", "/api/import-csv", { 
         trades,
-        userId: userId // Verwende die über Props übergebene userId
+        userId: currentUserId // Verwende immer die aktuelle Benutzer-ID
       });
       return await res.json();
     },
