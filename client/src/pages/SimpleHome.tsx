@@ -428,16 +428,6 @@ export default function SimpleHome() {
                 </p>
               </div>
               
-              {/* FilterBar im Vergleich-Tab */}
-              <div className="w-full">
-                <FilterBar
-                  userId={userId}
-                  filters={filters}
-                  onFilterChange={handleFilterChange}
-                  showUserFilter={true}
-                />
-              </div>
-              
               {/* TradeCompare-Komponente direkt einbinden mit Key für Neuladen beim Tab-Wechsel */}
               <div className="w-full">
                 <TradeCompare key={`compare-${trades.length}`} />
