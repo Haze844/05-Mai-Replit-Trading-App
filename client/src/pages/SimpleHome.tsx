@@ -418,6 +418,33 @@ export default function SimpleHome() {
             <RiskManagementDashboard userId={userId} activeFilters={activeFilters} />
           </div>
         </TabsContent>
+        
+        {/* Trade-Vergleich Tab */}
+        <TabsContent value="compare" className="mt-0">
+          <div className="rocket-card rounded-xl p-2 sm:p-4">
+            {/* Verwende hier direkt die TradeCompare-Komponente */}
+            <div className="flex flex-col mt-2 gap-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  Trade-Vergleich
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Vergleichen Sie Trades zwischen Admin und Mo
+                </p>
+              </div>
+              
+              <div className="mt-4">
+                <Link href="/compare" className="inline-block">
+                  <Button variant="default" className="gap-2">
+                    <Users className="h-4 w-4" />
+                    Zum Trade-Vergleich
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
             
         <TabsContent value="ai-analysis" className="mt-0">
           {/* Unternavigation für Analyse mit Tabs */}

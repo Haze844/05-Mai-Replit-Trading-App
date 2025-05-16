@@ -223,6 +223,9 @@ export default function Header({ activeTab = "dashboard", onTabChange }: HeaderP
                 <TabsTrigger value="risk" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-md px-4 py-1.5 transition-all duration-200 rounded-lg">
                   <AlertCircle className="w-4 h-4 mr-1.5" /> Risk-Manager
                 </TabsTrigger>
+                <TabsTrigger value="compare" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:shadow-md px-4 py-1.5 transition-all duration-200 rounded-lg">
+                  <Users className="w-4 h-4 mr-1.5" /> Vergleich
+                </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
