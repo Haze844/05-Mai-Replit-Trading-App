@@ -14,6 +14,7 @@ import TradeDashboard from "@/components/TradeDashboard";
 import PerformanceHeatmap from "@/components/PerformanceHeatmap";
 import TradingStreakTracker from "@/components/TradingStreakTracker";
 import AccountBalanceProgress from "@/components/AccountBalanceProgress";
+import TradeCompare from "@/components/TradeCompare";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -369,13 +370,6 @@ export default function SimpleHome() {
             </div>
             
             <div className="relative w-full">
-              {/* Filter */}
-              <FilterBar
-                userId={userId}
-                filters={filters}
-                onFilterChange={handleFilterChange}
-              />
-              
               {/* Trade Tabelle - verbreitert */}
               <div className="w-full">
                 <TradeTable
@@ -422,7 +416,6 @@ export default function SimpleHome() {
         {/* Trade-Vergleich Tab */}
         <TabsContent value="compare" className="mt-0">
           <div className="rocket-card rounded-xl p-2 sm:p-4">
-            {/* Verwende hier direkt die TradeCompare-Komponente */}
             <div className="flex flex-col mt-2 gap-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold flex items-center gap-2">
@@ -434,13 +427,19 @@ export default function SimpleHome() {
                 </p>
               </div>
               
-              <div className="mt-4">
-                <Link href="/compare" className="inline-block">
-                  <Button variant="default" className="gap-2">
-                    <Users className="h-4 w-4" />
-                    Zum Trade-Vergleich
-                  </Button>
-                </Link>
+              {/* FilterBar im Vergleich-Tab */}
+              <div className="w-full">
+                <FilterBar
+                  userId={userId}
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                  showUserFilter={true}
+                />
+              </div>
+              
+              {/* TradeCompare-Komponente direkt einbinden */}
+              <div className="w-full">
+                <TradeCompare />
               </div>
             </div>
           </div>
