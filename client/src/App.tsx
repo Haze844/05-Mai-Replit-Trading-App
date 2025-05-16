@@ -22,6 +22,7 @@ function Router() {
       <ProtectedRoute path="/coach" component={PersonalCoach} />
       <ProtectedRoute path="/calendar" component={MacroEconomicCalendar} />
       <ProtectedRoute path="/social" component={SocialTrading} />
+      <ProtectedRoute path="/compare" component={SimpleHome} />
       <Route path="/booklet" component={Booklet} />
       <Route path="/auth" component={AuthPage} />
       <Route path="*" component={NotFound} />

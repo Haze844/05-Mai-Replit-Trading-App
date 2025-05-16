@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import cors from "cors";
+import compareRouter from "./compare-api";
 
 const app = express();
 
@@ -17,6 +18,9 @@ app.use(cors({
 // Erhöhe die Größenbeschränkung für JSON-Anfragen auf 10MB für größere Bilder
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+
+// Verwende den Compare-Router für die Vergleichsfunktionalität
+app.use('/api', compareRouter);
 
 // Serve static files from the public directory
 app.use(express.static(path.join(process.cwd(), "public")));

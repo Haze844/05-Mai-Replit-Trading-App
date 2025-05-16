@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Trade } from '@/types/trade';
+import { Trade } from '../types/trade';
 import TradeTable from './TradeTable';
 import FilterBar from './FilterBar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
