@@ -15,18 +15,31 @@ export default function SimpleImageViewer({ imageUrl, onClose }: SimpleImageView
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const imgRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
-  // Schließen bei Escape-Taste
+  // Escape-Taste abfangen, ohne den Bearbeitungsmodus zu beeinflussen
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // Nur den Bildbetrachter schließen, aber das Event nicht propagieren
+        e.stopPropagation();
         onClose();
       }
     };
     
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+    const currentContainer = containerRef.current;
+    if (currentContainer) {
+      currentContainer.tabIndex = -1; // Macht das Element fokussierbar
+      currentContainer.focus(); // Element fokussieren
+      currentContainer.addEventListener('keydown', handleKeyDown);
+    }
+    
+    return () => {
+      if (currentContainer) {
+        currentContainer.removeEventListener('keydown', handleKeyDown);
+      }
+    };
+  }, [onClose, containerRef.current]);
 
   // Zoom-Funktionen
   const handleZoomIn = () => {
@@ -98,6 +111,7 @@ export default function SimpleImageViewer({ imageUrl, onClose }: SimpleImageView
     <div 
       className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"
       onClick={onClose}
+      ref={containerRef}
     >
       <div 
         className="relative max-w-[90vw] max-h-[90vh] overflow-hidden"
