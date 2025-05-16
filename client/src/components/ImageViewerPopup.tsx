@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, WheelEvent, MouseEvent } from "react";
-import { X, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from 'react';
+import { X, ZoomIn, ZoomOut, RotateCw, RotateCcw, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ImageViewerPopupProps {
   image: string | null;
@@ -8,389 +8,191 @@ interface ImageViewerPopupProps {
 }
 
 export default function ImageViewerPopup({ image, onClose }: ImageViewerPopupProps) {
-  // State für Anzeige und Interaktion
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [lastClickTime, setLastClickTime] = useState(0);
-  const [imageError, setImageError] = useState(false);
-  
-  // Refs für DOM-Elemente
-  const imageRef = useRef<HTMLImageElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const popupRef = useRef<HTMLDivElement>(null);
-  
-  // Prüfe, ob es ein TradingView-Link ist
-  const isTradingViewLink = image && /tradingview\.com\/x\//i.test(image);
+  const imgRef = useRef<HTMLImageElement>(null);
 
-  // Setze Fokus und füge Keyboard-Handler hinzu
+  // Schließen bei Escape-Taste
   useEffect(() => {
-    if (!image) return;
-    
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    
-    // Event-Listener hinzufügen
-    window.addEventListener("keydown", handleEscape);
-    
-    // Verhindere Scrolling des Body während Popup offen ist
-    document.body.style.overflow = 'hidden';
-    
-    // Event-Listener entfernen beim Cleanup
-    return () => {
-      window.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = '';
-    };
-  }, [image, onClose]);
-  
-  // Verhindere, dass das Popup beim Beenden der Bearbeitung geschlossen wird
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      // Wenn ein Klickereignis außerhalb des Popups stattfindet
-      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-        // Stoppe das Event, um zu verhindern, dass es übergeordnete Elemente erreicht
-        e.stopPropagation();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
       }
     };
     
-    // Capture-Phase verwenden, um sicherzustellen, dass wir das Event zuerst bekommen
-    document.addEventListener("click", handleClick as any, true);
-    
-    return () => {
-      document.removeEventListener("click", handleClick as any, true);
-    };
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
-  // Wenn kein Bild gesetzt ist, zeige nichts an
-  if (!image) return null;
+  // Zurücksetzen der Werte beim Öffnen eines neuen Bildes
+  useEffect(() => {
+    setScale(1);
+    setRotation(0);
+    setPosition({ x: 0, y: 0 });
+  }, [image]);
 
-  // URL für das anzuzeigende Bild
-  const getDisplayUrl = () => {
-    if (!image) return '';
-    
-    if (isTradingViewLink) {
-      // Für TradingView Links
-      return image;
-    }
-    
-    // Für alle anderen Links
-    return image;
+  // Handling des Zooms
+  const handleZoomIn = () => {
+    setScale(prev => Math.min(prev + 0.1, 3));
   };
 
-  // Funktion für Mausrad-Zoom
-  const handleWheel = (e: WheelEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Extrem sanfter Zoom-Faktor
-    const delta = e.deltaY * -0.0025;
-    
-    // Bei kleinem Zoom noch sanfter zoomen
-    const zoomFactor = scale < 1.5 ? 0.5 : 0.8;
-    const adjustedDelta = delta * zoomFactor;
-    
-    // Berechnetes neues Zoom-Level mit Begrenzung
-    const newScale = Math.min(Math.max(0.5, scale + adjustedDelta), 5);
-    
-    // Nur fortfahren, wenn sich das Zoom-Level merklich ändert
-    if (Math.abs(newScale - scale) < 0.001) return;
-    
-    // Zentriere den Zoom auf die Mausposition
-    if (imageRef.current && containerRef.current) {
-      const rect = imageRef.current.getBoundingClientRect();
-      const containerRect = containerRef.current.getBoundingClientRect();
-      
-      // Berechne Offset für Zentrierung
-      const offsetX = (e.clientX - containerRect.left) - containerRect.width / 2;
-      const offsetY = (e.clientY - containerRect.top) - containerRect.height / 2;
-      
-      // Setze neue Position mit extrem sanfter Anpassung
-      const positionAdjustment = 0.025;
-      setPosition({
-        x: position.x - offsetX * positionAdjustment,
-        y: position.y - offsetY * positionAdjustment
-      });
-    }
-    
-    setScale(newScale);
+  const handleZoomOut = () => {
+    setScale(prev => Math.max(prev - 0.1, 0.5));
   };
-  
-  // Double-Click-Handler für schnelles Zoomen
-  const handleDoubleClick = (e: MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Sanfteres Zoomen beim Doppelklick
-    const zoomIncrement = scale < 1.5 ? 0.3 : 0.4;
-    const newScale = Math.min(scale + zoomIncrement, 5);
-    
-    // Zentriere den Zoom auf die Mausposition
-    if (imageRef.current && containerRef.current) {
-      const rect = imageRef.current.getBoundingClientRect();
-      const containerRect = containerRef.current.getBoundingClientRect();
-      
-      // Berechne Offset für Zentrierung
-      const offsetX = (e.clientX - containerRect.left) - containerRect.width / 2;
-      const offsetY = (e.clientY - containerRect.top) - containerRect.height / 2;
-      
-      // Setze Position mit sanfter Anpassung
-      setPosition({
-        x: position.x - offsetX * 0.2,
-        y: position.y - offsetY * 0.2
-      });
-    }
-    
-    setScale(newScale);
+
+  // Handling der Rotation
+  const handleRotateClockwise = () => {
+    setRotation(prev => (prev + 90) % 360);
   };
-  
-  // Maus-Down-Event für Drag-Start und Doppelklick-Erkennung
-  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
-    // Nur mit linker Maustaste
-    if (e.button !== 0) return;
-    
-    const now = Date.now();
-    
-    // Prüfe auf Doppelklick (Klicks innerhalb von 300ms)
-    if (now - lastClickTime < 300) {
-      handleDoubleClick(e);
-      setLastClickTime(0); // Zurücksetzen, um Triple-Klicks zu verhindern
-      return;
-    }
-    
-    setLastClickTime(now);
-    
-    // Wenn nicht gezoomt, nicht ziehen
-    if (scale <= 1) return;
-    
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+
+  const handleRotateCounterClockwise = () => {
+    setRotation(prev => (prev - 90 + 360) % 360);
   };
-  
-  // Maus-Move-Event für Drag
-  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const newX = e.clientX - dragStart.x;
-    const newY = e.clientY - dragStart.y;
-    
-    // Limitiere die Bewegung basierend auf dem Zoom-Level
-    const maxOffset = (scale - 1) * 200;
-    const limitedX = Math.min(Math.max(newX, -maxOffset), maxOffset);
-    const limitedY = Math.min(Math.max(newY, -maxOffset), maxOffset);
-    
-    setPosition({ x: limitedX, y: limitedY });
-  };
-  
-  // Maus-Up-Event für Drag-Ende
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-  
-  // Funktion zum Zurücksetzen des Zooms
-  const resetZoom = (e: React.MouseEvent) => {
-    e.stopPropagation();
+
+  // Zurücksetzen aller Werte
+  const handleReset = () => {
     setScale(1);
     setRotation(0);
     setPosition({ x: 0, y: 0 });
   };
-  
-  // Funktion zum gezielten Zoom-In
-  const zoomIn = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newScale = Math.min(scale + 0.25, 5);
-    setScale(newScale);
+
+  // Handling des Drag-and-Drop
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return; // nur linke Maustaste
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
   };
-  
-  // Funktion zum gezielten Zoom-Out
-  const zoomOut = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newScale = Math.max(scale - 0.25, 0.5);
-    setScale(newScale);
-    // Wenn wir unter 1.0 Zoom gehen, setze Position zurück
-    if (newScale <= 1) {
-      setPosition({ x: 0, y: 0 });
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setPosition({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Handling des Doppelklicks
+  const handleDoubleClick = () => {
+    if (scale !== 1) {
+      handleReset();
+    } else {
+      setScale(2);
     }
   };
-  
-  // Funktion zum Rotieren
-  const rotateImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setRotation(rotation + 90);
+
+  // Handling des Scrollrads für Zoom
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      setScale(prev => Math.min(prev + 0.1, 3));
+    } else {
+      setScale(prev => Math.max(prev - 0.1, 0.5));
+    }
   };
 
-  const handleImageError = () => {
-    setImageError(true);
-  };
+  if (!image) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-black/95 transition-opacity duration-300"
-      onClick={(e) => {
-        // Schließe das Popup nur, wenn direkt auf den Hintergrund geklickt wird
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-      ref={popupRef}
+    <div 
+      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"
+      onClick={onClose} // Schließen bei Klick außerhalb des Bildes
     >
-      {/* Schließen-Button oben rechts */}
-      <Button 
-        variant="outline" 
-        size="icon" 
-        className="absolute top-4 right-4 bg-black/50 border-white/20 text-white hover:bg-white/20 z-[1001]"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose();
-        }}
-      >
-        <X className="h-4 w-4" />
-      </Button>
-
-      {/* Zoom-Buttons unten */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 z-[1001] bg-black/50 rounded-full p-1.5">
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="bg-black/50 border-white/20 text-white hover:bg-white/20 h-8 w-8"
-          onClick={zoomOut}
-        >
-          <ZoomOut className="h-3.5 w-3.5" />
-        </Button>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="bg-black/50 border-white/20 text-white hover:bg-white/20 h-8 w-8"
-          onClick={zoomIn}
-        >
-          <ZoomIn className="h-3.5 w-3.5" />
-        </Button>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="bg-black/50 border-white/20 text-white hover:bg-white/20 h-8 w-8"
-          onClick={rotateImage}
-        >
-          <RotateCw className="h-3.5 w-3.5" />
-        </Button>
-        <Button 
-          variant="outline" 
-          className="bg-black/50 border-white/20 text-white text-xs hover:bg-white/20 h-8 px-2"
-          onClick={resetZoom}
-        >
-          Zurücksetzen
-        </Button>
-      </div>
-
-      {/* Hinweis zum Ziehen des Bildes */}
-      {scale > 1 && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white text-xs px-3 py-1.5 rounded-full z-[1001] whitespace-nowrap">
-          Bild ziehen zum Verschieben des Ausschnitts
-        </div>
-      )}
-
-      {/* Inhalt des Popups */}
       <div 
-        className={`w-full h-full flex items-center justify-center p-4 overflow-hidden ${isDragging ? 'cursor-grabbing' : scale > 1 ? 'cursor-grab' : 'cursor-zoom-in'}`}
-        ref={containerRef}
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onClick={(e) => {
-          // Verhindere, dass Klicks auf den Container das Popup schließen
-          e.stopPropagation();
-        }}
+        className="relative max-w-[90vw] max-h-[90vh] overflow-hidden"
+        onClick={(e) => e.stopPropagation()} // Verhindert Schließen bei Klick auf Bild-Container
       >
-        {isTradingViewLink && !imageError ? (
-          // Für TradingView Link
-          <div 
-            className="relative max-w-full max-h-full" 
-            style={{ 
-              transformOrigin: 'center',
-              cursor: isDragging ? 'grabbing' : scale > 1 ? 'grab' : 'zoom-in'
-            }}
-            onClick={(e) => {
-              // Verhindere Ereignis-Bubbling
-              e.stopPropagation();
-              
-              // Bei nicht gezoomtem Bild, zoomen
-              if (scale <= 1) {
-                zoomIn(e);
-              }
-            }}
+        {/* Schließen-Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 right-2 z-10 bg-black/50 hover:bg-black/70 text-white rounded-full"
+          onClick={onClose}
+        >
+          <X className="h-5 w-5" />
+        </Button>
+        
+        {/* Steuerungselemente */}
+        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-10 flex items-center space-x-2 bg-black/50 rounded-full p-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white h-8 w-8"
+            onClick={handleZoomIn}
           >
-            <img 
-              ref={imageRef}
-              src={getDisplayUrl()} 
-              alt="TradingView Chart" 
-              className="max-w-full max-h-full object-contain" 
-              style={{ 
-                transform: `scale(${scale}) rotate(${rotation}deg) translate(${position.x / scale}px, ${position.y / scale}px)`,
-                transition: isDragging ? 'none' : 'transform 0.2s ease-out'
-              }}
-              onError={handleImageError}
-              draggable={false}
-            />
-          </div>
-        ) : (
-          // Normales Bild
-          <div 
-            className="relative max-w-full max-h-full" 
-            style={{ 
-              transformOrigin: 'center',
-              cursor: isDragging ? 'grabbing' : scale > 1 ? 'grab' : 'zoom-in'
-            }}
-            onClick={(e) => {
-              // Verhindere Ereignis-Bubbling
-              e.stopPropagation();
-              
-              // Bei nicht gezoomtem Bild, zoomen
-              if (scale <= 1) {
-                zoomIn(e);
-              }
-            }}
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white h-8 w-8"
+            onClick={handleZoomOut}
           >
-            <img 
-              ref={imageRef}
-              src={getDisplayUrl()} 
-              alt="Bildvorschau" 
-              className="max-w-full max-h-full object-contain" 
-              style={{ 
-                transform: `scale(${scale}) rotate(${rotation}deg) translate(${position.x / scale}px, ${position.y / scale}px)`,
-                transition: isDragging ? 'none' : 'transform 0.2s ease-out'
-              }}
-              onError={handleImageError}
-              draggable={false}
-            />
-          </div>
-        )}
-
-        {/* Fallback für Bildfehler */}
-        {imageError && (
-          <div className="text-white text-center p-6 bg-black/70 rounded-lg">
-            <p>Das Bild konnte nicht geladen werden.</p>
-            {image && <p className="text-sm text-gray-400 mt-2">{image}</p>}
-            {isTradingViewLink && (
-              <Button 
-                variant="outline" 
-                className="mt-4 border-white/20 text-white hover:bg-white/20"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  window.open(image, '_blank');
-                }}
-              >
-                Chart auf TradingView öffnen
-              </Button>
-            )}
-          </div>
-        )}
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon" 
+            className="text-white h-8 w-8"
+            onClick={handleRotateClockwise}
+          >
+            <RotateCw className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white h-8 w-8"
+            onClick={handleRotateCounterClockwise}
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white h-8 w-8"
+            onClick={handleReset}
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        {/* Zoom-Hint */}
+        <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+          {Math.round(scale * 100)}% | Scrollen zum Zoomen
+        </div>
+        
+        {/* Das Bild */}
+        <div 
+          className="select-none cursor-grab active:cursor-grabbing"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onWheel={handleWheel}
+          onDoubleClick={handleDoubleClick}
+          style={{ 
+            touchAction: 'none' // Verhindert Standard-Touch-Events
+          }}
+        >
+          <img 
+            ref={imgRef}
+            src={image} 
+            alt="Vergrößerte Ansicht" 
+            className="max-w-none pointer-events-none"
+            style={{
+              transform: `translate(${position.x}px, ${position.y}px) scale(${scale}) rotate(${rotation}deg)`,
+              transformOrigin: 'center',
+              transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+            }}
+            onDragStart={(e) => e.preventDefault()} // Verhindert Standard-Drag
+          />
+        </div>
       </div>
     </div>
   );
