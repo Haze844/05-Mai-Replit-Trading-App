@@ -28,6 +28,8 @@ const USER_COLORS = {
 export default function TradeCompare() {
   // State für kombinierte Trades
   const [combinedTrades, setCombinedTrades] = useState<Trade[]>([]);
+  // State für gefilterte Trades (Ergebnis der Filter-Anwendung)
+  const [filteredTrades, setFilteredTrades] = useState<Trade[]>([]);
   // State für aktive Filter
   const [activeFilters, setActiveFilters] = useState({});
   
@@ -172,7 +174,73 @@ export default function TradeCompare() {
 
   // Filter-Handler
   const handleFilterChange = (newFilters: any) => {
+    console.log("TradeCompare - Neue Filter empfangen:", newFilters);
     setActiveFilters(newFilters);
+    
+    // Hier zusätzlich die Trades filtern, basierend auf den neuen Filtern
+    if (!isLoadingAdmin && !isLoadingMo && combinedTrades.length > 0) {
+      // Filtern mit den neuen Filtern
+      const filteredTrades = combinedTrades.filter(trade => {
+        // Symbol Filter
+        if (newFilters.symbol !== 'all' && trade.symbol !== newFilters.symbol) {
+          return false;
+        }
+        
+        // Account Type Filter
+        if (newFilters.accountType !== 'all' && trade.accountType !== newFilters.accountType) {
+          return false;
+        }
+        
+        // Session Filter
+        if (newFilters.session !== 'all' && trade.session !== newFilters.session) {
+          return false;
+        }
+        
+        // Setup Filter
+        if (newFilters.setup !== 'all' && trade.setup !== newFilters.setup) {
+          return false;
+        }
+        
+        // Entry Type Filter
+        if (newFilters.entryType !== 'all' && trade.entryType !== newFilters.entryType) {
+          return false;
+        }
+        
+        // Date Filter
+        if (newFilters.dateFrom || newFilters.dateTo) {
+          const tradeDate = new Date(trade.date);
+          
+          if (newFilters.dateFrom) {
+            const fromDate = new Date(newFilters.dateFrom);
+            if (tradeDate < fromDate) {
+              return false;
+            }
+          }
+          
+          if (newFilters.dateTo) {
+            const toDate = new Date(newFilters.dateTo);
+            toDate.setHours(23, 59, 59, 999); // Ende des Tages
+            if (tradeDate > toDate) {
+              return false;
+            }
+          }
+        }
+        
+        // User Filter
+        if (newFilters.user && newFilters.user !== 'all') {
+          if (newFilters.user === 'jasper' && trade.userName !== 'Jasper') {
+            return false;
+          }
+          if (newFilters.user === 'mo' && trade.userName !== 'Mo') {
+            return false;
+          }
+        }
+        
+        return true;
+      });
+      
+      console.log(`TradeCompare - Trades nach Filterung: ${filteredTrades.length} von ${combinedTrades.length}`);
+    }
   };
 
   return (
