@@ -20,16 +20,116 @@ import {
   DollarSign, 
   Activity, 
   ArrowUpRight, 
-  ArrowDownRight 
+  ArrowDownRight,
+  TrendingUp,
+  TrendingDown,
+  Award,
+  AlertTriangle,
+  Calendar,
+  Filter,
+  Info,
+  RefreshCw,
+  BadgeCheck
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { Separator } from '@/components/ui/separator';
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { 
+  Sparklines, 
+  SparklinesLine, 
+  SparklinesBars,
+  SparklinesSpots
+} from 'react-sparklines';
 
 // Farben für Benutzerunterscheidung
 const USER_COLORS = {
   admin: 'bg-blue-500/10', // Jasper-Farbmarkierung
   jasper: 'bg-blue-500/10', // Alternative Namenskonvention
   mo: 'bg-green-500/10'
+};
+
+// Einfache Donut-Chart Komponente
+const DonutChart = ({ percentage, color, size = 60, strokeWidth = 6 }) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="transform -rotate-90">
+        {/* Hintergrund-Kreis */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="rgba(30, 30, 30, 0.5)"
+          strokeWidth={strokeWidth}
+        />
+        {/* Fortschritts-Kreis */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          className="transition-all duration-1000 ease-out"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center font-bold text-xs" style={{ color }}>
+        {Math.round(percentage)}%
+      </div>
+    </div>
+  );
+};
+
+// Hilfsfunktion um historische Trade-Daten für Sparklines zu generieren
+const getTradeHistory = (trades, key = 'isWin', count = 10) => {
+  const tradesToUse = [...trades].slice(0, count);
+  return key === 'isWin' 
+    ? tradesToUse.map(t => t.isWin ? 1 : 0) 
+    : tradesToUse.map(t => parseFloat(t[key] || 0));
+};
+
+// Besten Trade finden
+const findBestTrade = (trades) => {
+  if (!trades || trades.length === 0) return null;
+  return trades.reduce((best, current) => {
+    // Bevorzuge höchsten Profit zuerst
+    if ((current.profitLoss || 0) > (best.profitLoss || 0)) return current;
+    // Bei gleichem Profit, bevorzuge höheres RR
+    if ((current.profitLoss || 0) === (best.profitLoss || 0) && 
+        (current.rrAchieved || 0) > (best.rrAchieved || 0)) return current;
+    return best;
+  }, trades[0]);
+};
+
+// Schlechtesten Trade finden
+const findWorstTrade = (trades) => {
+  if (!trades || trades.length === 0) return null;
+  return trades.reduce((worst, current) => {
+    // Bevorzuge niedrigsten Profit zuerst (größten Verlust)
+    if ((current.profitLoss || 0) < (worst.profitLoss || 0)) return current;
+    // Bei gleichem Verlust, bevorzuge niedrigeres RR
+    if ((current.profitLoss || 0) === (worst.profitLoss || 0) && 
+        (current.rrAchieved || 0) < (worst.rrAchieved || 0)) return current;
+    return worst;
+  }, trades[0]);
 };
 
 export default function TradeCompare() {
@@ -81,6 +181,15 @@ export default function TradeCompare() {
       return sum + (trade.rrAchieved || 0);
     }, 0) / (jasperCount || 1);
     
+    // Datenpunkte für historische Visualisierung - Jasper
+    const jasperWinHistory = jasperTrades.slice(0, 10).map(t => t.isWin ? 1 : 0).reverse();
+    const jasperPLHistory = jasperTrades.slice(0, 10).map(t => t.profitLoss || 0).reverse();
+    const jasperRRHistory = jasperTrades.slice(0, 10).map(t => t.rrAchieved || 0).reverse();
+    
+    // Bester und schlechtester Trade für Jasper
+    const jasperBestTrade = findBestTrade(jasperTrades);
+    const jasperWorstTrade = findWorstTrade(jasperTrades);
+    
     // Mo-Statistiken
     const moCount = moTrades.length;
     const moWins = moTrades.filter(t => t.isWin === true).length;
@@ -94,6 +203,25 @@ export default function TradeCompare() {
     const moAvgRR = moTrades.reduce((sum, trade) => {
       return sum + (trade.rrAchieved || 0);
     }, 0) / (moCount || 1);
+    
+    // Datenpunkte für historische Visualisierung - Mo
+    const moWinHistory = moTrades.slice(0, 10).map(t => t.isWin ? 1 : 0).reverse();
+    const moPLHistory = moTrades.slice(0, 10).map(t => t.profitLoss || 0).reverse();
+    const moRRHistory = moTrades.slice(0, 10).map(t => t.rrAchieved || 0).reverse();
+    
+    // Bester und schlechtester Trade für Mo
+    const moBestTrade = findBestTrade(moTrades);
+    const moWorstTrade = findWorstTrade(moTrades);
+
+    // Direkte Vergleichsmetriken (Jasper vs Mo)
+    const winRateDiff = jasperCount > 0 && moCount > 0 ? jasperWinRate - moWinRate : 0;
+    const plDiff = jasperTotalPL - moTotalPL;
+    const rrDiff = jasperCount > 0 && moCount > 0 ? jasperAvgRR - moAvgRR : 0;
+    
+    // Wer hat bessere Performance?
+    const winRateLeader = winRateDiff > 0 ? 'Jasper' : winRateDiff < 0 ? 'Mo' : 'Gleichstand';
+    const plLeader = plDiff > 0 ? 'Jasper' : plDiff < 0 ? 'Mo' : 'Gleichstand';
+    const rrLeader = rrDiff > 0 ? 'Jasper' : rrDiff < 0 ? 'Mo' : 'Gleichstand';
     
     return {
       count,
@@ -109,12 +237,29 @@ export default function TradeCompare() {
       jasperWinRate,
       jasperTotalPL,
       jasperAvgRR,
+      jasperWinHistory,
+      jasperPLHistory,
+      jasperRRHistory,
+      jasperBestTrade,
+      jasperWorstTrade,
       moCount,
       moWins,
       moLosses,
       moWinRate,
       moTotalPL,
-      moAvgRR
+      moAvgRR,
+      moWinHistory,
+      moPLHistory,
+      moRRHistory,
+      moBestTrade,
+      moWorstTrade,
+      // Vergleichsmetriken
+      winRateDiff,
+      plDiff,
+      rrDiff,
+      winRateLeader,
+      plLeader,
+      rrLeader
     };
   }, [combinedTrades, filteredTrades, activeFilters]);
 
