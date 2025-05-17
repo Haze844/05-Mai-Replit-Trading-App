@@ -85,6 +85,8 @@ interface TradeTableProps {
   onActiveFiltersChange?: (activeFilters: any) => void; // Hinzugefügt für Heatmap-Kommunikation
   showColoredRows?: boolean; // Farbmarkierung für Benutzerzeilen anzeigen
   showUserColumn?: boolean; // Spalte mit Benutzernamen anzeigen
+  showHeader?: boolean; // Ob der Kartenheader mit "Trade hinzufügen" angezeigt werden soll
+  showAccountProgress?: boolean; // Ob die Kontoentwicklung angezeigt werden soll
 }
 
 // Options for Liquidation Entry dropdown
@@ -97,7 +99,9 @@ export default function TradeTable({
   onFilteredTradesChange, 
   onActiveFiltersChange,
   showColoredRows = false,
-  showUserColumn = false
+  showUserColumn = false,
+  showHeader = true,
+  showAccountProgress = true
 }: TradeTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const tradesPerPage = 20;
