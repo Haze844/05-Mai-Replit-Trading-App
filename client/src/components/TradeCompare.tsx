@@ -17,12 +17,12 @@ import {
   BarChart2, 
   Users, 
   Target, 
-  DollarSign, 
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
   Activity, 
   ArrowUpRight, 
   ArrowDownRight,
-  TrendingUp,
-  TrendingDown,
   Award,
   AlertTriangle,
   Calendar,
@@ -143,6 +143,13 @@ export default function TradeCompare() {
   const [selectedTrade, setSelectedTrade] = useState<any>(null);
   // State für ausgewählten Zeitraum (für schnelle Filter)
   const [selectedTimeRange, setSelectedTimeRange] = useState<string>("all");
+  // State für Sparkline-Daten
+  const [sparklineData, setSparklineData] = useState({
+    jasperPL: Array(10).fill(0),
+    moPL: Array(10).fill(0),
+    jasperWinRate: Array(10).fill(50),
+    moWinRate: Array(10).fill(50)
+  });
   
   // Statistik-Berechnungen für die angezeigten Trades, unterteilt nach Benutzer
   const tradeStats = useMemo(() => {
@@ -705,6 +712,24 @@ export default function TradeCompare() {
                   {tradeStats.jasperTotalPL >= 1000 ? 'Excellent' : 
                    tradeStats.jasperTotalPL >= 0 ? 'Profitable' : 
                    'Loss'}
+                </div>
+                
+                {/* Sparkline für P/L-Trend */}
+                <div className="mt-2 p-1 bg-blue-950/20 rounded-md border border-blue-900/30">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-blue-300/60">P/L Trend</span>
+                    {tradeStats.jasperPLHistory.length > 0 && (
+                      <span className="text-[10px] text-blue-300/60">
+                        {tradeStats.jasperPLHistory[tradeStats.jasperPLHistory.length - 1] >= tradeStats.jasperPLHistory[0] ? 
+                          <TrendingUp className="w-3 h-3 text-blue-400" /> : 
+                          <TrendingDown className="w-3 h-3 text-blue-400" />}
+                      </span>
+                    )}
+                  </div>
+                  <Sparklines data={tradeStats.jasperPLHistory.length > 0 ? tradeStats.jasperPLHistory : [0,0,0,0,0]} height={20} margin={5}>
+                    <SparklinesLine color="rgba(59, 130, 246, 0.8)" style={{ fill: "rgba(59, 130, 246, 0.2)" }} />
+                    <SparklinesSpots size={1.5} style={{ fill: "rgba(59, 130, 246, 0.8)" }} />
+                  </Sparklines>
                 </div>
               </div>
             </div>
