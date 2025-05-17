@@ -109,27 +109,43 @@ const getTradeHistory = (trades, key = 'isWin', count = 10) => {
 // Besten Trade finden
 const findBestTrade = (trades) => {
   if (!trades || trades.length === 0) return null;
-  return trades.reduce((best, current) => {
+  
+  // Zuerst nur Trades mit gültigen profitLoss Werten filtern
+  const validTrades = trades.filter(t => 
+    t && typeof t.profitLoss === 'number' && !isNaN(t.profitLoss)
+  );
+  
+  if (validTrades.length === 0) return null;
+  
+  return validTrades.reduce((best, current) => {
     // Bevorzuge höchsten Profit zuerst
     if ((current.profitLoss || 0) > (best.profitLoss || 0)) return current;
     // Bei gleichem Profit, bevorzuge höheres RR
     if ((current.profitLoss || 0) === (best.profitLoss || 0) && 
         (current.rrAchieved || 0) > (best.rrAchieved || 0)) return current;
     return best;
-  }, trades[0]);
+  }, validTrades[0]);
 };
 
 // Schlechtesten Trade finden
 const findWorstTrade = (trades) => {
   if (!trades || trades.length === 0) return null;
-  return trades.reduce((worst, current) => {
+  
+  // Zuerst nur Trades mit gültigen profitLoss Werten filtern
+  const validTrades = trades.filter(t => 
+    t && typeof t.profitLoss === 'number' && !isNaN(t.profitLoss)
+  );
+  
+  if (validTrades.length === 0) return null;
+  
+  return validTrades.reduce((worst, current) => {
     // Bevorzuge niedrigsten Profit zuerst (größten Verlust)
     if ((current.profitLoss || 0) < (worst.profitLoss || 0)) return current;
     // Bei gleichem Verlust, bevorzuge niedrigeres RR
     if ((current.profitLoss || 0) === (worst.profitLoss || 0) && 
         (current.rrAchieved || 0) < (worst.rrAchieved || 0)) return current;
     return worst;
-  }, trades[0]);
+  }, validTrades[0]);
 };
 
 export default function TradeCompare() {
