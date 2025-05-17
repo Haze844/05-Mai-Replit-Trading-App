@@ -141,6 +141,8 @@ export default function TradeCompare() {
   const [activeFilters, setActiveFilters] = useState({});
   // State für ausgewählten Trade (für Details)
   const [selectedTrade, setSelectedTrade] = useState<any>(null);
+  // State für ausgewählten Zeitraum (für schnelle Filter)
+  const [selectedTimeRange, setSelectedTimeRange] = useState<string>("all");
   
   // Statistik-Berechnungen für die angezeigten Trades, unterteilt nach Benutzer
   const tradeStats = useMemo(() => {
@@ -367,6 +369,45 @@ export default function TradeCompare() {
     }
   }, [adminTrades, moTrades, isLoadingAdmin, isLoadingMo]);
 
+  // Hilfsfunktion zum Setzen von Datums-Filtern
+  const applyDateFilter = (rangeType: string) => {
+    const today = new Date();
+    let fromDate = new Date();
+    
+    switch(rangeType) {
+      case "7days":
+        // Letzte 7 Tage
+        fromDate.setDate(today.getDate() - 7);
+        break;
+      case "30days":
+        // Letzte 30 Tage
+        fromDate.setDate(today.getDate() - 30);
+        break;
+      case "month":
+        // Aktueller Monat
+        fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        break;
+      case "all":
+      default:
+        // Alle Trades (Standardfilter von 2020)
+        fromDate = new Date("2020-01-01");
+        break;
+    }
+    
+    // Aktualisiere den ausgewählten Zeitraum für die UI
+    setSelectedTimeRange(rangeType);
+    
+    // Aktualisiere die Filter
+    const newFilters = { 
+      ...activeFilters, 
+      startDate: fromDate.toISOString(),
+      endDate: new Date("2030-12-31").toISOString() // Weit in der Zukunft
+    };
+    
+    console.log(`TradeCompare - Zeitraumfilter angewendet: ${rangeType}, von ${fromDate.toLocaleDateString()}`);
+    handleFilterChange(newFilters);
+  };
+
   // Filter-Handler
   const handleFilterChange = (newFilters: any) => {
     console.log("TradeCompare - Neue Filter empfangen:", newFilters);
@@ -377,43 +418,43 @@ export default function TradeCompare() {
       // Filtern mit den neuen Filtern
       const newFilteredTrades = combinedTrades.filter((trade: any) => {
         // Symbol Filter
-        if (newFilters.symbol !== 'all' && trade.symbol !== newFilters.symbol) {
+        if (newFilters.symbol !== 'all' && newFilters.symbols?.length > 0 && !newFilters.symbols.includes(trade.symbol)) {
           return false;
         }
         
         // Account Type Filter
-        if (newFilters.accountType !== 'all' && trade.accountType !== newFilters.accountType) {
+        if (newFilters.accountType !== 'all' && newFilters.accountTypes?.length > 0 && !newFilters.accountTypes.includes(trade.accountType)) {
           return false;
         }
         
         // Session Filter
-        if (newFilters.session !== 'all' && trade.session !== newFilters.session) {
+        if (newFilters.session !== 'all' && newFilters.sessions?.length > 0 && !newFilters.sessions.includes(trade.session)) {
           return false;
         }
         
         // Setup Filter
-        if (newFilters.setup !== 'all' && trade.setup !== newFilters.setup) {
+        if (newFilters.setup !== 'all' && newFilters.setups?.length > 0 && !newFilters.setups.includes(trade.setup)) {
           return false;
         }
         
         // Entry Type Filter
-        if (newFilters.entryType !== 'all' && trade.entryType !== newFilters.entryType) {
+        if (newFilters.entryType !== 'all' && newFilters.entryTypes?.length > 0 && !newFilters.entryTypes.includes(trade.entryType)) {
           return false;
         }
         
         // Date Filter
-        if (newFilters.dateFrom || newFilters.dateTo) {
+        if (newFilters.startDate || newFilters.endDate) {
           const tradeDate = new Date(trade.date);
           
-          if (newFilters.dateFrom) {
-            const fromDate = new Date(newFilters.dateFrom);
+          if (newFilters.startDate) {
+            const fromDate = new Date(newFilters.startDate);
             if (tradeDate < fromDate) {
               return false;
             }
           }
           
-          if (newFilters.dateTo) {
-            const toDate = new Date(newFilters.dateTo);
+          if (newFilters.endDate) {
+            const toDate = new Date(newFilters.endDate);
             toDate.setHours(23, 59, 59, 999); // Ende des Tages
             if (tradeDate > toDate) {
               return false;
@@ -466,10 +507,38 @@ export default function TradeCompare() {
                   <PopoverContent className="w-56 p-3 bg-black/90 border border-primary/30">
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-primary mb-2">Schnellauswahl Zeitraum</h4>
-                      <Button variant="outline" size="sm" className="w-full text-xs justify-start mb-1">Letzte 7 Tage</Button>
-                      <Button variant="outline" size="sm" className="w-full text-xs justify-start mb-1">Letzte 30 Tage</Button>
-                      <Button variant="outline" size="sm" className="w-full text-xs justify-start mb-1">Aktueller Monat</Button>
-                      <Button variant="outline" size="sm" className="w-full text-xs justify-start">Alle Trades</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className={`w-full text-xs justify-start mb-1 ${selectedTimeRange === "7days" ? "bg-primary/20 border-primary/40" : ""}`}
+                        onClick={() => applyDateFilter("7days")}
+                      >
+                        Letzte 7 Tage
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className={`w-full text-xs justify-start mb-1 ${selectedTimeRange === "30days" ? "bg-primary/20 border-primary/40" : ""}`}
+                        onClick={() => applyDateFilter("30days")}
+                      >
+                        Letzte 30 Tage
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className={`w-full text-xs justify-start mb-1 ${selectedTimeRange === "month" ? "bg-primary/20 border-primary/40" : ""}`}
+                        onClick={() => applyDateFilter("month")}
+                      >
+                        Aktueller Monat
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className={`w-full text-xs justify-start ${selectedTimeRange === "all" ? "bg-primary/20 border-primary/40" : ""}`}
+                        onClick={() => applyDateFilter("all")}
+                      >
+                        Alle Trades
+                      </Button>
                     </div>
                   </PopoverContent>
                 </Popover>
