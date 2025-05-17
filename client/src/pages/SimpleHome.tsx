@@ -423,9 +423,6 @@ export default function SimpleHome() {
                   <Users className="h-5 w-5 text-primary" />
                   Trade-Vergleich
                 </h2>
-                <p className="text-sm text-muted-foreground">
-                  Vergleichen Sie Trades zwischen Jasper und Mo
-                </p>
               </div>
               
               {/* TradeCompare-Komponente direkt einbinden mit Key für Neuladen beim Tab-Wechsel */}
