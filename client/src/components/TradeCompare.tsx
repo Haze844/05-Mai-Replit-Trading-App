@@ -470,14 +470,7 @@ export default function TradeCompare() {
         </div>
       </div>
 
-      {/* Filter-Bar Komponente */}
-      <div className="mb-4">
-        <FilterBar 
-          onFilterChange={handleFilterChange} 
-          initialFilters={{}} 
-          showUserFilter={true} 
-        />
-      </div>
+      {/* Filter-Bar wurde entfernt */}
 
       <Card className="bg-black/50 border-primary/20 overflow-hidden">
         <CardContent className="p-0">
