@@ -493,55 +493,7 @@ export default function TradeCompare() {
           </div>
         </div>
         
-        {/* Gesamtergebnis am unteren Rand */}
-        <div className="mt-5 pt-4 border-t border-primary/10">
-          <h3 className="text-sm font-medium text-primary/80 mb-3 flex items-center">
-            <BarChart2 className="w-4 h-4 mr-1.5 text-primary/80" />
-            Gesamtergebnis (beide Trader)
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-black/20 p-3 rounded-lg border border-primary/5">
-              <div className="text-xs text-center text-muted-foreground mb-1">Gesamt Win Rate</div>
-              <div className={`text-center text-lg font-bold ${tradeStats.winRate >= 50 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {tradeStats.winRate.toFixed(1)}%
-              </div>
-              <div className="w-full mt-1 bg-gray-800/50 rounded-full h-1.5">
-                <div className="h-1.5 rounded-full"
-                  style={{
-                    width: `${Math.min(100, Math.max(tradeStats.winRate, 5))}%`,
-                    background: `${
-                      tradeStats.winRate >= 65 ? 'linear-gradient(90deg, #059669, #10b981)' : 
-                      tradeStats.winRate >= 50 ? 'linear-gradient(90deg, #10b981, #34d399)' : 
-                      'linear-gradient(90deg, #dc2626, #ef4444)'
-                    }`
-                  }}
-                ></div>
-              </div>
-            </div>
-            <div className="bg-black/20 p-3 rounded-lg border border-primary/5">
-              <div className="text-xs text-center text-muted-foreground mb-1">Gesamt P/L</div>
-              <div className={`text-center text-lg font-bold ${tradeStats.totalPL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {tradeStats.totalPL.toFixed(0)}$
-              </div>
-              <div className="text-xs text-center mt-1">
-                {tradeStats.jasperTotalPL.toFixed(0)}$ (J) + {tradeStats.moTotalPL.toFixed(0)}$ (M)
-              </div>
-            </div>
-            <div className="bg-black/20 p-3 rounded-lg border border-primary/5">
-              <div className="text-xs text-center text-muted-foreground mb-1">Durchschnitt RR</div>
-              <div className={`text-center text-lg font-bold ${
-                ((tradeStats.jasperAvgRR + tradeStats.moAvgRR) / 2) >= 1.5 ? 'text-emerald-400' : 
-                ((tradeStats.jasperAvgRR + tradeStats.moAvgRR) / 2) >= 1 ? 'text-emerald-300' : 
-                'text-red-400'
-              }`}>
-                {((tradeStats.jasperAvgRR + tradeStats.moAvgRR) / 2).toFixed(2)}R
-              </div>
-              <div className="text-xs text-center mt-1">
-                {tradeStats.count} Trades gesamt
-              </div>
-            </div>
-          </div>
-        </div>
+
       </div>
 
       {/* Filter-Bar wurde entfernt */}
