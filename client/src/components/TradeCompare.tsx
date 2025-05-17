@@ -302,11 +302,6 @@ export default function TradeCompare() {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Link to="/">
-          <ChevronLeft className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
-        </Link>
-      </div>
       
       {/* Verbesserte Statistik-Bar für den Vergleich-Tab */}
       <div className="mb-5 bg-gradient-to-r from-black/30 to-black/20 rounded-xl p-4 border border-primary/20 backdrop-blur-sm shadow-lg">
@@ -530,7 +525,7 @@ export default function TradeCompare() {
           <DialogContent className="max-w-7xl w-[90vw] max-h-[85vh] overflow-y-auto bg-black/95 border border-primary/30 shadow-xl p-0">
             <DialogTitle className="sr-only">Trade Details</DialogTitle>
             <DialogDescription className="sr-only">
-              Detailansicht eines ausgewählten Trades mit allen Parametern und Eigenschaften.
+              Details des ausgewählten Trades
             </DialogDescription>
             <TradeDetail 
               selectedTrade={selectedTrade} 
