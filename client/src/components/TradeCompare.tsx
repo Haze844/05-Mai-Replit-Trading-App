@@ -392,6 +392,8 @@ export default function TradeCompare() {
                 isLoading={isLoadingAdmin || isLoadingMo}
                 showColoredRows={true}
                 showUserColumn={true}
+                showHeader={false}
+                showAccountProgress={false}
                 onTradeSelect={setSelectedTrade}
                 onActiveFiltersChange={(filters) => {
                   console.log("TradeTable sendet Filter zurück an TradeCompare:", filters);
