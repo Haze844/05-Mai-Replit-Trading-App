@@ -448,8 +448,134 @@ export default function TradeCompare() {
   return (
     <div className="container mx-auto p-4">
       
-      {/* Verbesserte Statistik-Bar für den Vergleich-Tab */}
-      <div className="mb-5 bg-gradient-to-r from-black/30 to-black/20 rounded-xl p-4 border border-primary/20 backdrop-blur-sm shadow-lg">
+      {/* Optimierte Statistik-Bar mit erweiterten Visualisierungen */}
+      <div className="mb-5 bg-gradient-to-r from-black/30 to-black/20 rounded-xl p-4 border border-primary/20 backdrop-blur-sm shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300">
+        {/* Zeitraumauswahl und Filter-Controls */}
+        <div className="flex justify-end mb-3">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="flex items-center gap-1.5 bg-black/40 hover:bg-black/30 border-primary/30 text-primary/80 text-xs">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span>Zeitraum</span>
+                      <Filter className="h-3 w-3 ml-1 opacity-70" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-3 bg-black/90 border border-primary/30">
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-primary mb-2">Schnellauswahl Zeitraum</h4>
+                      <Button variant="outline" size="sm" className="w-full text-xs justify-start mb-1">Letzte 7 Tage</Button>
+                      <Button variant="outline" size="sm" className="w-full text-xs justify-start mb-1">Letzte 30 Tage</Button>
+                      <Button variant="outline" size="sm" className="w-full text-xs justify-start mb-1">Aktueller Monat</Button>
+                      <Button variant="outline" size="sm" className="w-full text-xs justify-start">Alle Trades</Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-black/90 border-primary/30 text-xs">
+                Zeitraum für Statistikvergleich wählen
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-1 ml-2 bg-black/40 hover:bg-black/30 border-primary/30 text-primary/80 text-xs" onClick={() => {
+                  refetchAdmin();
+                  refetchMo();
+                }}>
+                  <RefreshCw className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-black/90 border-primary/30 text-xs">
+                Daten aktualisieren
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        
+        {/* Head-to-Head Vergleich oben */}
+        <div className="mb-5 rounded-lg bg-gradient-to-r from-blue-950/10 via-gray-950/10 to-green-950/10 border border-gray-800/40 p-3">
+          <h3 className="text-sm font-semibold text-center mb-2.5 text-gray-300">Head-to-Head Vergleich</h3>
+          
+          <div className="grid grid-cols-3 gap-2">
+            {/* Win Rate Vergleich */}
+            <div className="bg-black/20 rounded-lg border border-gray-800/40 p-2 flex flex-col items-center">
+              <h4 className="text-[10px] uppercase tracking-wider opacity-70 text-center mb-1.5">Win Rate</h4>
+              <div className="flex items-center justify-between w-full px-2 mb-2">
+                <div className="flex items-center">
+                  <div className="h-5 w-2 bg-blue-500/40 rounded-full mr-2"></div>
+                  <span className="text-xs font-bold text-blue-400">{tradeStats.jasperWinRate.toFixed(0)}%</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="text-xs font-bold text-green-400">{tradeStats.moWinRate.toFixed(0)}%</span>
+                  <div className="h-5 w-2 bg-green-500/40 rounded-full ml-2"></div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[9px] ${Math.abs(tradeStats.winRateDiff) < 1 ? 'text-gray-400' : tradeStats.winRateDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
+                  {tradeStats.winRateLeader === 'Gleichstand' ? 'Gleichstand' : 
+                   `${tradeStats.winRateLeader} +${Math.abs(tradeStats.winRateDiff).toFixed(1)}%`}
+                </span>
+                {Math.abs(tradeStats.winRateDiff) >= 10 && (
+                  <BadgeCheck className={`h-3 w-3 ${tradeStats.winRateDiff > 0 ? 'text-blue-300' : 'text-green-300'}`} />
+                )}
+              </div>
+            </div>
+            
+            {/* P/L Vergleich */}
+            <div className="bg-black/20 rounded-lg border border-gray-800/40 p-2 flex flex-col items-center">
+              <h4 className="text-[10px] uppercase tracking-wider opacity-70 text-center mb-1.5">Profit/Loss</h4>
+              <div className="flex items-center justify-between w-full px-2 mb-2">
+                <div className="flex items-center">
+                  <div className="h-5 w-2 bg-blue-500/40 rounded-full mr-2"></div>
+                  <span className="text-xs font-bold text-blue-400">${tradeStats.jasperTotalPL.toFixed(0)}</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="text-xs font-bold text-green-400">${tradeStats.moTotalPL.toFixed(0)}</span>
+                  <div className="h-5 w-2 bg-green-500/40 rounded-full ml-2"></div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[9px] ${Math.abs(tradeStats.plDiff) < 10 ? 'text-gray-400' : tradeStats.plDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
+                  {tradeStats.plLeader === 'Gleichstand' ? 'Gleichstand' : 
+                   `${tradeStats.plLeader} +$${Math.abs(tradeStats.plDiff).toFixed(0)}`}
+                </span>
+                {Math.abs(tradeStats.plDiff) >= 500 && (
+                  <BadgeCheck className={`h-3 w-3 ${tradeStats.plDiff > 0 ? 'text-blue-300' : 'text-green-300'}`} />
+                )}
+              </div>
+            </div>
+            
+            {/* RR Vergleich */}
+            <div className="bg-black/20 rounded-lg border border-gray-800/40 p-2 flex flex-col items-center">
+              <h4 className="text-[10px] uppercase tracking-wider opacity-70 text-center mb-1.5">Risk/Reward</h4>
+              <div className="flex items-center justify-between w-full px-2 mb-2">
+                <div className="flex items-center">
+                  <div className="h-5 w-2 bg-blue-500/40 rounded-full mr-2"></div>
+                  <span className="text-xs font-bold text-blue-400">{tradeStats.jasperAvgRR.toFixed(2)}R</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="text-xs font-bold text-green-400">{tradeStats.moAvgRR.toFixed(2)}R</span>
+                  <div className="h-5 w-2 bg-green-500/40 rounded-full ml-2"></div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[9px] ${Math.abs(tradeStats.rrDiff) < 0.1 ? 'text-gray-400' : tradeStats.rrDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
+                  {tradeStats.rrLeader === 'Gleichstand' ? 'Gleichstand' : 
+                   `${tradeStats.rrLeader} +${Math.abs(tradeStats.rrDiff).toFixed(2)}R`}
+                </span>
+                {Math.abs(tradeStats.rrDiff) >= 0.5 && (
+                  <BadgeCheck className={`h-3 w-3 ${tradeStats.rrDiff > 0 ? 'text-blue-300' : 'text-green-300'}`} />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        
         {/* Statistik-Gruppen mit klaren Benutzer-Überschriften */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Jasper Statistiken */}
