@@ -597,45 +597,49 @@ export default function TradeTable({
   return (
     <div className="relative w-full">
       <Card className="bg-black/40 backdrop-blur-sm border-primary/10 shadow-xl h-[70vh]">
-        <CardHeader className="pb-0 pt-3 px-3">
-          <div className="flex flex-wrap items-start justify-between gap-1 w-full">
-            {/* Account Balance Progress mit gefilterten Trades - über die volle Breite */}
-            <AccountBalanceProgressNew 
-              className="w-full flex-grow" 
-              filteredTrades={filteredTrades} 
-            />
-            
-            {/* Filter Buttons */}
-            <div className="flex flex-col sm:flex-row gap-2 items-center w-full">
-              <div className="flex-1 order-2 sm:order-1 flex justify-center">
-                <Button 
-                  variant="default" 
-                  size="sm"
-                  className="text-xs h-9 bg-blue-600/80 hover:bg-blue-500 text-white font-medium border-blue-700/50 shadow-md shadow-blue-900/20 transition-all duration-200 ease-in-out transform hover:scale-105 rounded-lg"
-                  onClick={() => {
-                    // Ein neues Event erstellen und dispatchen
-                    const event = new CustomEvent('add-trade-clicked');
-                    window.dispatchEvent(event);
-                  }}
-                >
-                  <LayoutDashboard className="h-4 w-4 mr-2 animate-pulse" />
-                  Trade Hinzufügen
-                </Button>
-              </div>
-              <div className="order-1 sm:order-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="text-xs h-8 bg-black/30 hover:bg-red-500/20 hover:text-red-500 border-primary/10"
-                  onClick={resetFilters}
-                >
-                  <X className="h-3 w-3 mr-1" />
-                  Filter zurücksetzen
-                </Button>
+        {showHeader !== false && (
+          <CardHeader className="pb-0 pt-3 px-3">
+            <div className="flex flex-wrap items-start justify-between gap-1 w-full">
+              {/* Account Balance Progress mit gefilterten Trades - über die volle Breite */}
+              {showAccountProgress !== false && (
+                <AccountBalanceProgressNew 
+                  className="w-full flex-grow" 
+                  filteredTrades={filteredTrades} 
+                />
+              )}
+              
+              {/* Filter Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2 items-center w-full">
+                <div className="flex-1 order-2 sm:order-1 flex justify-center">
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    className="text-xs h-9 bg-blue-600/80 hover:bg-blue-500 text-white font-medium border-blue-700/50 shadow-md shadow-blue-900/20 transition-all duration-200 ease-in-out transform hover:scale-105 rounded-lg"
+                    onClick={() => {
+                      // Ein neues Event erstellen und dispatchen
+                      const event = new CustomEvent('add-trade-clicked');
+                      window.dispatchEvent(event);
+                    }}
+                  >
+                    <LayoutDashboard className="h-4 w-4 mr-2 animate-pulse" />
+                    Trade Hinzufügen
+                  </Button>
+                </div>
+                <div className="order-1 sm:order-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="text-xs h-8 bg-black/30 hover:bg-red-500/20 hover:text-red-500 border-primary/10"
+                    onClick={resetFilters}
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Filter zurücksetzen
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        </CardHeader>
+          </CardHeader>
+        )}
         
         <div className="overflow-x-visible overflow-y-auto max-h-[70vh]">
           <table className="w-full text-xs">
