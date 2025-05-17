@@ -310,30 +310,24 @@ export default function TradeCompare() {
       
       {/* Verbesserte Statistik-Bar für den Vergleich-Tab */}
       <div className="mb-5 bg-gradient-to-r from-black/30 to-black/20 rounded-xl p-4 border border-primary/20 backdrop-blur-sm shadow-lg">
-        {/* Benutzerheader mit schöneren Indikatoren */}
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-950/30 rounded-lg border border-blue-500/20">
-            <div className="w-3 h-3 rounded-full bg-blue-500/80 shadow-sm shadow-blue-400/30"></div>
-            <h3 className="text-sm font-semibold text-blue-300">Jasper ({tradeStats.jasperCount} Trades)</h3>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-950/30 rounded-lg border border-green-500/20">
-            <h3 className="text-sm font-semibold text-green-300">Mo ({tradeStats.moCount} Trades)</h3>
-            <div className="w-3 h-3 rounded-full bg-green-500/80 shadow-sm shadow-green-400/30"></div>
-          </div>
-        </div>
-        
-        {/* Verbesserte Statistik-Karten */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Win Rate Vergleich - Verbessertes Layout */}
-          <div className="bg-gradient-to-br from-black/40 to-black/20 p-4 rounded-xl border border-primary/10 shadow-md">
-            <h3 className="text-sm font-medium text-primary/80 mb-3 flex items-center">
-              <Target className="w-4 h-4 mr-1.5 text-primary/80" />
-              Win Rate
-            </h3>
-            <div className="flex justify-between items-center gap-6">
-              {/* Jasper Win Rate */}
-              <div className="flex-1">
-                <div className="flex gap-2 items-center mb-1">
+        {/* Statistik-Gruppen mit klaren Benutzer-Überschriften */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Jasper Statistiken */}
+          <div className="space-y-4">
+            {/* Jasper Kopfzeile */}
+            <div className="flex items-center gap-2 px-4 py-2 bg-blue-950/30 rounded-lg border border-blue-500/20">
+              <div className="w-3 h-3 rounded-full bg-blue-500/80 shadow-sm shadow-blue-400/30"></div>
+              <h3 className="text-base font-semibold text-blue-300">Jasper ({tradeStats.jasperCount} Trades)</h3>
+            </div>
+            
+            {/* Jasper Win Rate */}
+            <div className="bg-gradient-to-br from-black/40 to-black/20 p-4 rounded-xl border border-primary/10 shadow-md">
+              <h3 className="text-sm font-medium text-blue-300/80 mb-2 flex items-center">
+                <Target className="w-4 h-4 mr-1.5 text-blue-300/80" />
+                Win Rate
+              </h3>
+              <div className="flex flex-col">
+                <div className="flex items-center justify-between mb-1">
                   <span className={`text-lg font-bold ${tradeStats.jasperWinRate >= 50 ? 'text-blue-400' : 'text-red-400'}`}>
                     {tradeStats.jasperWinRate.toFixed(1)}%
                   </span>
@@ -358,107 +352,35 @@ export default function TradeCompare() {
                   ></div>
                 </div>
               </div>
-              
-              {/* Vergleichsindikator */}
-              <div className="text-center px-1">
-                <div className={`text-xs font-medium ${
-                  tradeStats.jasperWinRate > tradeStats.moWinRate ? 'text-blue-400' :
-                  tradeStats.moWinRate > tradeStats.jasperWinRate ? 'text-green-400' :
-                  'text-gray-400'
-                }`}>
-                  {tradeStats.jasperWinRate > tradeStats.moWinRate ? '>' : 
-                   tradeStats.moWinRate > tradeStats.jasperWinRate ? '<' : '='}
-                </div>
-              </div>
-              
-              {/* Mo Win Rate */}
-              <div className="flex-1">
-                <div className="flex gap-2 items-center justify-end mb-1">
-                  <div className={`flex items-center text-[10px] rounded-md px-1.5 py-0.5 ${
-                    tradeStats.moWinRate >= 65 ? 'bg-green-900/40 text-green-400 border border-green-700/30' : 
-                    tradeStats.moWinRate >= 50 ? 'bg-green-900/40 text-green-400 border border-green-700/30' : 
-                    'bg-red-900/40 text-red-400 border border-red-700/30'
-                  }`}>
-                    {tradeStats.moWins}W / {tradeStats.moLosses}L
-                  </div>
-                  <span className={`text-lg font-bold ${tradeStats.moWinRate >= 50 ? 'text-green-400' : 'text-red-400'}`}>
-                    {tradeStats.moWinRate.toFixed(1)}%
-                  </span>
-                </div>
-                <div className="w-full bg-gray-800/50 rounded-full h-2.5 overflow-hidden shadow-inner">
-                  <div className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${Math.min(100, Math.max(tradeStats.moWinRate, 5))}%`,
-                      background: `${
-                        tradeStats.moWinRate >= 65 ? 'linear-gradient(90deg, #047857, #10b981)' : 
-                        tradeStats.moWinRate >= 50 ? 'linear-gradient(90deg, #10b981, #34d399)' : 
-                        'linear-gradient(90deg, #dc2626, #ef4444)'
-                      }`
-                    }}
-                  ></div>
-                </div>
-              </div>
             </div>
-          </div>
-          
-          {/* P/L Vergleich - Verbessert */}
-          <div className="bg-gradient-to-br from-black/40 to-black/20 p-4 rounded-xl border border-primary/10 shadow-md">
-            <h3 className="text-sm font-medium text-primary/80 mb-3 flex items-center">
-              <DollarSign className="w-4 h-4 mr-1.5 text-primary/80" />
-              Profit/Loss
-            </h3>
-            <div className="flex items-center justify-between">
-              <div className="text-center flex-1">
+            
+            {/* Jasper P/L */}
+            <div className="bg-gradient-to-br from-black/40 to-black/20 p-4 rounded-xl border border-primary/10 shadow-md">
+              <h3 className="text-sm font-medium text-blue-300/80 mb-2 flex items-center">
+                <DollarSign className="w-4 h-4 mr-1.5 text-blue-300/80" />
+                Profit/Loss
+              </h3>
+              <div className="flex flex-col">
                 <span className={`text-xl font-bold ${tradeStats.jasperTotalPL >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
                   {tradeStats.jasperTotalPL >= 0 ? '+' : ''}{tradeStats.jasperTotalPL.toFixed(0)}$
                 </span>
                 <div className={`text-xs mt-1 ${tradeStats.jasperTotalPL >= 1000 ? 'text-blue-300' : 
-                                                  tradeStats.jasperTotalPL >= 0 ? 'text-blue-400/70' : 
-                                                  'text-red-400/70'}`}>
+                                              tradeStats.jasperTotalPL >= 0 ? 'text-blue-400/70' : 
+                                              'text-red-400/70'}`}>
                   {tradeStats.jasperTotalPL >= 1000 ? 'Excellent' : 
                    tradeStats.jasperTotalPL >= 0 ? 'Profitable' : 
                    'Loss'}
                 </div>
               </div>
-              
-              {/* Vergleichsindikator */}
-              <div className="flex flex-col items-center justify-center mx-4 px-3 py-1.5 rounded-lg bg-gray-900/30">
-                <div className={`text-sm font-medium ${
-                  tradeStats.jasperTotalPL > tradeStats.moTotalPL ? 'text-blue-400' :
-                  tradeStats.moTotalPL > tradeStats.jasperTotalPL ? 'text-green-400' :
-                  'text-gray-400'
-                }`}>
-                  {tradeStats.jasperTotalPL > tradeStats.moTotalPL ? 'J > M' : 
-                   tradeStats.moTotalPL > tradeStats.jasperTotalPL ? 'M > J' : '='}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {Math.abs(tradeStats.jasperTotalPL - tradeStats.moTotalPL).toFixed(0)}$ Diff
-                </div>
-              </div>
-              
-              <div className="text-center flex-1">
-                <span className={`text-xl font-bold ${tradeStats.moTotalPL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {tradeStats.moTotalPL >= 0 ? '+' : ''}{tradeStats.moTotalPL.toFixed(0)}$
-                </span>
-                <div className={`text-xs mt-1 ${tradeStats.moTotalPL >= 1000 ? 'text-green-300' : 
-                                                tradeStats.moTotalPL >= 0 ? 'text-green-400/70' : 
-                                                'text-red-400/70'}`}>
-                  {tradeStats.moTotalPL >= 1000 ? 'Excellent' : 
-                   tradeStats.moTotalPL >= 0 ? 'Profitable' : 
-                   'Loss'}
-                </div>
-              </div>
             </div>
-          </div>
-          
-          {/* RR Vergleich - Verbessert */}
-          <div className="bg-gradient-to-br from-black/40 to-black/20 p-4 rounded-xl border border-primary/10 shadow-md">
-            <h3 className="text-sm font-medium text-primary/80 mb-3 flex items-center">
-              <Activity className="w-4 h-4 mr-1.5 text-primary/80" />
-              Risk/Reward Ratio
-            </h3>
-            <div className="flex items-center justify-between">
-              <div className="flex-1 text-center">
+            
+            {/* Jasper RR */}
+            <div className="bg-gradient-to-br from-black/40 to-black/20 p-4 rounded-xl border border-primary/10 shadow-md">
+              <h3 className="text-sm font-medium text-blue-300/80 mb-2 flex items-center">
+                <Activity className="w-4 h-4 mr-1.5 text-blue-300/80" />
+                Risk/Reward Ratio
+              </h3>
+              <div className="flex flex-col">
                 <span className={`text-xl font-bold ${
                   tradeStats.jasperAvgRR >= 1.5 ? 'text-blue-400' : 
                   tradeStats.jasperAvgRR >= 1 ? 'text-blue-300' : 
@@ -477,18 +399,78 @@ export default function TradeCompare() {
                    tradeStats.jasperAvgRR >= 1 ? 'Average' : 'Poor'}
                 </div>
               </div>
-              
-              {/* Vergleichsindikator */}
-              <div className={`text-sm font-medium mx-4 px-3 py-1.5 rounded-lg bg-gray-900/30 ${
-                tradeStats.jasperAvgRR > tradeStats.moAvgRR ? 'text-blue-400' :
-                tradeStats.moAvgRR > tradeStats.jasperAvgRR ? 'text-green-400' :
-                'text-gray-400'
-              }`}>
-                {tradeStats.jasperAvgRR > tradeStats.moAvgRR ? 'J > M' : 
-                 tradeStats.moAvgRR > tradeStats.jasperAvgRR ? 'M > J' : '='}
+            </div>
+          </div>
+          
+          {/* Mo Statistiken */}
+          <div className="space-y-4">
+            {/* Mo Kopfzeile */}
+            <div className="flex items-center gap-2 px-4 py-2 bg-green-950/30 rounded-lg border border-green-500/20">
+              <div className="w-3 h-3 rounded-full bg-green-500/80 shadow-sm shadow-green-400/30"></div>
+              <h3 className="text-base font-semibold text-green-300">Mo ({tradeStats.moCount} Trades)</h3>
+            </div>
+            
+            {/* Mo Win Rate */}
+            <div className="bg-gradient-to-br from-black/40 to-black/20 p-4 rounded-xl border border-primary/10 shadow-md">
+              <h3 className="text-sm font-medium text-green-300/80 mb-2 flex items-center">
+                <Target className="w-4 h-4 mr-1.5 text-green-300/80" />
+                Win Rate
+              </h3>
+              <div className="flex flex-col">
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`text-lg font-bold ${tradeStats.moWinRate >= 50 ? 'text-green-400' : 'text-red-400'}`}>
+                    {tradeStats.moWinRate.toFixed(1)}%
+                  </span>
+                  <div className={`flex items-center text-[10px] rounded-md px-1.5 py-0.5 ${
+                    tradeStats.moWinRate >= 65 ? 'bg-green-900/40 text-green-400 border border-green-700/30' : 
+                    tradeStats.moWinRate >= 50 ? 'bg-green-900/40 text-green-400 border border-green-700/30' : 
+                    'bg-red-900/40 text-red-400 border border-red-700/30'
+                  }`}>
+                    {tradeStats.moWins}W / {tradeStats.moLosses}L
+                  </div>
+                </div>
+                <div className="w-full bg-gray-800/50 rounded-full h-2.5 overflow-hidden shadow-inner">
+                  <div className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(100, Math.max(tradeStats.moWinRate, 5))}%`,
+                      background: `${
+                        tradeStats.moWinRate >= 65 ? 'linear-gradient(90deg, #047857, #10b981)' : 
+                        tradeStats.moWinRate >= 50 ? 'linear-gradient(90deg, #10b981, #34d399)' : 
+                        'linear-gradient(90deg, #dc2626, #ef4444)'
+                      }`
+                    }}
+                  ></div>
+                </div>
               </div>
-              
-              <div className="flex-1 text-center">
+            </div>
+            
+            {/* Mo P/L */}
+            <div className="bg-gradient-to-br from-black/40 to-black/20 p-4 rounded-xl border border-primary/10 shadow-md">
+              <h3 className="text-sm font-medium text-green-300/80 mb-2 flex items-center">
+                <DollarSign className="w-4 h-4 mr-1.5 text-green-300/80" />
+                Profit/Loss
+              </h3>
+              <div className="flex flex-col">
+                <span className={`text-xl font-bold ${tradeStats.moTotalPL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {tradeStats.moTotalPL >= 0 ? '+' : ''}{tradeStats.moTotalPL.toFixed(0)}$
+                </span>
+                <div className={`text-xs mt-1 ${tradeStats.moTotalPL >= 1000 ? 'text-green-300' : 
+                                            tradeStats.moTotalPL >= 0 ? 'text-green-400/70' : 
+                                            'text-red-400/70'}`}>
+                  {tradeStats.moTotalPL >= 1000 ? 'Excellent' : 
+                   tradeStats.moTotalPL >= 0 ? 'Profitable' : 
+                   'Loss'}
+                </div>
+              </div>
+            </div>
+            
+            {/* Mo RR */}
+            <div className="bg-gradient-to-br from-black/40 to-black/20 p-4 rounded-xl border border-primary/10 shadow-md">
+              <h3 className="text-sm font-medium text-green-300/80 mb-2 flex items-center">
+                <Activity className="w-4 h-4 mr-1.5 text-green-300/80" />
+                Risk/Reward Ratio
+              </h3>
+              <div className="flex flex-col">
                 <span className={`text-xl font-bold ${
                   tradeStats.moAvgRR >= 1.5 ? 'text-green-400' : 
                   tradeStats.moAvgRR >= 1 ? 'text-green-300' : 
@@ -509,40 +491,53 @@ export default function TradeCompare() {
               </div>
             </div>
           </div>
-          
-          {/* Gesamtstatistik - Verbessert */}
-          <div className="bg-gradient-to-br from-black/40 to-black/20 p-4 rounded-xl border border-primary/10 shadow-md">
-            <h3 className="text-sm font-medium text-primary/80 mb-3 flex items-center">
-              <BarChart2 className="w-4 h-4 mr-1.5 text-primary/80" />
-              Gesamtergebnis
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-black/20 p-2 rounded-lg border border-primary/5">
-                <div className="text-xs text-center text-muted-foreground mb-1">Gesamt Win Rate</div>
-                <div className={`text-center text-lg font-bold ${tradeStats.winRate >= 50 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {tradeStats.winRate.toFixed(1)}%
-                </div>
-                <div className="w-full mt-1 bg-gray-800/50 rounded-full h-1.5">
-                  <div className="h-1.5 rounded-full"
-                    style={{
-                      width: `${Math.min(100, Math.max(tradeStats.winRate, 5))}%`,
-                      background: `${
-                        tradeStats.winRate >= 65 ? 'linear-gradient(90deg, #059669, #10b981)' : 
-                        tradeStats.winRate >= 50 ? 'linear-gradient(90deg, #10b981, #34d399)' : 
-                        'linear-gradient(90deg, #dc2626, #ef4444)'
-                      }`
-                    }}
-                  ></div>
-                </div>
+        </div>
+        
+        {/* Gesamtergebnis am unteren Rand */}
+        <div className="mt-5 pt-4 border-t border-primary/10">
+          <h3 className="text-sm font-medium text-primary/80 mb-3 flex items-center">
+            <BarChart2 className="w-4 h-4 mr-1.5 text-primary/80" />
+            Gesamtergebnis (beide Trader)
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-black/20 p-3 rounded-lg border border-primary/5">
+              <div className="text-xs text-center text-muted-foreground mb-1">Gesamt Win Rate</div>
+              <div className={`text-center text-lg font-bold ${tradeStats.winRate >= 50 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {tradeStats.winRate.toFixed(1)}%
               </div>
-              <div className="bg-black/20 p-2 rounded-lg border border-primary/5">
-                <div className="text-xs text-center text-muted-foreground mb-1">Gesamt P/L</div>
-                <div className={`text-center text-lg font-bold ${tradeStats.totalPL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {tradeStats.totalPL.toFixed(0)}$
-                </div>
-                <div className="text-xs text-center mt-1">
-                  {tradeStats.count} Trades gesamt
-                </div>
+              <div className="w-full mt-1 bg-gray-800/50 rounded-full h-1.5">
+                <div className="h-1.5 rounded-full"
+                  style={{
+                    width: `${Math.min(100, Math.max(tradeStats.winRate, 5))}%`,
+                    background: `${
+                      tradeStats.winRate >= 65 ? 'linear-gradient(90deg, #059669, #10b981)' : 
+                      tradeStats.winRate >= 50 ? 'linear-gradient(90deg, #10b981, #34d399)' : 
+                      'linear-gradient(90deg, #dc2626, #ef4444)'
+                    }`
+                  }}
+                ></div>
+              </div>
+            </div>
+            <div className="bg-black/20 p-3 rounded-lg border border-primary/5">
+              <div className="text-xs text-center text-muted-foreground mb-1">Gesamt P/L</div>
+              <div className={`text-center text-lg font-bold ${tradeStats.totalPL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {tradeStats.totalPL.toFixed(0)}$
+              </div>
+              <div className="text-xs text-center mt-1">
+                {tradeStats.jasperTotalPL.toFixed(0)}$ (J) + {tradeStats.moTotalPL.toFixed(0)}$ (M)
+              </div>
+            </div>
+            <div className="bg-black/20 p-3 rounded-lg border border-primary/5">
+              <div className="text-xs text-center text-muted-foreground mb-1">Durchschnitt RR</div>
+              <div className={`text-center text-lg font-bold ${
+                ((tradeStats.jasperAvgRR + tradeStats.moAvgRR) / 2) >= 1.5 ? 'text-emerald-400' : 
+                ((tradeStats.jasperAvgRR + tradeStats.moAvgRR) / 2) >= 1 ? 'text-emerald-300' : 
+                'text-red-400'
+              }`}>
+                {((tradeStats.jasperAvgRR + tradeStats.moAvgRR) / 2).toFixed(2)}R
+              </div>
+              <div className="text-xs text-center mt-1">
+                {tradeStats.count} Trades gesamt
               </div>
             </div>
           </div>
