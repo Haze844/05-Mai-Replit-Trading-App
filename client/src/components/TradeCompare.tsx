@@ -4,6 +4,13 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Trade } from '@shared/schema';
 import TradeTable from './TradeTable';
 import FilterBar from './FilterBar';
+import TradeDetail from './TradeDetail';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogTitle 
+} from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ChevronLeft, 
@@ -32,6 +39,8 @@ export default function TradeCompare() {
   const [filteredTrades, setFilteredTrades] = useState<Trade[]>([]);
   // State für aktive Filter
   const [activeFilters, setActiveFilters] = useState({});
+  // State für ausgewählten Trade (für Details)
+  const [selectedTrade, setSelectedTrade] = useState<any>(null);
   
   // Statistik-Berechnungen für die angezeigten Trades
   const tradeStats = useMemo(() => {
@@ -383,6 +392,7 @@ export default function TradeCompare() {
                 isLoading={isLoadingAdmin || isLoadingMo}
                 showColoredRows={true}
                 showUserColumn={true}
+                onTradeSelect={setSelectedTrade}
                 onActiveFiltersChange={(filters) => {
                   console.log("TradeTable sendet Filter zurück an TradeCompare:", filters);
                   // Nur aktualisieren, wenn Filter sich tatsächlich geändert haben
@@ -395,6 +405,22 @@ export default function TradeCompare() {
           </Tabs>
         </CardContent>
       </Card>
+      
+      {/* Trade Details - Erscheint als Modal */}
+      {selectedTrade && (
+        <Dialog open={true} onOpenChange={(open) => !open && setSelectedTrade(null)}>
+          <DialogContent className="max-w-7xl w-[90vw] max-h-[85vh] overflow-y-auto bg-black/95 border border-primary/30 shadow-xl p-0">
+            <DialogTitle className="sr-only">Trade Details</DialogTitle>
+            <DialogDescription className="sr-only">
+              Detailansicht eines ausgewählten Trades mit allen Parametern und Eigenschaften.
+            </DialogDescription>
+            <TradeDetail 
+              selectedTrade={selectedTrade} 
+              onTradeSelected={setSelectedTrade} 
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
       <div className="mt-6 text-center text-sm text-muted-foreground">
         <div className="flex justify-center gap-4">
