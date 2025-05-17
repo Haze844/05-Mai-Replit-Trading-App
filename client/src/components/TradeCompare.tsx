@@ -306,10 +306,7 @@ export default function TradeCompare() {
         <Link to="/">
           <ChevronLeft className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
         </Link>
-        <h1 className="text-2xl font-bold">Trade-Vergleich</h1>
       </div>
-
-      <Separator className="my-4" />
       
       {/* Dynamische Statistik-Bar für den Vergleich-Tab */}
       <div className="mb-5 bg-gradient-to-r from-black/20 to-black/10 rounded-lg p-2 border border-primary/10 backdrop-blur-sm shadow-md">
