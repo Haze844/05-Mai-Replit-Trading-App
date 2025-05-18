@@ -1268,10 +1268,17 @@ export default function TradeCompare() {
                 </KpiTooltip>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className={`text-[9px] ${Math.abs(tradeStats.winRateDiff) < 1 ? 'text-gray-400' : tradeStats.winRateDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
-                  {tradeStats.winRateLeader === 'Gleichstand' ? 'Gleichstand' : 
-                   `${tradeStats.winRateLeader} +${Math.abs(tradeStats.winRateDiff).toFixed(1)}%`}
-                </span>
+                <KpiTooltip
+                  title="Win-Rate Vergleich" 
+                  jasperValue={tradeStats.jasperWinRate.toFixed(1) + "%"} 
+                  moValue={tradeStats.moWinRate.toFixed(1) + "%"}
+                  unit="%"
+                >
+                  <span className={`text-[9px] cursor-help hover:underline ${Math.abs(tradeStats.winRateDiff) < 1 ? 'text-gray-400' : tradeStats.winRateDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
+                    {tradeStats.winRateLeader === 'Gleichstand' ? 'Gleichstand' : 
+                    `${tradeStats.winRateLeader} +${Math.abs(tradeStats.winRateDiff).toFixed(1)}%`}
+                  </span>
+                </KpiTooltip>
                 {Math.abs(tradeStats.winRateDiff) >= 10 && (
                   <BadgeCheck className={`h-3 w-3 ${tradeStats.winRateDiff > 0 ? 'text-blue-300' : 'text-green-300'}`} />
                 )}
@@ -1306,10 +1313,17 @@ export default function TradeCompare() {
                 </KpiTooltip>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className={`text-[9px] ${Math.abs(tradeStats.plDiff) < 10 ? 'text-gray-400' : tradeStats.plDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
-                  {tradeStats.plLeader === 'Gleichstand' ? 'Gleichstand' : 
-                   `${tradeStats.plLeader} +$${Math.abs(tradeStats.plDiff).toFixed(0)}`}
-                </span>
+                <KpiTooltip
+                  title="Gesamtgewinn/-verlust" 
+                  jasperValue={tradeStats.jasperTotalPL.toFixed(0)} 
+                  moValue={tradeStats.moTotalPL.toFixed(0)}
+                  unit="$"
+                >
+                  <span className={`text-[9px] cursor-help hover:underline ${Math.abs(tradeStats.plDiff) < 10 ? 'text-gray-400' : tradeStats.plDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
+                    {tradeStats.plLeader === 'Gleichstand' ? 'Gleichstand' : 
+                    `${tradeStats.plLeader} +$${Math.abs(tradeStats.plDiff).toFixed(0)}`}
+                  </span>
+                </KpiTooltip>
                 {Math.abs(tradeStats.plDiff) >= 500 && (
                   <BadgeCheck className={`h-3 w-3 ${tradeStats.plDiff > 0 ? 'text-blue-300' : 'text-green-300'}`} />
                 )}
@@ -1344,10 +1358,17 @@ export default function TradeCompare() {
                 </KpiTooltip>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className={`text-[9px] ${Math.abs(tradeStats.rrDiff) < 0.1 ? 'text-gray-400' : tradeStats.rrDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
-                  {tradeStats.rrLeader === 'Gleichstand' ? 'Gleichstand' : 
-                   `${tradeStats.rrLeader} +${Math.abs(tradeStats.rrDiff).toFixed(2)}R`}
-                </span>
+                <KpiTooltip
+                  title="Risk/Reward Verhältnis" 
+                  jasperValue={tradeStats.jasperAvgRR.toFixed(2)} 
+                  moValue={tradeStats.moAvgRR.toFixed(2)}
+                  unit="R"
+                >
+                  <span className={`text-[9px] cursor-help hover:underline ${Math.abs(tradeStats.rrDiff) < 0.1 ? 'text-gray-400' : tradeStats.rrDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
+                    {tradeStats.rrLeader === 'Gleichstand' ? 'Gleichstand' : 
+                    `${tradeStats.rrLeader} +${Math.abs(tradeStats.rrDiff).toFixed(2)}R`}
+                  </span>
+                </KpiTooltip>
                 {Math.abs(tradeStats.rrDiff) >= 0.5 && (
                   <BadgeCheck className={`h-3 w-3 ${tradeStats.rrDiff > 0 ? 'text-blue-300' : 'text-green-300'}`} />
                 )}
@@ -1931,13 +1952,20 @@ export default function TradeCompare() {
                 Risk/Reward Ratio
               </h3>
               <div className="flex flex-col">
-                <span className={`text-xl font-bold ${
-                  tradeStats.moAvgRR >= 1.5 ? 'text-green-400' : 
-                  tradeStats.moAvgRR >= 1 ? 'text-green-300' : 
-                  'text-red-400'
-                }`}>
-                  {tradeStats.moAvgRR.toFixed(2)}R
-                </span>
+                <KpiTooltip 
+                  title="Risk/Reward Verhältnis" 
+                  jasperValue={tradeStats.jasperAvgRR.toFixed(2)} 
+                  moValue={tradeStats.moAvgRR.toFixed(2)}
+                  unit="R"
+                >
+                  <span className={`text-xl font-bold cursor-help ${
+                    tradeStats.moAvgRR >= 1.5 ? 'text-green-400' : 
+                    tradeStats.moAvgRR >= 1 ? 'text-green-300' : 
+                    'text-red-400'
+                  }`}>
+                    {tradeStats.moAvgRR.toFixed(2)}R
+                  </span>
+                </KpiTooltip>
                 <div className={`text-xs mt-1 ${
                   tradeStats.moAvgRR >= 2 ? 'text-green-300' : 
                   tradeStats.moAvgRR >= 1.5 ? 'text-green-400/70' : 
