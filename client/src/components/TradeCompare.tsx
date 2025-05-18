@@ -1093,40 +1093,7 @@ export default function TradeCompare() {
         </div>
       </div>
       
-      {/* Aktionsleiste für Export und erweiterte Funktionen */}
-      <div className="mb-5 bg-gradient-to-r from-black/30 to-black/20 rounded-xl p-3 border border-primary/20 backdrop-blur-sm flex justify-end space-x-2">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-black/40 hover:bg-black/30 border-primary/30 text-primary/80"
-                onClick={() => exportComparisonDataToCSV({
-                  jasperCount: tradeStats.jasperCount,
-                  moCount: tradeStats.moCount,
-                  jasperWins: tradeStats.jasperWins,
-                  moWins: tradeStats.moWins,
-                  jasperLosses: tradeStats.jasperLosses,
-                  moLosses: tradeStats.moLosses,
-                  jasperWinRate: tradeStats.jasperWinRate,
-                  moWinRate: tradeStats.moWinRate,
-                  jasperAvgRR: tradeStats.jasperAvgRR,
-                  moAvgRR: tradeStats.moAvgRR,
-                  jasperTotalPL: tradeStats.jasperTotalPL,
-                  moTotalPL: tradeStats.moTotalPL
-                })}
-              >
-                <FileDown className="h-4 w-4 mr-1" />
-                <span className="text-xs">Export</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="bg-black/90 border-primary/30">
-              CSV-Export der Vergleichsdaten
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
+
       
       {/* Optimierte Statistik-Bar mit erweiterten Visualisierungen */}
       <div className="mb-5 bg-gradient-to-r from-black/30 to-black/20 rounded-xl p-4 border border-primary/20 backdrop-blur-sm shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300">
@@ -1258,6 +1225,38 @@ export default function TradeCompare() {
               </TooltipTrigger>
               <TooltipContent side="bottom" className="bg-black/90 border-primary/30 text-xs">
                 Zeitraum für Statistikvergleich wählen
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-1 ml-2 bg-black/40 hover:bg-black/30 border-primary/30 text-primary/80 text-xs"
+                  onClick={() => exportComparisonDataToCSV({
+                    jasperCount: tradeStats.jasperCount,
+                    moCount: tradeStats.moCount,
+                    jasperWins: tradeStats.jasperWins,
+                    moWins: tradeStats.moWins,
+                    jasperLosses: tradeStats.jasperLosses,
+                    moLosses: tradeStats.moLosses,
+                    jasperWinRate: tradeStats.jasperWinRate,
+                    moWinRate: tradeStats.moWinRate,
+                    jasperAvgRR: tradeStats.jasperAvgRR,
+                    moAvgRR: tradeStats.moAvgRR,
+                    jasperTotalPL: tradeStats.jasperTotalPL,
+                    moTotalPL: tradeStats.moTotalPL
+                  })}
+                >
+                  <FileDown className="h-3.5 w-3.5" />
+                  <span>Export</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-black/90 border-primary/30 text-xs">
+                CSV-Export der Vergleichsdaten
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
