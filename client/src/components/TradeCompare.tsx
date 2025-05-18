@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Label } from "@/components/ui/label";
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Trade } from '@shared/schema';
@@ -268,6 +269,187 @@ const findWorstTrade = (trades) => {
   }
 };
 
+// Funktion zur Generierung von Wochentags-Heatmap-Daten
+const generateWeekdayHeatmapData = (trades, userName = null) => {
+  // Definiere Wochentage und Sitzungen
+  const weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+  const sessions = ['Morgen', 'Mittag', 'Abend', 'Nacht'];
+  
+  // Initialisiere die Heatmap-Datenstruktur
+  const heatmapData = weekdays.map(day => ({
+    day,
+    sessions: sessions.map(session => ({
+      session,
+      count: 0,
+      winCount: 0,
+      winRate: 0,
+      totalPL: 0,
+      avgPL: 0,
+      trades: []
+    }))
+  }));
+  
+  // Keine Berechnung, wenn keine Trades verfügbar sind
+  if (!trades || trades.length === 0) {
+    return heatmapData;
+  }
+  
+  // Füllen der Heatmap mit Daten
+  trades.forEach(trade => {
+    // Wenn userName angegeben, filtere nach diesem
+    if (userName && trade.userName !== userName) return;
+    
+    const tradeDate = new Date(trade.date);
+    
+    // Wochentag ermitteln (0 = Sonntag, 1 = Montag, ..., 6 = Samstag)
+    // Umrechnen in unser Format (0 = Montag, ..., 6 = Sonntag)
+    let weekdayIndex = tradeDate.getDay() - 1;
+    if (weekdayIndex < 0) weekdayIndex = 6; // Sonntag ans Ende setzen
+    
+    // Tageszeit für Session bestimmen
+    const hour = tradeDate.getHours();
+    let sessionIndex;
+    
+    if (hour >= 5 && hour < 12) {
+      sessionIndex = 0; // Morgen (5-11 Uhr)
+    } else if (hour >= 12 && hour < 17) {
+      sessionIndex = 1; // Mittag (12-16 Uhr)
+    } else if (hour >= 17 && hour < 22) {
+      sessionIndex = 2; // Abend (17-21 Uhr)
+    } else {
+      sessionIndex = 3; // Nacht (22-4 Uhr)
+    }
+    
+    // Aktualisiere die Daten in der Zelle
+    const cell = heatmapData[weekdayIndex].sessions[sessionIndex];
+    cell.count++;
+    if (trade.isWin) cell.winCount++;
+    cell.totalPL += (trade.profitLoss || 0);
+    cell.trades.push(trade);
+  });
+  
+  // Berechne abgeleitete Werte wie Win-Rate und Durchschnitts-PL
+  heatmapData.forEach(day => {
+    day.sessions.forEach(session => {
+      if (session.count > 0) {
+        session.winRate = (session.winCount / session.count) * 100;
+        session.avgPL = session.totalPL / session.count;
+      }
+    });
+  });
+  
+  return heatmapData;
+};
+
+// Wochentags-Heatmap-Komponente
+const WeekdayHeatmap = ({ data, userTheme, userName }) => {
+  // Finde die maximale Anzahl von Trades in einer Zelle für die Farbskalierung
+  const maxCount = Math.max(
+    ...data.flatMap(day => day.sessions.map(session => session.count)), 
+    1 // Mindestens 1, um Division durch Null zu vermeiden
+  );
+  
+  // Farbintensität basierend auf relativer Häufigkeit berechnen
+  const getColorIntensity = (count) => {
+    if (count === 0) return 'bg-gray-950/50';
+    
+    // Intensität berechnen (20-90% Opazität)
+    const intensity = Math.min(Math.max(count / maxCount * 100, 20), 90);
+    const opacityValue = Math.round(intensity);
+    
+    // Je nach Benutzer unterschiedliche Farbthemen
+    if (userTheme === 'jasper') {
+      return `bg-blue-900/[0.${opacityValue}]`;
+    } else {
+      return `bg-teal-900/[0.${opacityValue}]`;
+    }
+  };
+  
+  // Textfarbe basierend auf Benutzer und Wert
+  const getTextColor = (isPositive = true) => {
+    if (userTheme === 'jasper') {
+      return isPositive ? 'text-blue-300' : 'text-red-400';
+    } else {
+      return isPositive ? 'text-teal-300' : 'text-red-400';
+    }
+  };
+  
+  return (
+    <div className="rounded-lg border border-gray-800/50 overflow-hidden">
+      <div className="grid grid-cols-[minmax(80px,auto)_repeat(4,1fr)]">
+        {/* Kopfzeile */}
+        <div className="bg-black/40 p-2 flex items-center justify-center">
+          <span className="text-xs font-medium text-gray-400">{userName}</span>
+        </div>
+        
+        {['Morgen', 'Mittag', 'Abend', 'Nacht'].map((session) => (
+          <div key={session} className="bg-black/40 p-2 flex items-center justify-center">
+            <span className="text-[10px] uppercase tracking-wider text-gray-500">{session}</span>
+          </div>
+        ))}
+        
+        {/* Datenzeilen */}
+        {data.map((day) => (
+          <React.Fragment key={day.day}>
+            <div className="bg-black/30 p-2 flex items-center">
+              <span className="text-xs text-gray-400">{day.day}</span>
+            </div>
+            
+            {day.sessions.map((session, idx) => (
+              <div 
+                key={`${day.day}-${idx}`} 
+                className={`${getColorIntensity(session.count)} p-2 hover:bg-gray-800/30 transition-colors relative group`}
+              >
+                {session.count > 0 ? (
+                  <>
+                    <div className="flex flex-col items-center">
+                      <span className="text-[10px] text-gray-300 font-medium">
+                        {session.count}
+                      </span>
+                      <span className={`text-[9px] ${getTextColor(session.winRate >= 50)}`}>
+                        {session.winRate.toFixed(0)}%
+                      </span>
+                    </div>
+                    
+                    {/* Detail-Tooltip bei Hover */}
+                    <div className="absolute z-50 hidden group-hover:block top-full left-1/2 transform -translate-x-1/2 mt-1 w-36 bg-black/95 border border-gray-700/50 rounded-md p-2 shadow-lg pointer-events-none">
+                      <div className="text-[10px] font-medium text-gray-300 mb-1">
+                        {day.day}, {session.session}
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-1 gap-y-0.5 text-[9px]">
+                        <span className="text-gray-400">Trades:</span>
+                        <span className="text-gray-300">{session.count}</span>
+                        
+                        <span className="text-gray-400">Win-Rate:</span>
+                        <span className={getTextColor(session.winRate >= 50)}>
+                          {session.winRate.toFixed(1)}%
+                        </span>
+                        
+                        <span className="text-gray-400">Durchschnitt:</span>
+                        <span className={getTextColor(session.avgPL >= 0)}>
+                          ${session.avgPL.toFixed(0)}
+                        </span>
+                        
+                        <span className="text-gray-400">Gesamt:</span>
+                        <span className={getTextColor(session.totalPL >= 0)}>
+                          ${session.totalPL.toFixed(0)}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <span className="text-[9px] text-gray-700 flex justify-center">-</span>
+                )}
+              </div>
+            ))}
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Hauptkomponente
 export default function TradeCompare() {
   // State für kombinierte Trades
   const [combinedTrades, setCombinedTrades] = useState<Trade[]>([]);
@@ -647,41 +829,115 @@ export default function TradeCompare() {
                       <Filter className="h-3 w-3 ml-1 opacity-70" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-56 p-3 bg-black/90 border border-primary/30">
+                  <PopoverContent className="w-72 p-3 bg-black/90 border border-primary/30">
                     <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-primary mb-2">Schnellauswahl Zeitraum</h4>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className={`w-full text-xs justify-start mb-1 ${selectedTimeRange === "7days" ? "bg-primary/20 border-primary/40" : ""}`}
-                        onClick={() => applyDateFilter("7days")}
-                      >
-                        Letzte 7 Tage
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className={`w-full text-xs justify-start mb-1 ${selectedTimeRange === "30days" ? "bg-primary/20 border-primary/40" : ""}`}
-                        onClick={() => applyDateFilter("30days")}
-                      >
-                        Letzte 30 Tage
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className={`w-full text-xs justify-start mb-1 ${selectedTimeRange === "month" ? "bg-primary/20 border-primary/40" : ""}`}
-                        onClick={() => applyDateFilter("month")}
-                      >
-                        Aktueller Monat
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className={`w-full text-xs justify-start ${selectedTimeRange === "all" ? "bg-primary/20 border-primary/40" : ""}`}
-                        onClick={() => applyDateFilter("all")}
-                      >
-                        Alle Trades
-                      </Button>
+                      <h4 className="text-sm font-medium text-primary mb-2 flex items-center">
+                        <Calendar className="w-3.5 h-3.5 mr-2 opacity-70" />
+                        Zeitraum wählen
+                      </h4>
+                      
+                      {/* Detaillierte Datumsauswahl */}
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <Label htmlFor="from" className="text-xs text-gray-400 mb-1 block">Von</Label>
+                          <input
+                            id="from"
+                            type="date"
+                            value={
+                              activeFilters?.startDate 
+                                ? new Date(activeFilters.startDate).toISOString().split('T')[0] 
+                                : '2020-01-01'
+                            }
+                            onChange={(e) => {
+                              const newDate = new Date(e.target.value);
+                              handleFilterChange({
+                                ...activeFilters,
+                                startDate: newDate.toISOString()
+                              });
+                              setSelectedTimeRange('custom');
+                            }}
+                            className="w-full h-8 rounded-md border border-gray-700 bg-black/40 px-3 py-1 text-xs text-gray-200"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="to" className="text-xs text-gray-400 mb-1 block">Bis</Label>
+                          <input
+                            id="to"
+                            type="date"
+                            value={
+                              activeFilters?.endDate 
+                                ? new Date(activeFilters.endDate).toISOString().split('T')[0] 
+                                : new Date().toISOString().split('T')[0]
+                            }
+                            onChange={(e) => {
+                              const newDate = new Date(e.target.value);
+                              newDate.setHours(23, 59, 59, 999); // Ende des Tages
+                              handleFilterChange({
+                                ...activeFilters,
+                                endDate: newDate.toISOString()
+                              });
+                              setSelectedTimeRange('custom');
+                            }}
+                            className="w-full h-8 rounded-md border border-gray-700 bg-black/40 px-3 py-1 text-xs text-gray-200"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="border-t border-gray-800 pt-3">
+                        <p className="text-xs text-gray-400 mb-2">Schnellauswahl:</p>
+                        <div className="flex flex-wrap gap-1">
+                          <button
+                            onClick={() => applyDateFilter("7days")}
+                            className={`text-[10px] px-2 py-1 rounded ${
+                              selectedTimeRange === "7days"
+                                ? 'bg-primary/30 text-primary-foreground border border-primary/70'
+                                : 'bg-black/50 hover:bg-gray-800/30 text-gray-300 border border-gray-800/70'
+                            }`}
+                          >
+                            7 Tage
+                          </button>
+                          <button
+                            onClick={() => applyDateFilter("30days")}
+                            className={`text-[10px] px-2 py-1 rounded ${
+                              selectedTimeRange === "30days"
+                                ? 'bg-primary/30 text-primary-foreground border border-primary/70'
+                                : 'bg-black/50 hover:bg-gray-800/30 text-gray-300 border border-gray-800/70'
+                            }`}
+                          >
+                            30 Tage
+                          </button>
+                          <button
+                            onClick={() => applyDateFilter("quarter")}
+                            className={`text-[10px] px-2 py-1 rounded ${
+                              selectedTimeRange === "quarter"
+                                ? 'bg-primary/30 text-primary-foreground border border-primary/70'
+                                : 'bg-black/50 hover:bg-gray-800/30 text-gray-300 border border-gray-800/70'
+                            }`}
+                          >
+                            Quartal
+                          </button>
+                          <button
+                            onClick={() => applyDateFilter("year")}
+                            className={`text-[10px] px-2 py-1 rounded ${
+                              selectedTimeRange === "year"
+                                ? 'bg-primary/30 text-primary-foreground border border-primary/70'
+                                : 'bg-black/50 hover:bg-gray-800/30 text-gray-300 border border-gray-800/70'
+                            }`}
+                          >
+                            Jahr
+                          </button>
+                          <button
+                            onClick={() => applyDateFilter("all")}
+                            className={`text-[10px] px-2 py-1 rounded ${
+                              selectedTimeRange === "all"
+                                ? 'bg-primary/30 text-primary-foreground border border-primary/70'
+                                : 'bg-black/50 hover:bg-gray-800/30 text-gray-300 border border-gray-800/70'
+                            }`}
+                          >
+                            Alle
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </PopoverContent>
                 </Popover>
