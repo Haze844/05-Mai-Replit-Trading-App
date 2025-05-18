@@ -26,10 +26,15 @@ import {
   Award,
   AlertTriangle,
   Calendar,
+  CalendarDays,
   Filter,
   Info,
   RefreshCw,
-  BadgeCheck
+  BadgeCheck,
+  CircleUser,
+  BarChart,
+  LayoutTemplate,
+  User
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { Separator } from '@/components/ui/separator';
