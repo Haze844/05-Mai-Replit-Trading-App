@@ -6,7 +6,7 @@ import { Trade } from '@shared/schema';
 import TradeTable from './TradeTable';
 import FilterBar from './FilterBar';
 import TradeDetail from './TradeDetail';
-import { KpiTooltip, ComparisonBadge } from './KpiTooltip';
+import { KpiTooltip, ComparisonBadge, SparklineDataTooltip } from './KpiTooltip';
 import { exportComparisonDataToCSV } from '@/lib/exportHelper';
 import { 
   Dialog, 

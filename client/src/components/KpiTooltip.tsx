@@ -6,6 +6,48 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+/**
+ * Spezieller Tooltip für Datenpunkte in Sparkline-Visualisierungen
+ */
+export function SparklineDataTooltip({ trade, color = "blue" }: { trade: any, color?: "blue" | "green" }) {
+  if (!trade) return null;
+  const colorClass = color === "blue" ? "blue" : "green";
+  
+  return (
+    <div className={`opacity-0 group-hover:opacity-100 transition-opacity duration-150 absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-20 bg-black/90 border border-${colorClass}-500/30 rounded-md py-1.5 px-3 text-xs whitespace-nowrap pointer-events-none`}>
+      <div className={`font-semibold mb-1 text-${colorClass}-300`}>
+        {trade.symbol} - {trade.setup || 'Kein Setup'}
+      </div>
+      <div className="flex justify-between gap-3">
+        <span className="text-gray-300">Datum:</span>
+        <span className="text-white">{new Date(trade.date).toLocaleDateString()}</span>
+      </div>
+      <div className="flex justify-between gap-3">
+        <span className="text-gray-300">Ergebnis:</span>
+        <span className={trade.isWin ? 'text-green-400' : 'text-red-400'}>
+          {trade.isWin ? 'Gewinn' : 'Verlust'}
+        </span>
+      </div>
+      {trade.profitLoss !== undefined && (
+        <div className="flex justify-between gap-3">
+          <span className="text-gray-300">P/L:</span>
+          <span className={Number(trade.profitLoss) >= 0 ? 'text-green-400' : 'text-red-400'}>
+            ${Number(trade.profitLoss).toFixed(0)}
+          </span>
+        </div>
+      )}
+      {trade.rrAchieved !== undefined && (
+        <div className="flex justify-between gap-3">
+          <span className="text-gray-300">R/R:</span>
+          <span className={Number(trade.rrAchieved) >= 0 ? 'text-green-400' : 'text-red-400'}>
+            {Number(trade.rrAchieved).toFixed(1)}R
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface KpiTooltipProps {
   title: string;
   jasperValue: number | string;
