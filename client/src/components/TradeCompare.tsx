@@ -1244,14 +1244,28 @@ export default function TradeCompare() {
             <div className="bg-black/20 rounded-lg border border-gray-800/40 p-2 flex flex-col items-center">
               <h4 className="text-[10px] uppercase tracking-wider opacity-70 text-center mb-1.5">Win Rate</h4>
               <div className="flex items-center justify-between w-full px-2 mb-2">
-                <div className="flex items-center">
-                  <div className="h-5 w-2 bg-blue-500/40 rounded-full mr-2"></div>
-                  <span className="text-xs font-bold text-blue-400">{tradeStats.jasperWinRate.toFixed(0)}%</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-xs font-bold text-green-400">{tradeStats.moWinRate.toFixed(0)}%</span>
-                  <div className="h-5 w-2 bg-green-500/40 rounded-full ml-2"></div>
-                </div>
+                <KpiTooltip
+                  title="Win-Rate Vergleich"
+                  jasperValue={tradeStats.jasperWinRate.toFixed(0) + "%"}
+                  moValue={tradeStats.moWinRate.toFixed(0) + "%"}
+                  unit="%"
+                >
+                  <div className="flex items-center cursor-help">
+                    <div className="h-5 w-2 bg-blue-500/40 rounded-full mr-2"></div>
+                    <span className="text-xs font-bold text-blue-400">{tradeStats.jasperWinRate.toFixed(0)}%</span>
+                  </div>
+                </KpiTooltip>
+                <KpiTooltip
+                  title="Win-Rate Vergleich"
+                  jasperValue={tradeStats.jasperWinRate.toFixed(0) + "%"}
+                  moValue={tradeStats.moWinRate.toFixed(0) + "%"}
+                  unit="%"
+                >
+                  <div className="flex items-center cursor-help">
+                    <span className="text-xs font-bold text-green-400">{tradeStats.moWinRate.toFixed(0)}%</span>
+                    <div className="h-5 w-2 bg-green-500/40 rounded-full ml-2"></div>
+                  </div>
+                </KpiTooltip>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className={`text-[9px] ${Math.abs(tradeStats.winRateDiff) < 1 ? 'text-gray-400' : tradeStats.winRateDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
@@ -1268,14 +1282,28 @@ export default function TradeCompare() {
             <div className="bg-black/20 rounded-lg border border-gray-800/40 p-2 flex flex-col items-center">
               <h4 className="text-[10px] uppercase tracking-wider opacity-70 text-center mb-1.5">Profit/Loss</h4>
               <div className="flex items-center justify-between w-full px-2 mb-2">
-                <div className="flex items-center">
-                  <div className="h-5 w-2 bg-blue-500/40 rounded-full mr-2"></div>
-                  <span className="text-xs font-bold text-blue-400">${tradeStats.jasperTotalPL.toFixed(0)}</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-xs font-bold text-green-400">${tradeStats.moTotalPL.toFixed(0)}</span>
-                  <div className="h-5 w-2 bg-green-500/40 rounded-full ml-2"></div>
-                </div>
+                <KpiTooltip
+                  title="Gesamtgewinn/-verlust" 
+                  jasperValue={tradeStats.jasperTotalPL.toFixed(0)} 
+                  moValue={tradeStats.moTotalPL.toFixed(0)}
+                  unit="$"
+                >
+                  <div className="flex items-center cursor-help">
+                    <div className="h-5 w-2 bg-blue-500/40 rounded-full mr-2"></div>
+                    <span className="text-xs font-bold text-blue-400">${tradeStats.jasperTotalPL.toFixed(0)}</span>
+                  </div>
+                </KpiTooltip>
+                <KpiTooltip
+                  title="Gesamtgewinn/-verlust" 
+                  jasperValue={tradeStats.jasperTotalPL.toFixed(0)} 
+                  moValue={tradeStats.moTotalPL.toFixed(0)}
+                  unit="$"
+                >
+                  <div className="flex items-center cursor-help">
+                    <span className="text-xs font-bold text-green-400">${tradeStats.moTotalPL.toFixed(0)}</span>
+                    <div className="h-5 w-2 bg-green-500/40 rounded-full ml-2"></div>
+                  </div>
+                </KpiTooltip>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className={`text-[9px] ${Math.abs(tradeStats.plDiff) < 10 ? 'text-gray-400' : tradeStats.plDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
@@ -1292,14 +1320,28 @@ export default function TradeCompare() {
             <div className="bg-black/20 rounded-lg border border-gray-800/40 p-2 flex flex-col items-center">
               <h4 className="text-[10px] uppercase tracking-wider opacity-70 text-center mb-1.5">Risk/Reward</h4>
               <div className="flex items-center justify-between w-full px-2 mb-2">
-                <div className="flex items-center">
-                  <div className="h-5 w-2 bg-blue-500/40 rounded-full mr-2"></div>
-                  <span className="text-xs font-bold text-blue-400">{tradeStats.jasperAvgRR.toFixed(2)}R</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-xs font-bold text-green-400">{tradeStats.moAvgRR.toFixed(2)}R</span>
-                  <div className="h-5 w-2 bg-green-500/40 rounded-full ml-2"></div>
-                </div>
+                <KpiTooltip
+                  title="Risk/Reward Verhältnis" 
+                  jasperValue={tradeStats.jasperAvgRR.toFixed(2)} 
+                  moValue={tradeStats.moAvgRR.toFixed(2)}
+                  unit="R"
+                >
+                  <div className="flex items-center cursor-help">
+                    <div className="h-5 w-2 bg-blue-500/40 rounded-full mr-2"></div>
+                    <span className="text-xs font-bold text-blue-400">{tradeStats.jasperAvgRR.toFixed(2)}R</span>
+                  </div>
+                </KpiTooltip>
+                <KpiTooltip
+                  title="Risk/Reward Verhältnis" 
+                  jasperValue={tradeStats.jasperAvgRR.toFixed(2)} 
+                  moValue={tradeStats.moAvgRR.toFixed(2)}
+                  unit="R"
+                >
+                  <div className="flex items-center cursor-help">
+                    <span className="text-xs font-bold text-green-400">{tradeStats.moAvgRR.toFixed(2)}R</span>
+                    <div className="h-5 w-2 bg-green-500/40 rounded-full ml-2"></div>
+                  </div>
+                </KpiTooltip>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className={`text-[9px] ${Math.abs(tradeStats.rrDiff) < 0.1 ? 'text-gray-400' : tradeStats.rrDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
@@ -1721,19 +1763,26 @@ export default function TradeCompare() {
               </h3>
               <div className="flex flex-col">
                 <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center">
-                    <DonutChart 
-                      percentage={tradeStats.moWinRate} 
-                      color={tradeStats.moWinRate >= 65 ? 'rgba(16, 185, 129, 0.9)' : 
-                             tradeStats.moWinRate >= 50 ? 'rgba(52, 211, 153, 0.9)' : 
-                             'rgba(239, 68, 68, 0.9)'}
-                      size={50}
-                      strokeWidth={4}
-                    />
-                    <span className={`text-lg font-bold ml-3 ${tradeStats.moWinRate >= 50 ? 'text-green-400' : 'text-red-400'}`}>
-                      {tradeStats.moWinRate.toFixed(1)}%
-                    </span>
-                  </div>
+                  <KpiTooltip
+                    title="Win-Rate Vergleich"
+                    jasperValue={tradeStats.jasperWinRate.toFixed(1) + "%"}
+                    moValue={tradeStats.moWinRate.toFixed(1) + "%"}
+                    unit="%"
+                  >
+                    <div className="flex items-center cursor-help">
+                      <DonutChart 
+                        percentage={tradeStats.moWinRate} 
+                        color={tradeStats.moWinRate >= 65 ? 'rgba(16, 185, 129, 0.9)' : 
+                               tradeStats.moWinRate >= 50 ? 'rgba(52, 211, 153, 0.9)' : 
+                               'rgba(239, 68, 68, 0.9)'}
+                        size={50}
+                        strokeWidth={4}
+                      />
+                      <span className={`text-lg font-bold ml-3 ${tradeStats.moWinRate >= 50 ? 'text-green-400' : 'text-red-400'}`}>
+                        {tradeStats.moWinRate.toFixed(1)}%
+                      </span>
+                    </div>
+                  </KpiTooltip>
                   <div className={`flex items-center text-[10px] rounded-md px-1.5 py-0.5 ${
                     tradeStats.moWinRate >= 65 ? 'bg-green-900/40 text-green-400 border border-green-700/30' : 
                     tradeStats.moWinRate >= 50 ? 'bg-green-900/40 text-green-400 border border-green-700/30' : 
@@ -1805,9 +1854,16 @@ export default function TradeCompare() {
                 Profit/Loss
               </h3>
               <div className="flex flex-col">
-                <span className={`text-xl font-bold ${tradeStats.moTotalPL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {tradeStats.moTotalPL >= 0 ? '+' : ''}{tradeStats.moTotalPL.toFixed(0)}$
-                </span>
+                <KpiTooltip
+                  title="Gesamtgewinn/-verlust" 
+                  jasperValue={tradeStats.jasperTotalPL.toFixed(0)} 
+                  moValue={tradeStats.moTotalPL.toFixed(0)}
+                  unit="$"
+                >
+                  <span className={`text-xl font-bold cursor-help ${tradeStats.moTotalPL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {tradeStats.moTotalPL >= 0 ? '+' : ''}{tradeStats.moTotalPL.toFixed(0)}$
+                  </span>
+                </KpiTooltip>
                 <div className={`text-xs mt-1 ${tradeStats.moTotalPL >= 1000 ? 'text-green-300' : 
                                             tradeStats.moTotalPL >= 0 ? 'text-green-400/70' : 
                                             'text-red-400/70'}`}>
