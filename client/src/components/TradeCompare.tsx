@@ -108,44 +108,86 @@ const getTradeHistory = (trades, key = 'isWin', count = 10) => {
 
 // Besten Trade finden
 const findBestTrade = (trades) => {
-  if (!trades || trades.length === 0) return null;
+  // Sicherheitscheck - falls keine Trades oder leeres Array
+  if (!trades || !Array.isArray(trades) || trades.length === 0) {
+    console.log("findBestTrade: Keine gültigen Trades gefunden");
+    return null;
+  }
   
-  // Zuerst nur Trades mit gültigen profitLoss Werten filtern
-  const validTrades = trades.filter(t => 
-    t && typeof t.profitLoss === 'number' && !isNaN(t.profitLoss)
-  );
+  // Debugging
+  console.log(`findBestTrade: Analysiere ${trades.length} Trades`);
   
-  if (validTrades.length === 0) return null;
-  
-  return validTrades.reduce((best, current) => {
-    // Bevorzuge höchsten Profit zuerst
-    if ((current.profitLoss || 0) > (best.profitLoss || 0)) return current;
-    // Bei gleichem Profit, bevorzuge höheres RR
-    if ((current.profitLoss || 0) === (best.profitLoss || 0) && 
-        (current.rrAchieved || 0) > (best.rrAchieved || 0)) return current;
-    return best;
-  }, validTrades[0]);
+  // Trades sortieren, erst für profitLoss, dann für rrAchieved (beide absteigend für besten Trade)
+  try {
+    // Nur gültige Trades mit numerischen Werten für profitLoss verwenden
+    const validTrades = trades.filter(t => 
+      t && 
+      typeof t.profitLoss === 'number' && 
+      !isNaN(t.profitLoss)
+    );
+    
+    console.log(`findBestTrade: ${validTrades.length} gültige Trades nach Filterung`);
+    
+    if (validTrades.length === 0) return null;
+    
+    // Nach Profit sortieren (absteigend)
+    const sortedTrades = [...validTrades].sort((a, b) => {
+      // Primäres Sortierkriterium: profitLoss (absteigend)
+      const profitDiff = (b.profitLoss || 0) - (a.profitLoss || 0);
+      if (profitDiff !== 0) return profitDiff;
+      
+      // Sekundäres Sortierkriterium: rrAchieved (absteigend)
+      return (b.rrAchieved || 0) - (a.rrAchieved || 0);
+    });
+    
+    console.log(`findBestTrade: Bester Trade gefunden:`, sortedTrades[0]);
+    return sortedTrades[0];
+  } catch (error) {
+    console.error("Fehler beim Finden des besten Trades:", error);
+    return null;
+  }
 };
 
 // Schlechtesten Trade finden
 const findWorstTrade = (trades) => {
-  if (!trades || trades.length === 0) return null;
+  // Sicherheitscheck - falls keine Trades oder leeres Array
+  if (!trades || !Array.isArray(trades) || trades.length === 0) {
+    console.log("findWorstTrade: Keine gültigen Trades gefunden");
+    return null;
+  }
   
-  // Zuerst nur Trades mit gültigen profitLoss Werten filtern
-  const validTrades = trades.filter(t => 
-    t && typeof t.profitLoss === 'number' && !isNaN(t.profitLoss)
-  );
+  // Debugging
+  console.log(`findWorstTrade: Analysiere ${trades.length} Trades`);
   
-  if (validTrades.length === 0) return null;
-  
-  return validTrades.reduce((worst, current) => {
-    // Bevorzuge niedrigsten Profit zuerst (größten Verlust)
-    if ((current.profitLoss || 0) < (worst.profitLoss || 0)) return current;
-    // Bei gleichem Verlust, bevorzuge niedrigeres RR
-    if ((current.profitLoss || 0) === (worst.profitLoss || 0) && 
-        (current.rrAchieved || 0) < (worst.rrAchieved || 0)) return current;
-    return worst;
-  }, validTrades[0]);
+  // Trades sortieren, erst für profitLoss, dann für rrAchieved (beide aufsteigend für schlechtesten Trade)
+  try {
+    // Nur gültige Trades mit numerischen Werten für profitLoss verwenden
+    const validTrades = trades.filter(t => 
+      t && 
+      typeof t.profitLoss === 'number' && 
+      !isNaN(t.profitLoss)
+    );
+    
+    console.log(`findWorstTrade: ${validTrades.length} gültige Trades nach Filterung`);
+    
+    if (validTrades.length === 0) return null;
+    
+    // Nach Profit sortieren (aufsteigend)
+    const sortedTrades = [...validTrades].sort((a, b) => {
+      // Primäres Sortierkriterium: profitLoss (aufsteigend)
+      const profitDiff = (a.profitLoss || 0) - (b.profitLoss || 0);
+      if (profitDiff !== 0) return profitDiff;
+      
+      // Sekundäres Sortierkriterium: rrAchieved (aufsteigend)
+      return (a.rrAchieved || 0) - (b.rrAchieved || 0);
+    });
+    
+    console.log(`findWorstTrade: Schlechtester Trade gefunden:`, sortedTrades[0]);
+    return sortedTrades[0];
+  } catch (error) {
+    console.error("Fehler beim Finden des schlechtesten Trades:", error);
+    return null;
+  }
 };
 
 export default function TradeCompare() {
