@@ -59,25 +59,40 @@ const USER_COLORS = {
   mo: 'bg-green-500/10'
 };
 
-// Einfache Donut-Chart Komponente
+// Verbesserte Donut-Chart Komponente mit Animation
 const DonutChart = ({ percentage, color, size = 60, strokeWidth = 6 }) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
   
+  // Hintergrundfarbe basierend auf der Hauptfarbe dynamisch berechnen
+  const bgColor = percentage >= 65
+    ? `rgba(${color.includes('59, 130, 246') || color.includes('blue') ? '59, 130, 246' : '16, 185, 129'}, 0.1)`
+    : percentage >= 50
+      ? `rgba(${color.includes('59, 130, 246') || color.includes('blue') ? '59, 130, 246' : '16, 185, 129'}, 0.05)`
+      : 'rgba(239, 68, 68, 0.1)';
+  
   return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="transform -rotate-90">
-        {/* Hintergrund-Kreis */}
+    <div className="relative flex items-center justify-center group" style={{ width: size, height: size }}>
+      {/* Hintergrund-Pulsieren bei hohen Werten */}
+      {percentage >= 70 && (
+        <div 
+          className="absolute inset-0 rounded-full animate-pulse opacity-30"
+          style={{ backgroundColor: color, animationDuration: '3s' }}
+        />
+      )}
+      
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="transform -rotate-90 relative z-10">
+        {/* Hintergrund-Kreis mit weicherem Übergang */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          fill="none"
-          stroke="rgba(30, 30, 30, 0.5)"
-          strokeWidth={strokeWidth}
+          fill={bgColor}
+          stroke="rgba(30, 30, 30, 0.3)"
+          strokeWidth={strokeWidth / 2}
         />
-        {/* Fortschritts-Kreis */}
+        {/* Fortschritts-Kreis mit Animation */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -88,11 +103,20 @@ const DonutChart = ({ percentage, color, size = 60, strokeWidth = 6 }) => {
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
-          className="transition-all duration-1000 ease-out"
+          className="transition-all duration-1500 ease-out"
+          style={{
+            filter: `drop-shadow(0 0 3px ${color.replace(')', ', 0.6)')})`,
+            animation: 'donutFadeIn 1.5s ease-out forwards'
+          }}
         />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center font-bold text-xs" style={{ color }}>
-        {Math.round(percentage)}%
+      <div className="absolute inset-0 flex flex-col items-center justify-center group-hover:scale-110 transition-transform duration-300 z-20">
+        <div className="font-bold text-sm" style={{ color }}>
+          {Math.round(percentage)}%
+        </div>
+        <div className="text-[8px] opacity-80 mt-0.5" style={{ color }}>
+          {percentage >= 65 ? 'Excellent' : percentage >= 50 ? 'Good' : 'Improve'}
+        </div>
       </div>
     </div>
   );
@@ -751,16 +775,56 @@ export default function TradeCompare() {
                 </div>
                 
                 {/* Sparkline für Win-Rate */}
-                <div className="mt-2 p-1 bg-blue-950/20 rounded-md border border-blue-900/30">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] text-blue-300/60">Win-Rate Trend</span>
+                <div className="mt-2 p-2 bg-gradient-to-r from-blue-950/30 to-blue-900/10 rounded-md border border-blue-800/40 shadow-inner">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] text-blue-300/80 font-medium flex items-center">
+                      <Activity className="w-3 h-3 mr-1 text-blue-400/70" />
+                      Win-Rate Trend
+                    </span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-900/30 text-blue-300/90">
+                      {tradeStats.jasperWinHistory.length} trades
+                    </span>
                   </div>
-                  <Sparklines data={tradeStats.jasperWinHistory.length > 0 ? 
-                            tradeStats.jasperWinHistory.map(v => v * 100) : 
-                            [0,0,0,0,0]} 
-                           height={20} margin={5}>
-                    <SparklinesBars color="rgba(59, 130, 246, 0.8)" />
-                  </Sparklines>
+                  <div className="bg-blue-950/40 rounded p-1 backdrop-blur-sm relative overflow-hidden">
+                    {/* Highlight-Bereiche für gute Win-Rate */}
+                    <div className="absolute inset-0 flex flex-col">
+                      <div className="h-1/3 w-full border-b border-dashed border-blue-500/10"></div>
+                      <div className="h-1/3 w-full bg-blue-500/5 border-b border-dashed border-blue-500/20"></div>
+                      <div className="h-1/3 w-full bg-blue-500/10"></div>
+                    </div>
+                    <Sparklines 
+                      data={tradeStats.jasperWinHistory.length > 0 ? 
+                          tradeStats.jasperWinHistory.map(v => v * 100) : 
+                          [0,0,0,0,0]} 
+                      height={30} 
+                      margin={5}
+                      min={0}
+                      max={100}
+                    >
+                      <SparklinesBars 
+                        color="rgba(59, 130, 246, 0.8)" 
+                        style={{ 
+                          fill: "url(#blueGradient)",
+                          filter: "drop-shadow(0 1px 2px rgba(37, 99, 235, 0.3))" 
+                        }} 
+                      />
+                      <SparklinesSpots 
+                        size={3} 
+                        style={{ 
+                          fill: 'white',
+                          stroke: "rgba(59, 130, 246, 0.8)", 
+                          strokeWidth: 2,
+                        }} 
+                      />
+                      {/* SVG Definitionen für Gradienten */}
+                      <defs>
+                        <linearGradient id="blueGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="rgba(59, 130, 246, 0.9)" />
+                          <stop offset="100%" stopColor="rgba(59, 130, 246, 0.3)" />
+                        </linearGradient>
+                      </defs>
+                    </Sparklines>
+                  </div>
                 </div>
               </div>
             </div>
@@ -784,21 +848,53 @@ export default function TradeCompare() {
                 </div>
                 
                 {/* Sparkline für P/L-Trend */}
-                <div className="mt-2 p-1 bg-blue-950/20 rounded-md border border-blue-900/30">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] text-blue-300/60">P/L Trend</span>
-                    {tradeStats.jasperPLHistory.length > 0 && (
-                      <span className="text-[10px] text-blue-300/60">
-                        {tradeStats.jasperPLHistory[tradeStats.jasperPLHistory.length - 1] >= tradeStats.jasperPLHistory[0] ? 
-                          <TrendingUp className="w-3 h-3 text-blue-400" /> : 
-                          <TrendingDown className="w-3 h-3 text-blue-400" />}
-                      </span>
-                    )}
+                <div className="mt-2 p-2 bg-gradient-to-r from-blue-950/30 to-blue-900/10 rounded-md border border-blue-800/40 shadow-inner">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] text-blue-300/80 font-medium flex items-center">
+                      <TrendingUp className="w-3 h-3 mr-1 text-blue-400/70" />
+                      P/L Trend
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {tradeStats.jasperPLHistory.length > 0 && (
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full flex items-center gap-1 
+                          ${tradeStats.jasperPLHistory[tradeStats.jasperPLHistory.length - 1] >= tradeStats.jasperPLHistory[0] ? 
+                          'bg-blue-500/20 text-blue-300' : 'bg-red-500/20 text-red-300'}`}>
+                          {tradeStats.jasperPLHistory[tradeStats.jasperPLHistory.length - 1] >= tradeStats.jasperPLHistory[0] ? 
+                            <ArrowUpRight className="w-2.5 h-2.5" /> : 
+                            <ArrowDownRight className="w-2.5 h-2.5" />}
+                          {Math.abs(tradeStats.jasperPLHistory[tradeStats.jasperPLHistory.length - 1] - tradeStats.jasperPLHistory[0]).toFixed(0)}$
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <Sparklines data={tradeStats.jasperPLHistory.length > 0 ? tradeStats.jasperPLHistory : [0,0,0,0,0]} height={20} margin={5}>
-                    <SparklinesLine color="rgba(59, 130, 246, 0.8)" style={{ fill: "rgba(59, 130, 246, 0.2)" }} />
-                    <SparklinesSpots size={1.5} style={{ fill: "rgba(59, 130, 246, 0.8)" }} />
-                  </Sparklines>
+                  <div className="bg-blue-950/40 rounded p-1 backdrop-blur-sm relative overflow-hidden">
+                    {/* Null-Linie für P/L */}
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-dashed border-blue-500/30 h-0"></div>
+                    </div>
+                    <Sparklines 
+                      data={tradeStats.jasperPLHistory.length > 0 ? tradeStats.jasperPLHistory : [0,0,0,0,0]} 
+                      height={30} 
+                      margin={5}
+                    >
+                      <SparklinesLine 
+                        color="rgba(59, 130, 246, 0.8)" 
+                        style={{
+                          strokeWidth: 2,
+                          fill: "rgba(59, 130, 246, 0.1)",
+                          filter: "drop-shadow(0 1px 3px rgba(37, 99, 235, 0.4))"
+                        }}
+                      />
+                      <SparklinesSpots 
+                        size={3} 
+                        style={{ 
+                          fill: 'white',
+                          stroke: "rgba(59, 130, 246, 0.8)", 
+                          strokeWidth: 2,
+                        }} 
+                      />
+                    </Sparklines>
+                  </div>
                 </div>
               </div>
             </div>
@@ -829,13 +925,51 @@ export default function TradeCompare() {
                 </div>
                 
                 {/* Sparkline für RR-Trend */}
-                <div className="mt-2 p-1 bg-blue-950/20 rounded-md border border-blue-900/30">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] text-blue-300/60">R/R Trend</span>
+                <div className="mt-2 p-2 bg-gradient-to-r from-blue-950/30 to-blue-900/10 rounded-md border border-blue-800/40 shadow-inner">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] text-blue-300/80 font-medium flex items-center">
+                      <Activity className="w-3 h-3 mr-1 text-blue-400/70" />
+                      R/R Trend
+                    </span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-900/30 text-blue-300/90">
+                      Ø {tradeStats.jasperAvgRR.toFixed(2)}R
+                    </span>
                   </div>
-                  <Sparklines data={tradeStats.jasperRRHistory.length > 0 ? tradeStats.jasperRRHistory : [0,0,0,0,0]} height={20} margin={5}>
-                    <SparklinesLine color="rgba(59, 130, 246, 0.8)" />
-                  </Sparklines>
+                  <div className="bg-blue-950/40 rounded p-1 backdrop-blur-sm relative overflow-hidden">
+                    {/* Referenzlinien für RR */}
+                    <div className="absolute inset-0 flex flex-col">
+                      <div className="h-1/3 w-full border-b border-dashed border-blue-500/20"></div>
+                      <div className="h-1/3 w-full border-b border-dashed border-blue-500/30"></div>
+                    </div>
+                    
+                    {/* 1R Linie */}
+                    <div className="absolute inset-0 flex items-center mt-6">
+                      <div className="w-full border-t border-dashed border-green-500/30 h-0"></div>
+                    </div>
+                    
+                    <Sparklines 
+                      data={tradeStats.jasperRRHistory.length > 0 ? tradeStats.jasperRRHistory : [0,0,0,0,0]} 
+                      height={30} 
+                      margin={5}
+                      min={0}
+                    >
+                      <SparklinesLine 
+                        color="rgba(59, 130, 246, 0.8)" 
+                        style={{
+                          strokeWidth: 2,
+                          filter: "drop-shadow(0 1px 3px rgba(37, 99, 235, 0.4))"
+                        }}
+                      />
+                      <SparklinesSpots 
+                        size={3} 
+                        style={{ 
+                          fill: 'white',
+                          stroke: "rgba(59, 130, 246, 0.8)", 
+                          strokeWidth: 2,
+                        }} 
+                      />
+                    </Sparklines>
+                  </div>
                 </div>
                 
                 {/* Beste/Schlechteste Trades */}
