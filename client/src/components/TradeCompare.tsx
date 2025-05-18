@@ -2494,13 +2494,13 @@ export default function TradeCompare() {
         </CardContent>
       </Card>
       
-      {/* Trade Details - Erscheint als Modal im gleichen Layout wie in Trades-Ansicht */}
+      {/* Trade Details - Erscheint als Modal im EXAKT gleichen Layout wie in Trades-Ansicht */}
       {selectedTrade && (
         <Dialog open={true} onOpenChange={(open) => !open && setSelectedTrade(null)}>
           <DialogContent className="max-w-7xl w-[90vw] max-h-[85vh] overflow-y-auto bg-black/95 border border-primary/30 shadow-xl p-0">
             <DialogTitle className="sr-only">Trade Details</DialogTitle>
             <DialogDescription className="sr-only">
-              Details des ausgewählten Trades
+              Detailansicht eines ausgewählten Trades mit allen Parametern und Eigenschaften.
             </DialogDescription>
             <TradeDetail 
               selectedTrade={selectedTrade} 
