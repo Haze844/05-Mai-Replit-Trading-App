@@ -3,8 +3,7 @@ import { Label } from "@/components/ui/label";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Trade } from '@shared/schema';
-import TradeTable from './TradeTable';
-import FilterBar from './FilterBar';
+import TradeCompareTable from './TradeCompareTable'; // NEUE KLON-TABELLE STATT TRADETABLE
 import TradeDetail from './TradeDetail';
 import { KpiTooltip, ComparisonBadge, SparklineDataTooltip } from './KpiTooltip';
 import { exportComparisonDataToCSV } from '@/lib/exportHelper';
