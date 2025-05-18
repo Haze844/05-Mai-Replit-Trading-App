@@ -548,8 +548,9 @@ export default function TradeCompare() {
 
 // Statistik-Berechnungen für die angezeigten Trades, unterteilt nach Benutzer
   const tradeStats = useMemo(() => {
-    // Verwende die gefilterten Trades für die Statistik-Berechnung
-    const tradesToUse = filteredTrades.length > 0 ? filteredTrades : combinedTrades;
+    // IMMER die gefilterten Trades für die Statistik-Berechnung verwenden
+    const tradesToUse = filteredTrades;
+    console.log(`Statistikberechnung basiert auf ${tradesToUse.length} gefilterten Trades`);
     
     // Gesamt-Statistiken
     const count = tradesToUse.length;
