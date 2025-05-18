@@ -449,6 +449,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // NEUE DEDIZIERTE ROUTE SPEZIELL FÜR TRADE-FEEDBACK
+  app.patch("/api/trades/:id/feedback", async (req: Request, res: Response) => {
+    try {
+      const tradeId = parseInt(req.params.id);
+      const { gptFeedback, userId } = req.body;
+      
+      console.log(`PATCH /api/trades/${tradeId}/feedback - Aktualisiere Feedback für Trade ${tradeId} (User: ${userId})`);
+      
+      if (isNaN(tradeId)) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Ungültige Trade-ID" 
+        });
+      }
+      
+      if (!gptFeedback && gptFeedback !== "") {
+        return res.status(400).json({ 
+          success: false,
+          message: "Feedback-Text ist erforderlich" 
+        });
+      }
+      
+      // Überprüfe ob der Trade existiert
+      const existingTrade = await storage.getTradeById(tradeId);
+      if (!existingTrade) {
+        return res.status(404).json({ 
+          success: false,
+          message: `Trade mit ID ${tradeId} nicht gefunden` 
+        });
+      }
+      
+      // Stellen sicher, dass der richtige Benutzer angegeben ist
+      const tradeUserId = userId || existingTrade.userId;
+      
+      console.log(`Aktualisiere Feedback für Trade ${tradeId} (User: ${tradeUserId}), Text: "${gptFeedback.substring(0, 30)}${gptFeedback.length > 30 ? '...' : ''}"`);
+      
+      // Update nur das Feedback-Feld
+      const updatedTrade = await storage.updateTrade(tradeId, { 
+        gptFeedback,
+        userId: tradeUserId
+      });
+      
+      // Erfolgsmeldung
+      res.status(200).json({
+        success: true,
+        message: "Feedback erfolgreich aktualisiert",
+        data: updatedTrade
+      });
+    } catch (error) {
+      console.error("Fehler beim Aktualisieren des Feedbacks:", error);
+      res.status(500).json({ 
+        success: false,
+        message: errorMessage(error) 
+      });
+    }
+  });
 
   app.put("/api/trades/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {

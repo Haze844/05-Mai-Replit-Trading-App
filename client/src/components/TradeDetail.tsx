@@ -208,20 +208,29 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
     });
   };
   
-  // Mutation für das Speichern des Feedbacks
+  // Mutation für das Speichern des Feedbacks - VERBESSERTE VERSION
   const updateFeedbackMutation = useMutation({
-    mutationFn: async (data: { id: number, gptFeedback: string, userId: number }) => {
+    mutationFn: async (data: { id: number | string, gptFeedback: string, userId: number }) => {
       console.log("Sende Feedback-Update-Request für ID:", data.id);
       
       try {
-        // Verwende apiRequest statt direktem fetch für bessere Session-Verwaltung
-        const response = await apiRequest('PATCH', `/api/trades`, {
-          id: data.id,
-          gptFeedback: data.gptFeedback,
-          userId: data.userId
+        // DIREKTE FETCH-ANFRAGE MIT CREDENTIALS: INCLUDE FÜR SESSION-ERHALT
+        const response = await fetch(`/api/trades/${data.id}/feedback`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            gptFeedback: data.gptFeedback,
+            userId: data.userId
+          }),
+          credentials: 'include'  // ENTSCHEIDEND: Stellt sicher, dass Cookies mitgesendet werden
         });
         
-        // apiRequest wirft bereits bei Fehlern, wir müssen nur die Ergebnisse zurückgeben
+        if (!response.ok) {
+          throw new Error(`Fehler beim Speichern des Feedbacks: ${response.status} ${response.statusText}`);
+        }
+        
         return await response.json();
       } catch (error) {
         console.error("Fehler beim Feedback-Update:", error);
@@ -231,84 +240,120 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
     onSuccess: (data) => {
       console.log("Feedback wurde erfolgreich gespeichert, Antwort vom Server:", data);
       
+      // Sofort alle Anfragen invalidieren
+      queryClient.invalidateQueries();
+      
+      // Sofort nach allen Trades neu fragen
+      queryClient.refetchQueries({ queryKey: ['/api/trades'] });
+      
+      // Beide Benutzer explizit neu laden
+      queryClient.refetchQueries({ queryKey: ['/api/trades', { userId: 1 }] });
+      queryClient.refetchQueries({ queryKey: ['/api/trades', { userId: 2 }] });
+      
+      // Verzögertes zusätzliches Refetch - für potenziell langsame Server-Reaktionen
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ['/api/trades'] });
+      }, 300);
+      
       // Spezielles Update für die Vergleichsansicht
       if (isCompareView && onTradeSelected && selectedTrade) {
-        // Deep copy des aktuellen Trades
-        const updatedTrade = { ...selectedTrade };
-        // Überschreibe das Feedback mit dem gesendeten Wert
-        updatedTrade.gptFeedback = feedbackText;
+        // Deep copy des aktuellen Trades mit aktualisierten Daten
+        const updatedTrade = { 
+          ...selectedTrade,
+          gptFeedback: feedbackText
+        };
         // Benachrichtige die Elternkomponente über den aktualisierten Trade
         onTradeSelected(updatedTrade);
       }
-      
-      // TanStack Query v5-kompatibles Format für Invalidierung
-      queryClient.invalidateQueries();
-      
-      // Verzögertes Refetch, um sicherzustellen, dass alle Daten aktualisiert werden
-      setTimeout(() => {
-        queryClient.refetchQueries({ queryKey: ['/api/trades'] });
-        if (selectedTrade && selectedTrade.userId) {
-          // Gezieltes Refetch für die spezifischen Benutzer-Trades
-          queryClient.refetchQueries({ queryKey: ['/api/trades', { userId: selectedTrade.userId }] });
-        }
-      }, 300);
     }
   });
 
-  // Funktion zum Speichern des Feedbacks
+  // Funktion zum Speichern des Feedbacks - VERBESSERTE VERSION
   const handleSaveFeedback = () => {
     if (!selectedTrade) return;
     
     // Spezialbehandlung für Vergleichsansicht mit IDs im Format "mo-123" oder "jasper-123"
     let tradeId = selectedTrade.id;
+    let originalUserId = selectedTrade.userId || 2;
     
     // Expliziter Debug-Log
     console.log("Speichere Feedback für Trade mit ID:", selectedTrade.id, "vom Typ:", typeof selectedTrade.id);
     
     // Wenn es ein String ist und ein Bindestrich drin ist (Vergleichsansicht)
-    if (typeof selectedTrade.id === 'string' && selectedTrade.id.toString().includes('-')) {
-      // Zuerst versuchen wir die originalId zu nutzen, falls vorhanden
-      if (selectedTrade.originalId) {
-        tradeId = selectedTrade.originalId;
-        console.log("Verwende originalId für API-Request:", tradeId);
-      } else {
-        // Sonst extrahieren wir die Nummer aus dem String
-        const parts = selectedTrade.id.toString().split('-');
-        if (parts.length > 1) {
-          tradeId = parseInt(parts[1]); // Extrahiere die Nummer nach dem Bindestrich
-          console.log("Extrahierte ID aus String:", tradeId);
-        }
+    if (typeof selectedTrade.id === 'string' && selectedTrade.id.includes('-')) {
+      // Für die Vergleichsansicht
+      const parts = selectedTrade.id.toString().split('-');
+      
+      // Der erste Teil ist der Benutzername (mo/jasper)
+      const userPrefix = parts[0];
+      // Leite userId aus dem Präfix ab
+      originalUserId = userPrefix === 'mo' ? 2 : 1;
+      
+      // Der zweite Teil ist die Original-ID
+      if (parts.length > 1) {
+        tradeId = parseInt(parts[1]); // Extrahiere die Nummer nach dem Bindestrich
+        console.log("Extrahierte ID aus String:", tradeId, "für Benutzer-ID:", originalUserId);
       }
+    } else if (selectedTrade.originalId) {
+      // Fallback: Wenn originalId vorhanden ist
+      tradeId = selectedTrade.originalId;
+      console.log("Verwende originalId für API-Request:", tradeId);
     }
     
-    updateFeedbackMutation.mutate({
-      id: tradeId,
-      gptFeedback: feedbackText,
-      userId: selectedTrade.userId || 2
-    }, {
-      onSuccess: () => {
-        toast({
-          title: "Feedback gespeichert",
-          description: "Das Feedback wurde erfolgreich aktualisiert."
-        });
-        setIsEditingFeedback(false);
-        
-        // Wenn wir in der Vergleichsansicht sind, aktualisieren wir auch den Trade im Elternelement
-        if (isCompareView && onTradeSelected && selectedTrade) {
-          const updatedTrade = {
-            ...selectedTrade,
-            gptFeedback: feedbackText
-          };
-          onTradeSelected(updatedTrade);
-        }
+    // Direkte fetch-Anfrage ohne Umwege
+    fetch(`/api/trades/${tradeId}/feedback`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      onError: (error: any) => {
-        toast({
-          title: "Fehler beim Speichern",
-          description: error.message || "Das Feedback konnte nicht gespeichert werden.",
-          variant: "destructive"
-        });
+      body: JSON.stringify({
+        gptFeedback: feedbackText,
+        userId: originalUserId
+      }),
+      credentials: 'include'  // ENTSCHEIDEND: Stellt sicher, dass Cookies mitgesendet werden
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Fehler beim Speichern des Feedbacks: ${response.status} ${response.statusText}`);
       }
+      return response.json();
+    })
+    .then(data => {
+      console.log("Feedback erfolgreich gespeichert:", data);
+      
+      // Erfolgsmeldung anzeigen
+      toast({
+        title: "Feedback gespeichert",
+        description: "Das Feedback wurde erfolgreich aktualisiert."
+      });
+      
+      // Bearbeitungsmodus schließen
+      setIsEditingFeedback(false);
+      
+      // Alle Caches aktualisieren
+      queryClient.invalidateQueries();
+      queryClient.refetchQueries({ queryKey: ['/api/trades'] });
+      
+      // Beide Benutzer-Caches aktualisieren
+      queryClient.refetchQueries({ queryKey: ['/api/trades', { userId: 1 }] });
+      queryClient.refetchQueries({ queryKey: ['/api/trades', { userId: 2 }] });
+      
+      // Wenn wir in der Vergleichsansicht sind, aktualisieren wir auch den Trade im Elternelement
+      if (isCompareView && onTradeSelected && selectedTrade) {
+        const updatedTrade = {
+          ...selectedTrade,
+          gptFeedback: feedbackText
+        };
+        onTradeSelected(updatedTrade);
+      }
+    })
+    .catch(error => {
+      console.error("Fehler beim Speichern des Feedbacks:", error);
+      toast({
+        title: "Fehler beim Speichern",
+        description: error.message || "Das Feedback konnte nicht gespeichert werden.",
+        variant: "destructive"
+      });
     });
   };
 
