@@ -1002,7 +1002,20 @@ export default function TradeCompare() {
                 variant="outline" 
                 size="sm" 
                 className="bg-black/40 hover:bg-black/30 border-primary/30 text-primary/80"
-                onClick={() => exportComparisonData()}
+                onClick={() => exportComparisonDataToCSV({
+                  jasperCount: adminTradeCount,
+                  moCount: moTradeCount,
+                  jasperWins: adminWins,
+                  moWins: moWins,
+                  jasperLosses: adminLosses,
+                  moLosses: moLosses,
+                  jasperWinRate: adminWinRate,
+                  moWinRate: moWinRate,
+                  jasperAvgRR: adminAvgRR,
+                  moAvgRR: moAvgRR,
+                  jasperTotalPL: adminTotalPL,
+                  moTotalPL: moTotalPL
+                })}
               >
                 <FileDown className="h-4 w-4 mr-1" />
                 <span className="text-xs">Export</span>
