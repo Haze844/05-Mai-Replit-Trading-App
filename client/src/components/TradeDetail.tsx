@@ -249,7 +249,19 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Feedback wurde erfolgreich gespeichert, Antwort vom Server:", data);
+      
+      // Spezielles Update für die Vergleichsansicht
+      if (isCompareView && onTradeSelected && selectedTrade) {
+        // Deep copy des aktuellen Trades
+        const updatedTrade = { ...selectedTrade };
+        // Überschreibe das Feedback mit dem gesendeten Wert
+        updatedTrade.gptFeedback = feedbackText;
+        // Benachrichtige die Elternkomponente über den aktualisierten Trade
+        onTradeSelected(updatedTrade);
+      }
+      
       // TanStack Query v5-kompatibles Format für Invalidierung
       queryClient.invalidateQueries();
     }
