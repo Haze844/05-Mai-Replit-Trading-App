@@ -52,11 +52,60 @@ import {
   SparklinesSpots
 } from 'react-sparklines';
 
-// Farben für Benutzerunterscheidung
+// Farben für Benutzerunterscheidung - erweitert für konsistentes Farbschema
 const USER_COLORS = {
   admin: 'bg-blue-500/10', // Jasper-Farbmarkierung
   jasper: 'bg-blue-500/10', // Alternative Namenskonvention
-  mo: 'bg-green-500/10'
+  mo: 'bg-teal-500/10'      // Türkisgrün für Mo (statt grün)
+};
+
+// Farbschemas für visuelles Branding je Nutzer
+const USER_THEME = {
+  // Jasper - Blau/Neonblau-Farbschema
+  jasper: {
+    primary: 'rgba(59, 130, 246, 0.8)',     // Hauptfarbe
+    light: 'rgba(59, 130, 246, 0.3)',       // Hellvariante
+    dark: 'rgba(37, 99, 235, 0.8)',         // Dunkelvariante
+    accent: 'rgba(96, 165, 250, 0.9)',      // Akzentfarbe
+    gradient: {
+      from: 'from-blue-700/50',
+      via: 'via-blue-600/30',
+      to: 'to-blue-500/50'
+    },
+    text: {
+      primary: 'text-blue-300',
+      secondary: 'text-blue-400',
+      muted: 'text-blue-300/60'
+    },
+    border: 'border-blue-500/30',
+    bg: {
+      card: 'bg-gradient-to-br from-black/40 to-blue-950/20',
+      highlight: 'bg-blue-500/10'
+    }
+  },
+  
+  // Mo - Türkisgrün-Farbschema
+  mo: {
+    primary: 'rgba(20, 184, 166, 0.8)',     // Hauptfarbe (Türkisgrün)
+    light: 'rgba(20, 184, 166, 0.3)',       // Hellvariante
+    dark: 'rgba(15, 118, 110, 0.8)',        // Dunkelvariante
+    accent: 'rgba(45, 212, 191, 0.9)',      // Akzentfarbe
+    gradient: {
+      from: 'from-teal-700/50',
+      via: 'via-teal-600/30',
+      to: 'to-teal-500/50'
+    },
+    text: {
+      primary: 'text-teal-300',
+      secondary: 'text-teal-400',
+      muted: 'text-teal-300/60'
+    },
+    border: 'border-teal-500/30',
+    bg: {
+      card: 'bg-gradient-to-br from-black/40 to-teal-950/20',
+      highlight: 'bg-teal-500/10'
+    }
+  }
 };
 
 // Verbesserte Donut-Chart Komponente mit Animation
