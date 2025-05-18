@@ -268,39 +268,46 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
     }
   });
 
-  // Funktion zum Speichern des Feedbacks - VERBESSERTE VERSION
+  // VOLLSTÄNDIG ÜBERARBEITETE FUNKTION ZUM SPEICHERN DES FEEDBACKS
   const handleSaveFeedback = () => {
     if (!selectedTrade) return;
     
-    // Spezialbehandlung für Vergleichsansicht mit IDs im Format "mo-123" oder "jasper-123"
+    // SCHRITT 1: BESTIMME DIE KORREKTE TRADE-ID UND USER-ID
     let tradeId = selectedTrade.id;
-    let originalUserId = selectedTrade.userId || 2;
+    let originalUserId = selectedTrade.userId || 2; // Default: Mo (2)
     
-    // Expliziter Debug-Log
-    console.log("Speichere Feedback für Trade mit ID:", selectedTrade.id, "vom Typ:", typeof selectedTrade.id);
+    console.log("Speichere Feedback für Trade", selectedTrade);
     
-    // Wenn es ein String ist und ein Bindestrich drin ist (Vergleichsansicht)
-    if (typeof selectedTrade.id === 'string' && selectedTrade.id.includes('-')) {
-      // Für die Vergleichsansicht
-      const parts = selectedTrade.id.toString().split('-');
+    // Verarbeitung basierend auf Trade-ID-Format
+    if (typeof selectedTrade.id === 'string') {
+      // FALL 1: Wenn die ID ein String ist (Format "mo-123" oder "jasper-123")
+      console.log("String-ID erkannt:", selectedTrade.id);
       
-      // Der erste Teil ist der Benutzername (mo/jasper)
-      const userPrefix = parts[0];
-      // Leite userId aus dem Präfix ab
-      originalUserId = userPrefix === 'mo' ? 2 : 1;
-      
-      // Der zweite Teil ist die Original-ID
-      if (parts.length > 1) {
-        tradeId = parseInt(parts[1]); // Extrahiere die Nummer nach dem Bindestrich
-        console.log("Extrahierte ID aus String:", tradeId, "für Benutzer-ID:", originalUserId);
+      if (selectedTrade.id.includes('-')) {
+        const parts = selectedTrade.id.split('-');
+        const userPrefix = parts[0].toLowerCase();
+        
+        // Bestimme die korrekte User-ID aus dem Präfix
+        originalUserId = userPrefix === 'mo' ? 2 : 1;
+        
+        // Extrahiere die numerische ID
+        if (parts.length > 1) {
+          tradeId = parseInt(parts[1], 10);
+          console.log(`ID '${selectedTrade.id}' verarbeitet zu: tradeId=${tradeId}, userId=${originalUserId}`);
+        }
       }
-    } else if (selectedTrade.originalId) {
-      // Fallback: Wenn originalId vorhanden ist
+    } else if (typeof selectedTrade.originalId !== 'undefined') {
+      // FALL 2: Wenn die Original-ID explizit vorhanden ist
       tradeId = selectedTrade.originalId;
-      console.log("Verwende originalId für API-Request:", tradeId);
+      console.log("Verwende explizite originalId:", tradeId);
     }
     
-    // Direkte fetch-Anfrage ohne Umwege
+    console.log(`Endgültige Parameter für Feedback-Update: tradeId=${tradeId}, userId=${originalUserId}`);
+    
+    // SCHRITT 2: SENDE DIE AKTUALISIERUNGSANFRAGE
+    console.log(`Sende PATCH-Anfrage an: /api/trades/${tradeId}/feedback`);
+    
+    // Direkte Fetch-Anfrage mit explizitem credentials: include
     fetch(`/api/trades/${tradeId}/feedback`, {
       method: 'PATCH',
       headers: {
@@ -310,16 +317,18 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
         gptFeedback: feedbackText,
         userId: originalUserId
       }),
-      credentials: 'include'  // ENTSCHEIDEND: Stellt sicher, dass Cookies mitgesendet werden
+      credentials: 'include'  // WICHTIG: Stellt sicher, dass Session-Cookies mitgesendet werden
     })
     .then(response => {
       if (!response.ok) {
-        throw new Error(`Fehler beim Speichern des Feedbacks: ${response.status} ${response.statusText}`);
+        throw new Error(`Fehler: ${response.status} ${response.statusText}`);
       }
       return response.json();
     })
     .then(data => {
-      console.log("Feedback erfolgreich gespeichert:", data);
+      console.log("✅ Feedback erfolgreich gespeichert:", data);
+      
+      // SCHRITT 3: UI-FEEDBACK UND CACHE-AKTUALISIERUNG
       
       // Erfolgsmeldung anzeigen
       toast({
@@ -327,28 +336,46 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
         description: "Das Feedback wurde erfolgreich aktualisiert."
       });
       
-      // Bearbeitungsmodus schließen
+      // Bearbeitungsmodus deaktivieren
       setIsEditingFeedback(false);
       
-      // Alle Caches aktualisieren
+      // KRITISCH: Sofortige Cache-Aktualisierungen
+      // 1. Alle Caches invalidieren
       queryClient.invalidateQueries();
+      
+      // 2. Sofort alle Trades neu laden
       queryClient.refetchQueries({ queryKey: ['/api/trades'] });
       
-      // Beide Benutzer-Caches aktualisieren
+      // 3. Gezielt beide Benutzer-Caches aktualisieren
       queryClient.refetchQueries({ queryKey: ['/api/trades', { userId: 1 }] });
       queryClient.refetchQueries({ queryKey: ['/api/trades', { userId: 2 }] });
       
-      // Wenn wir in der Vergleichsansicht sind, aktualisieren wir auch den Trade im Elternelement
+      // 4. Erneute Aktualisierung nach einer kurzen Verzögerung
+      setTimeout(() => {
+        console.log("Erneutes Laden aller Trades nach Feedback-Update");
+        queryClient.refetchQueries({ queryKey: ['/api/trades'] });
+        queryClient.refetchQueries({ queryKey: ['/api/trades', { userId: 1 }] });
+        queryClient.refetchQueries({ queryKey: ['/api/trades', { userId: 2 }] });
+      }, 300);
+      
+      // SCHRITT 4: SPEZIELLES UPDATE FÜR VERGLEICHSANSICHT
       if (isCompareView && onTradeSelected && selectedTrade) {
+        // Aktualisiere den lokalen Trade in der übergeordneten Komponente
         const updatedTrade = {
           ...selectedTrade,
           gptFeedback: feedbackText
         };
+        
+        console.log("Aktualisiere Trade in Vergleichsansicht:", updatedTrade);
+        
+        // Benachrichtige die Elternkomponente (TradeCompare)
         onTradeSelected(updatedTrade);
       }
     })
     .catch(error => {
-      console.error("Fehler beim Speichern des Feedbacks:", error);
+      console.error("❌ Fehler beim Speichern des Feedbacks:", error);
+      
+      // Fehlermeldung anzeigen
       toast({
         title: "Fehler beim Speichern",
         description: error.message || "Das Feedback konnte nicht gespeichert werden.",
