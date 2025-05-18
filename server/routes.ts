@@ -400,6 +400,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PATCH-Route speziell für Feedback-Updates ohne ID in der URL
+  app.patch("/api/trades", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { id, gptFeedback, userId } = req.body;
+      
+      if (!id) {
+        return res.status(400).json({ message: "Trade ID is required" });
+      }
+      
+      // Konvertiere String-IDs (z.B. "mo-77") in numerische IDs
+      let tradeId = id;
+      if (typeof id === 'string' && id.includes('-')) {
+        const parts = id.split('-');
+        if (parts.length > 1) {
+          tradeId = parseInt(parts[1], 10);
+          console.log(`Vergleichsansicht: ID '${id}' zu numerischer ID ${tradeId} konvertiert`);
+        }
+      }
+      
+      // Überprüfe ob der Trade existiert
+      const existingTrade = await storage.getTradeById(tradeId);
+      if (!existingTrade) {
+        return res.status(404).json({ message: `Trade mit ID ${tradeId} nicht gefunden` });
+      }
+      
+      console.log(`Aktualisiere Feedback für Trade ${tradeId} (userId: ${userId})`);
+      
+      // Update nur das Feedback-Feld
+      const updatedTrade = await storage.updateTrade(tradeId, { 
+        gptFeedback,
+        userId
+      });
+      
+      return res.status(200).json(updatedTrade);
+    } catch (error) {
+      console.error("Fehler beim Aktualisieren des Feedbacks:", error);
+      res.status(500).json({ message: errorMessage(error) });
+    }
+  });
+
   app.put("/api/trades/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const tradeId = Number(req.params.id);
