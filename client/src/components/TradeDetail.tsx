@@ -25,7 +25,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Pencil, Save, X, MessageSquare } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Pencil, Save, X, MessageSquare, Edit } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -43,6 +44,8 @@ export default function TradeDetail({ selectedTrade }: TradeDetailProps) {
   const { toast } = useToast();
   const [editMode, setEditMode] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const [isEditingFeedback, setIsEditingFeedback] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
   
   // Status für die bearbeiteten Felder, wird nur initialisiert, wenn selectedTrade sich ändert oder Edit-Modus gestartet wird
   const [editData, setEditData] = useState<Partial<Trade>>({});
@@ -200,6 +203,46 @@ export default function TradeDetail({ selectedTrade }: TradeDetailProps) {
       id: selectedTrade.id,
       chartImage: base64Image,
       userId: selectedTrade.userId || 2 // Wichtig: userId hinzufügen, Fallback auf 2 (Mo) falls nicht gesetzt
+    });
+  };
+  
+  // Mutation für das Speichern des Feedbacks
+  const updateFeedbackMutation = useMutation({
+    mutationFn: async (data: { id: number, gptFeedback: string, userId: number }) => {
+      const response = await apiRequest("PATCH", `/api/trades/${data.id}`, data);
+      if (!response.ok) {
+        throw new Error("Fehler beim Speichern des Feedbacks");
+      }
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['/api/trades']);
+    }
+  });
+
+  // Funktion zum Speichern des Feedbacks
+  const handleSaveFeedback = () => {
+    if (!selectedTrade) return;
+    
+    updateFeedbackMutation.mutate({
+      id: selectedTrade.id,
+      gptFeedback: feedbackText,
+      userId: selectedTrade.userId || 2
+    }, {
+      onSuccess: () => {
+        toast({
+          title: "Feedback gespeichert",
+          description: "Das Feedback wurde erfolgreich aktualisiert."
+        });
+        setIsEditingFeedback(false);
+      },
+      onError: (error: any) => {
+        toast({
+          title: "Fehler beim Speichern",
+          description: error.message || "Das Feedback konnte nicht gespeichert werden.",
+          variant: "destructive"
+        });
+      }
     });
   };
 
@@ -764,10 +807,70 @@ export default function TradeDetail({ selectedTrade }: TradeDetailProps) {
           </div>
 
           <div className="mb-4">
-            <div className="text-sm text-muted-foreground mb-2">GPT Feedback</div>
-            <div className="bg-muted p-3 rounded-lg text-sm">
-              {selectedTrade.gptFeedback || "Kein Feedback verfügbar."}
+            <div className="flex justify-between items-center mb-2">
+              <div className="text-sm font-medium text-muted-foreground">Trade Feedback</div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 text-xs px-2 hover:bg-primary/10" 
+                onClick={() => selectedTrade && setIsEditingFeedback(!isEditingFeedback)}
+              >
+                {isEditingFeedback ? 'Abbrechen' : 'Bearbeiten'}
+              </Button>
             </div>
+            
+            {isEditingFeedback ? (
+              <div className="space-y-2">
+                <Textarea
+                  placeholder="Geben Sie hier Ihr Feedback zum Trade ein..."
+                  className="min-h-[100px] text-sm"
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={() => {
+                      setIsEditingFeedback(false);
+                      if (selectedTrade) {
+                        setFeedbackText(selectedTrade.gptFeedback || "");
+                      }
+                    }}
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={handleSaveFeedback}
+                  >
+                    Speichern
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-muted p-3 rounded-lg text-sm relative group">
+                {selectedTrade?.gptFeedback || "Kein Feedback verfügbar."}
+                <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-6 w-6"
+                    onClick={() => {
+                      if (selectedTrade) {
+                        setIsEditingFeedback(true);
+                        setFeedbackText(selectedTrade.gptFeedback || "");
+                      }
+                    }}
+                  >
+                    <Edit className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
           
           {/* TradingView Chart Upload */}
