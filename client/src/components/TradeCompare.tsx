@@ -1059,18 +1059,18 @@ export default function TradeCompare() {
                 size="sm" 
                 className="bg-black/40 hover:bg-black/30 border-primary/30 text-primary/80"
                 onClick={() => exportComparisonDataToCSV({
-                  jasperCount: adminTradeCount,
-                  moCount: moTradeCount,
-                  jasperWins: adminWins,
-                  moWins: moWins,
-                  jasperLosses: adminLosses,
-                  moLosses: moLosses,
-                  jasperWinRate: adminWinRate,
-                  moWinRate: moWinRate,
-                  jasperAvgRR: adminAvgRR,
-                  moAvgRR: moAvgRR,
-                  jasperTotalPL: adminTotalPL,
-                  moTotalPL: moTotalPL
+                  jasperCount: tradeStats.jasperCount,
+                  moCount: tradeStats.moCount,
+                  jasperWins: tradeStats.jasperWins,
+                  moWins: tradeStats.moWins,
+                  jasperLosses: tradeStats.jasperLosses,
+                  moLosses: tradeStats.moLosses,
+                  jasperWinRate: tradeStats.jasperWinRate,
+                  moWinRate: tradeStats.moWinRate,
+                  jasperAvgRR: tradeStats.jasperAvgRR,
+                  moAvgRR: tradeStats.moAvgRR,
+                  jasperTotalPL: tradeStats.jasperTotalPL,
+                  moTotalPL: tradeStats.moTotalPL
                 })}
               >
                 <FileDown className="h-4 w-4 mr-1" />
@@ -1239,6 +1239,17 @@ export default function TradeCompare() {
         <div className="mb-5 rounded-lg bg-gradient-to-r from-blue-950/10 via-gray-950/10 to-green-950/10 border border-gray-800/40 p-3">
           <h3 className="text-sm font-semibold text-center mb-2.5 text-gray-300">Head-to-Head Vergleich</h3>
           
+          {/* Warnmeldung bei fehlenden Daten */}
+          {(tradeStats.jasperCount === 0 || tradeStats.moCount === 0) && (
+            <div className="text-amber-400 text-xs text-center p-2 mb-2 bg-amber-900/20 border border-amber-500/20 rounded-md">
+              {tradeStats.jasperCount === 0 && tradeStats.moCount === 0 
+                ? "Keine Daten für beide Benutzer verfügbar. Bitte importiere Trades für beide Benutzer."
+                : tradeStats.jasperCount === 0 
+                  ? "Keine Daten für Jasper verfügbar. Die Vergleiche zeigen nur Mos Werte an."
+                  : "Keine Daten für Mo verfügbar. Die Vergleiche zeigen nur Jaspers Werte an."}
+            </div>
+          )}
+          
           <div className="grid grid-cols-3 gap-2">
             {/* Win Rate Vergleich */}
             <div className="bg-black/20 rounded-lg border border-gray-800/40 p-2 flex flex-col items-center">
@@ -1246,43 +1257,51 @@ export default function TradeCompare() {
               <div className="flex items-center justify-between w-full px-2 mb-2">
                 <KpiTooltip
                   title="Win-Rate Vergleich"
-                  jasperValue={tradeStats.jasperWinRate.toFixed(0) + "%"}
-                  moValue={tradeStats.moWinRate.toFixed(0) + "%"}
+                  jasperValue={tradeStats.jasperCount > 0 ? tradeStats.jasperWinRate.toFixed(0) + "%" : "Keine Daten"}
+                  moValue={tradeStats.moCount > 0 ? tradeStats.moWinRate.toFixed(0) + "%" : "Keine Daten"}
                   unit="%"
                 >
                   <div className="flex items-center cursor-help">
                     <div className="h-5 w-2 bg-blue-500/40 rounded-full mr-2"></div>
-                    <span className="text-xs font-bold text-blue-400">{tradeStats.jasperWinRate.toFixed(0)}%</span>
+                    <span className="text-xs font-bold text-blue-400">
+                      {tradeStats.jasperCount > 0 ? tradeStats.jasperWinRate.toFixed(0) + "%" : "-"}
+                    </span>
                   </div>
                 </KpiTooltip>
                 <KpiTooltip
                   title="Win-Rate Vergleich"
-                  jasperValue={tradeStats.jasperWinRate.toFixed(0) + "%"}
-                  moValue={tradeStats.moWinRate.toFixed(0) + "%"}
+                  jasperValue={tradeStats.jasperCount > 0 ? tradeStats.jasperWinRate.toFixed(0) + "%" : "Keine Daten"}
+                  moValue={tradeStats.moCount > 0 ? tradeStats.moWinRate.toFixed(0) + "%" : "Keine Daten"}
                   unit="%"
                 >
                   <div className="flex items-center cursor-help">
-                    <span className="text-xs font-bold text-green-400">{tradeStats.moWinRate.toFixed(0)}%</span>
+                    <span className="text-xs font-bold text-green-400">
+                      {tradeStats.moCount > 0 ? tradeStats.moWinRate.toFixed(0) + "%" : "-"}
+                    </span>
                     <div className="h-5 w-2 bg-green-500/40 rounded-full ml-2"></div>
                   </div>
                 </KpiTooltip>
               </div>
-              <div className="flex items-center gap-1.5">
-                <KpiTooltip
-                  title="Win-Rate Vergleich" 
-                  jasperValue={tradeStats.jasperWinRate.toFixed(1) + "%"} 
-                  moValue={tradeStats.moWinRate.toFixed(1) + "%"}
-                  unit="%"
-                >
-                  <span className={`text-[9px] cursor-help hover:underline ${Math.abs(tradeStats.winRateDiff) < 1 ? 'text-gray-400' : tradeStats.winRateDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
-                    {tradeStats.winRateLeader === 'Gleichstand' ? 'Gleichstand' : 
-                    `${tradeStats.winRateLeader} +${Math.abs(tradeStats.winRateDiff).toFixed(1)}%`}
-                  </span>
-                </KpiTooltip>
-                {Math.abs(tradeStats.winRateDiff) >= 10 && (
-                  <BadgeCheck className={`h-3 w-3 ${tradeStats.winRateDiff > 0 ? 'text-blue-300' : 'text-green-300'}`} />
-                )}
-              </div>
+              {tradeStats.jasperCount > 0 && tradeStats.moCount > 0 ? (
+                <div className="flex items-center gap-1.5">
+                  <KpiTooltip
+                    title="Win-Rate Vergleich" 
+                    jasperValue={tradeStats.jasperWinRate.toFixed(1) + "%"} 
+                    moValue={tradeStats.moWinRate.toFixed(1) + "%"}
+                    unit="%"
+                  >
+                    <span className={`text-[9px] cursor-help hover:underline ${Math.abs(tradeStats.winRateDiff) < 1 ? 'text-gray-400' : tradeStats.winRateDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
+                      {tradeStats.winRateLeader === 'Gleichstand' ? 'Gleichstand' : 
+                      `${tradeStats.winRateLeader} +${Math.abs(tradeStats.winRateDiff).toFixed(1)}%`}
+                    </span>
+                  </KpiTooltip>
+                  {Math.abs(tradeStats.winRateDiff) >= 10 && (
+                    <BadgeCheck className={`h-3 w-3 ${tradeStats.winRateDiff > 0 ? 'text-blue-300' : 'text-green-300'}`} />
+                  )}
+                </div>
+              ) : (
+                <div className="text-[9px] text-gray-500 italic">Vergleich nicht möglich</div>
+              )}
             </div>
             
             {/* P/L Vergleich */}
@@ -1291,43 +1310,51 @@ export default function TradeCompare() {
               <div className="flex items-center justify-between w-full px-2 mb-2">
                 <KpiTooltip
                   title="Gesamtgewinn/-verlust" 
-                  jasperValue={tradeStats.jasperTotalPL.toFixed(0)} 
-                  moValue={tradeStats.moTotalPL.toFixed(0)}
+                  jasperValue={tradeStats.jasperCount > 0 ? "$" + tradeStats.jasperTotalPL.toFixed(0) : "Keine Daten"} 
+                  moValue={tradeStats.moCount > 0 ? "$" + tradeStats.moTotalPL.toFixed(0) : "Keine Daten"}
                   unit="$"
                 >
                   <div className="flex items-center cursor-help">
                     <div className="h-5 w-2 bg-blue-500/40 rounded-full mr-2"></div>
-                    <span className="text-xs font-bold text-blue-400">${tradeStats.jasperTotalPL.toFixed(0)}</span>
+                    <span className="text-xs font-bold text-blue-400">
+                      {tradeStats.jasperCount > 0 ? "$" + tradeStats.jasperTotalPL.toFixed(0) : "-"}
+                    </span>
                   </div>
                 </KpiTooltip>
                 <KpiTooltip
                   title="Gesamtgewinn/-verlust" 
-                  jasperValue={tradeStats.jasperTotalPL.toFixed(0)} 
-                  moValue={tradeStats.moTotalPL.toFixed(0)}
+                  jasperValue={tradeStats.jasperCount > 0 ? "$" + tradeStats.jasperTotalPL.toFixed(0) : "Keine Daten"} 
+                  moValue={tradeStats.moCount > 0 ? "$" + tradeStats.moTotalPL.toFixed(0) : "Keine Daten"}
                   unit="$"
                 >
                   <div className="flex items-center cursor-help">
-                    <span className="text-xs font-bold text-green-400">${tradeStats.moTotalPL.toFixed(0)}</span>
+                    <span className="text-xs font-bold text-green-400">
+                      {tradeStats.moCount > 0 ? "$" + tradeStats.moTotalPL.toFixed(0) : "-"}
+                    </span>
                     <div className="h-5 w-2 bg-green-500/40 rounded-full ml-2"></div>
                   </div>
                 </KpiTooltip>
               </div>
-              <div className="flex items-center gap-1.5">
-                <KpiTooltip
-                  title="Gesamtgewinn/-verlust" 
-                  jasperValue={tradeStats.jasperTotalPL.toFixed(0)} 
-                  moValue={tradeStats.moTotalPL.toFixed(0)}
-                  unit="$"
-                >
-                  <span className={`text-[9px] cursor-help hover:underline ${Math.abs(tradeStats.plDiff) < 10 ? 'text-gray-400' : tradeStats.plDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
-                    {tradeStats.plLeader === 'Gleichstand' ? 'Gleichstand' : 
-                    `${tradeStats.plLeader} +$${Math.abs(tradeStats.plDiff).toFixed(0)}`}
-                  </span>
-                </KpiTooltip>
-                {Math.abs(tradeStats.plDiff) >= 500 && (
-                  <BadgeCheck className={`h-3 w-3 ${tradeStats.plDiff > 0 ? 'text-blue-300' : 'text-green-300'}`} />
-                )}
-              </div>
+              {tradeStats.jasperCount > 0 && tradeStats.moCount > 0 ? (
+                <div className="flex items-center gap-1.5">
+                  <KpiTooltip
+                    title="Gesamtgewinn/-verlust" 
+                    jasperValue={tradeStats.jasperTotalPL.toFixed(0)} 
+                    moValue={tradeStats.moTotalPL.toFixed(0)}
+                    unit="$"
+                  >
+                    <span className={`text-[9px] cursor-help hover:underline ${Math.abs(tradeStats.plDiff) < 10 ? 'text-gray-400' : tradeStats.plDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
+                      {tradeStats.plLeader === 'Gleichstand' ? 'Gleichstand' : 
+                      `${tradeStats.plLeader} +$${Math.abs(tradeStats.plDiff).toFixed(0)}`}
+                    </span>
+                  </KpiTooltip>
+                  {Math.abs(tradeStats.plDiff) >= 500 && (
+                    <BadgeCheck className={`h-3 w-3 ${tradeStats.plDiff > 0 ? 'text-blue-300' : 'text-green-300'}`} />
+                  )}
+                </div>
+              ) : (
+                <div className="text-[9px] text-gray-500 italic">Vergleich nicht möglich</div>
+              )}
             </div>
             
             {/* RR Vergleich */}
@@ -1336,43 +1363,51 @@ export default function TradeCompare() {
               <div className="flex items-center justify-between w-full px-2 mb-2">
                 <KpiTooltip
                   title="Risk/Reward Verhältnis" 
-                  jasperValue={tradeStats.jasperAvgRR.toFixed(2)} 
-                  moValue={tradeStats.moAvgRR.toFixed(2)}
+                  jasperValue={tradeStats.jasperCount > 0 ? tradeStats.jasperAvgRR.toFixed(2) + "R" : "Keine Daten"} 
+                  moValue={tradeStats.moCount > 0 ? tradeStats.moAvgRR.toFixed(2) + "R" : "Keine Daten"}
                   unit="R"
                 >
                   <div className="flex items-center cursor-help">
                     <div className="h-5 w-2 bg-blue-500/40 rounded-full mr-2"></div>
-                    <span className="text-xs font-bold text-blue-400">{tradeStats.jasperAvgRR.toFixed(2)}R</span>
+                    <span className="text-xs font-bold text-blue-400">
+                      {tradeStats.jasperCount > 0 ? tradeStats.jasperAvgRR.toFixed(2) + "R" : "-"}
+                    </span>
                   </div>
                 </KpiTooltip>
                 <KpiTooltip
                   title="Risk/Reward Verhältnis" 
-                  jasperValue={tradeStats.jasperAvgRR.toFixed(2)} 
-                  moValue={tradeStats.moAvgRR.toFixed(2)}
+                  jasperValue={tradeStats.jasperCount > 0 ? tradeStats.jasperAvgRR.toFixed(2) + "R" : "Keine Daten"} 
+                  moValue={tradeStats.moCount > 0 ? tradeStats.moAvgRR.toFixed(2) + "R" : "Keine Daten"}
                   unit="R"
                 >
                   <div className="flex items-center cursor-help">
-                    <span className="text-xs font-bold text-green-400">{tradeStats.moAvgRR.toFixed(2)}R</span>
+                    <span className="text-xs font-bold text-green-400">
+                      {tradeStats.moCount > 0 ? tradeStats.moAvgRR.toFixed(2) + "R" : "-"}
+                    </span>
                     <div className="h-5 w-2 bg-green-500/40 rounded-full ml-2"></div>
                   </div>
                 </KpiTooltip>
               </div>
-              <div className="flex items-center gap-1.5">
-                <KpiTooltip
-                  title="Risk/Reward Verhältnis" 
-                  jasperValue={tradeStats.jasperAvgRR.toFixed(2)} 
-                  moValue={tradeStats.moAvgRR.toFixed(2)}
-                  unit="R"
-                >
-                  <span className={`text-[9px] cursor-help hover:underline ${Math.abs(tradeStats.rrDiff) < 0.1 ? 'text-gray-400' : tradeStats.rrDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
-                    {tradeStats.rrLeader === 'Gleichstand' ? 'Gleichstand' : 
-                    `${tradeStats.rrLeader} +${Math.abs(tradeStats.rrDiff).toFixed(2)}R`}
-                  </span>
-                </KpiTooltip>
-                {Math.abs(tradeStats.rrDiff) >= 0.5 && (
-                  <BadgeCheck className={`h-3 w-3 ${tradeStats.rrDiff > 0 ? 'text-blue-300' : 'text-green-300'}`} />
-                )}
-              </div>
+              {tradeStats.jasperCount > 0 && tradeStats.moCount > 0 ? (
+                <div className="flex items-center gap-1.5">
+                  <KpiTooltip
+                    title="Risk/Reward Verhältnis" 
+                    jasperValue={tradeStats.jasperAvgRR.toFixed(2)} 
+                    moValue={tradeStats.moAvgRR.toFixed(2)}
+                    unit="R"
+                  >
+                    <span className={`text-[9px] cursor-help hover:underline ${Math.abs(tradeStats.rrDiff) < 0.1 ? 'text-gray-400' : tradeStats.rrDiff > 0 ? 'text-blue-400' : 'text-green-400'}`}>
+                      {tradeStats.rrLeader === 'Gleichstand' ? 'Gleichstand' : 
+                      `${tradeStats.rrLeader} +${Math.abs(tradeStats.rrDiff).toFixed(2)}R`}
+                    </span>
+                  </KpiTooltip>
+                  {Math.abs(tradeStats.rrDiff) >= 0.5 && (
+                    <BadgeCheck className={`h-3 w-3 ${tradeStats.rrDiff > 0 ? 'text-blue-300' : 'text-green-300'}`} />
+                  )}
+                </div>
+              ) : (
+                <div className="text-[9px] text-gray-500 italic">Vergleich nicht möglich</div>
+              )}
             </div>
           </div>
         </div>
