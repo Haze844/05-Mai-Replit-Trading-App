@@ -2482,6 +2482,10 @@ export default function TradeCompare() {
                   // Nur aktualisieren, wenn Filter sich tatsächlich geändert haben
                   if (JSON.stringify(filters) !== JSON.stringify(activeFilters)) {
                     setActiveFilters(filters);
+                    // Cache neu laden und aktualisieren
+                    setTimeout(() => {
+                      queryClient.refetchQueries({ queryKey: ['/api/trades'] });
+                    }, 100);
                   }
                 }}
               />
