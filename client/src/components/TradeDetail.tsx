@@ -46,6 +46,29 @@ export default function TradeDetail({ selectedTrade }: TradeDetailProps) {
   // Status für die bearbeiteten Felder, wird nur initialisiert, wenn selectedTrade sich ändert oder Edit-Modus gestartet wird
   const [editData, setEditData] = useState<Partial<Trade>>({});
   
+  // Editing-States für alle editierbaren Felder
+  const [editingSetup, setEditingSetup] = useState<string>('');
+  const [editingEntryLevel, setEditingEntryLevel] = useState<string>('');
+  const [editingTrend, setEditingTrend] = useState<string>('');
+  const [editingInternalTrendNew, setEditingInternalTrendNew] = useState<string>('');
+  const [editingMicroTrend, setEditingMicroTrend] = useState<string>('');
+  const [editingMainTrend, setEditingMainTrend] = useState<string>('');
+  const [editingInternalTrend, setEditingInternalTrend] = useState<string>('');
+  const [editingLocation, setEditingLocation] = useState<string>('');
+  const [editingStructure, setEditingStructure] = useState<string>('');
+  const [editingLiquidation, setEditingLiquidation] = useState<string>('');
+  const [editingTimeframeEntry, setEditingTimeframeEntry] = useState<string>('');
+  const [editingMarketPhase, setEditingMarketPhase] = useState<string>('');
+  const [editingUnmitZone, setEditingUnmitZone] = useState<string>('');
+  const [editingRangePoints, setEditingRangePoints] = useState<number | undefined>(undefined);
+  const [editingRRAchieved, setEditingRRAchieved] = useState<number | undefined>(undefined);
+  const [editingRRPotential, setEditingRRPotential] = useState<number | undefined>(undefined);
+  const [editingSlType, setEditingSlType] = useState<string>('');
+  const [editingSlPoints, setEditingSlPoints] = useState<number | undefined>(undefined);
+  
+  // Referenz für das geöffnete Select-Menü - muss an einer Stelle definiert werden
+  const [menuOpen, setMenuOpen] = useState(false);
+  
   // Helfer-Funktion zum Aktualisieren einzelner Felder
   const updateField = (field: string, value: any) => {
     setEditData(prev => ({ ...prev, [field]: value }));
@@ -180,9 +203,6 @@ export default function TradeDetail({ selectedTrade }: TradeDetailProps) {
   };
 
   // Funktion entfernt, da wir jetzt BadgeTrend verwenden
-  
-  // Referenz für das geöffnete Select-Menü
-  const [menuOpen, setMenuOpen] = useState(false);
   
   // Funktion zum automatischen Speichern und Beenden des Bearbeitungsmodus
   const autoSave = () => {
