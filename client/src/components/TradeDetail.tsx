@@ -227,14 +227,15 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
         
         console.log("Sende Request mit Body:", requestBody);
         
-        // Eigener Fetch mit expliziten Headers
+        // Eigener Fetch mit expliziten Headers und 'credentials: include' zum Erhalten der Session
         const response = await fetch(url, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
-          body: requestBody
+          body: requestBody,
+          credentials: 'include' // Wichtig: Session-Cookies mitsenden, verhindert Ausloggen
         });
         
         if (!response.ok) {
@@ -264,6 +265,15 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
       
       // TanStack Query v5-kompatibles Format für Invalidierung
       queryClient.invalidateQueries();
+      
+      // Verzögertes Refetch, um sicherzustellen, dass alle Daten aktualisiert werden
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ['/api/trades'] });
+        if (selectedTrade && selectedTrade.userId) {
+          // Gezieltes Refetch für die spezifischen Benutzer-Trades
+          queryClient.refetchQueries({ queryKey: ['/api/trades', { userId: selectedTrade.userId }] });
+        }
+      }, 300);
     }
   });
 
