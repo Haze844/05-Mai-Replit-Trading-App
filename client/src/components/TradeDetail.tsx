@@ -19,12 +19,13 @@ import { BadgeTrend } from "@/components/ui/badge-trend";
 import { formatDate } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import ChartImageUpload from "./ChartImageUpload";
+import TradeNotes from "./TradeNotes";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Pencil, Save, X } from "lucide-react";
+import { Pencil, Save, X, MessageSquare } from "lucide-react";
 import {
   Select,
   SelectContent,
