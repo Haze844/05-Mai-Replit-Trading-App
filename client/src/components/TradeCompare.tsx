@@ -814,10 +814,9 @@ export default function TradeCompare() {
     console.log("TradeCompare - Neue Filter empfangen:", newFilters);
     setActiveFilters(newFilters);
     
-    // Erzwinge ein Neuladen der Daten mit neuen Filtern
+    // Erzwinge ein Neuladen der Daten durch Invalidierung des Caches
     // Dies ist wichtig, damit die Filter korrekt auf die API-Anfragen angewendet werden
-    jasperTradesQuery.refetch();
-    moTradesQuery.refetch();
+    queryClient.invalidateQueries();
     
     // Hier zusätzlich die Trades filtern, basierend auf den neuen Filtern
     if (combinedTrades.length > 0) {

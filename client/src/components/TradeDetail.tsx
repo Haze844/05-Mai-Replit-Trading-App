@@ -211,9 +211,18 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
   // Mutation für das Speichern des Feedbacks
   const updateFeedbackMutation = useMutation({
     mutationFn: async (data: { id: number, gptFeedback: string, userId: number }) => {
-      const response = await apiRequest("PATCH", `/api/trades/${data.id}`, data);
+      console.log("Sende Feedback-Update-Request für ID:", data.id);
+      
+      // Direkte Verwendung der API ohne ID in der URL-Pfad, stattdessen im Body
+      const response = await apiRequest("PATCH", `/api/trades`, {
+        id: data.id,  // ID im Body übergeben
+        gptFeedback: data.gptFeedback,
+        userId: data.userId
+      });
+      
       if (!response.ok) {
-        throw new Error("Fehler beim Speichern des Feedbacks");
+        const errorText = await response.text();
+        throw new Error(`Fehler beim Speichern des Feedbacks: ${errorText}`);
       }
       return await response.json();
     },
@@ -229,10 +238,23 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
     
     // Spezialbehandlung für Vergleichsansicht mit IDs im Format "mo-123" oder "jasper-123"
     let tradeId = selectedTrade.id;
-    if (isCompareView && typeof selectedTrade.id === 'string') {
-      const parts = String(selectedTrade.id).split('-');
-      if (parts.length > 1) {
-        tradeId = parseInt(parts[1]); // Extrahiere die Nummer nach dem Bindestrich
+    
+    // Expliziter Debug-Log
+    console.log("Speichere Feedback für Trade mit ID:", selectedTrade.id, "vom Typ:", typeof selectedTrade.id);
+    
+    // Wenn es ein String ist und ein Bindestrich drin ist (Vergleichsansicht)
+    if (typeof selectedTrade.id === 'string' && selectedTrade.id.includes('-')) {
+      // Zuerst versuchen wir die originalId zu nutzen, falls vorhanden
+      if (selectedTrade.originalId) {
+        tradeId = selectedTrade.originalId;
+        console.log("Verwende originalId für API-Request:", tradeId);
+      } else {
+        // Sonst extrahieren wir die Nummer aus dem String
+        const parts = selectedTrade.id.split('-');
+        if (parts.length > 1) {
+          tradeId = parseInt(parts[1]); // Extrahiere die Nummer nach dem Bindestrich
+          console.log("Extrahierte ID aus String:", tradeId);
+        }
       }
     }
     
