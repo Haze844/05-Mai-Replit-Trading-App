@@ -216,7 +216,8 @@ export default function TradeDetail({ selectedTrade }: TradeDetailProps) {
       return await response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['/api/trades']);
+      // TanStack Query v5-kompatibles Format für Invalidierung
+      queryClient.invalidateQueries();
     }
   });
 
