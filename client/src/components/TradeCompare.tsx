@@ -6,6 +6,8 @@ import { Trade } from '@shared/schema';
 import TradeTable from './TradeTable';
 import FilterBar from './FilterBar';
 import TradeDetail from './TradeDetail';
+import { KpiTooltip, ComparisonBadge } from './KpiTooltip';
+import { exportComparisonDataToCSV } from '@/lib/exportHelper';
 import { 
   Dialog, 
   DialogContent, 
@@ -872,13 +874,40 @@ export default function TradeCompare() {
                   {tradeStats && tradeStats.jasperCount > 0 ? (
                     <>
                       {tradeStats.jasperWinRate >= 65 && (
-                        <li>Hohe Erfolgsquote von {tradeStats.jasperWinRate.toFixed(0)}%</li>
+                        <li>
+                          <KpiTooltip 
+                            title="Win-Rate Vergleich" 
+                            jasperValue={tradeStats.jasperWinRate.toFixed(0) + "%"} 
+                            moValue={tradeStats.moWinRate.toFixed(0) + "%"}
+                            unit="%"
+                          >
+                            <span className="hover:underline cursor-help">Hohe Erfolgsquote von {tradeStats.jasperWinRate.toFixed(0)}%</span>
+                          </KpiTooltip>
+                        </li>
                       )}
                       {tradeStats.jasperAvgRR >= 1.5 && (
-                        <li>Ausgezeichnetes Risk/Reward mit {tradeStats.jasperAvgRR.toFixed(2)}R</li>
+                        <li>
+                          <KpiTooltip 
+                            title="Risk/Reward Verhältnis" 
+                            jasperValue={tradeStats.jasperAvgRR.toFixed(2)} 
+                            moValue={tradeStats.moAvgRR.toFixed(2)}
+                            unit="R"
+                          >
+                            <span className="hover:underline cursor-help">Ausgezeichnetes Risk/Reward mit {tradeStats.jasperAvgRR.toFixed(2)}R</span>
+                          </KpiTooltip>
+                        </li>
                       )}
                       {tradeStats.jasperTotalPL > 0 && (
-                        <li>Positive Gesamtperformance: ${tradeStats.jasperTotalPL.toFixed(0)}</li>
+                        <li>
+                          <KpiTooltip 
+                            title="Gesamtgewinn/-verlust" 
+                            jasperValue={tradeStats.jasperTotalPL.toFixed(0)} 
+                            moValue={tradeStats.moTotalPL.toFixed(0)}
+                            unit="$"
+                          >
+                            <span className="hover:underline cursor-help">Positive Gesamtperformance: ${tradeStats.jasperTotalPL.toFixed(0)}</span>
+                          </KpiTooltip>
+                        </li>
                       )}
                       {/* Fallback, wenn keine spezifischen Stärken erkannt wurden */}
                       {!(tradeStats.jasperWinRate >= 65 || tradeStats.jasperAvgRR >= 1.5 || tradeStats.jasperTotalPL > 0) && (
@@ -942,13 +971,40 @@ export default function TradeCompare() {
                   {tradeStats && tradeStats.moCount > 0 ? (
                     <>
                       {tradeStats.moWinRate >= 65 && (
-                        <li>Hohe Erfolgsquote von {tradeStats.moWinRate.toFixed(0)}%</li>
+                        <li>
+                          <KpiTooltip 
+                            title="Win-Rate Vergleich" 
+                            jasperValue={tradeStats.jasperWinRate.toFixed(0) + "%"} 
+                            moValue={tradeStats.moWinRate.toFixed(0) + "%"}
+                            unit="%"
+                          >
+                            <span className="hover:underline cursor-help">Hohe Erfolgsquote von {tradeStats.moWinRate.toFixed(0)}%</span>
+                          </KpiTooltip>
+                        </li>
                       )}
                       {tradeStats.moAvgRR >= 1.5 && (
-                        <li>Ausgezeichnetes Risk/Reward mit {tradeStats.moAvgRR.toFixed(2)}R</li>
+                        <li>
+                          <KpiTooltip 
+                            title="Risk/Reward Verhältnis" 
+                            jasperValue={tradeStats.jasperAvgRR.toFixed(2)} 
+                            moValue={tradeStats.moAvgRR.toFixed(2)}
+                            unit="R"
+                          >
+                            <span className="hover:underline cursor-help">Ausgezeichnetes Risk/Reward mit {tradeStats.moAvgRR.toFixed(2)}R</span>
+                          </KpiTooltip>
+                        </li>
                       )}
                       {tradeStats.moTotalPL > 0 && (
-                        <li>Positive Gesamtperformance: ${tradeStats.moTotalPL.toFixed(0)}</li>
+                        <li>
+                          <KpiTooltip 
+                            title="Gesamtgewinn/-verlust" 
+                            jasperValue={tradeStats.jasperTotalPL.toFixed(0)} 
+                            moValue={tradeStats.moTotalPL.toFixed(0)}
+                            unit="$"
+                          >
+                            <span className="hover:underline cursor-help">Positive Gesamtperformance: ${tradeStats.moTotalPL.toFixed(0)}</span>
+                          </KpiTooltip>
+                        </li>
                       )}
                       {/* Fallback, wenn keine spezifischen Stärken erkannt wurden */}
                       {!(tradeStats.moWinRate >= 65 || tradeStats.moAvgRR >= 1.5 || tradeStats.moTotalPL > 0) && (
@@ -1277,17 +1333,26 @@ export default function TradeCompare() {
               <div className="flex flex-col">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center">
-                    <DonutChart 
-                      percentage={tradeStats.jasperWinRate} 
-                      color={tradeStats.jasperWinRate >= 65 ? 'rgba(59, 130, 246, 0.9)' : 
-                             tradeStats.jasperWinRate >= 50 ? 'rgba(96, 165, 250, 0.9)' : 
-                             'rgba(239, 68, 68, 0.9)'}
-                      size={50}
-                      strokeWidth={4}
-                    />
-                    <span className={`text-lg font-bold ml-3 ${tradeStats.jasperWinRate >= 50 ? 'text-blue-400' : 'text-red-400'}`}>
-                      {tradeStats.jasperWinRate.toFixed(1)}%
-                    </span>
+                    <KpiTooltip
+                      title="Win-Rate Vergleich"
+                      jasperValue={tradeStats.jasperWinRate.toFixed(1) + "%"}
+                      moValue={tradeStats.moWinRate.toFixed(1) + "%"}
+                      unit="%"
+                    >
+                      <div className="flex items-center cursor-help">
+                        <DonutChart 
+                          percentage={tradeStats.jasperWinRate} 
+                          color={tradeStats.jasperWinRate >= 65 ? 'rgba(59, 130, 246, 0.9)' : 
+                                tradeStats.jasperWinRate >= 50 ? 'rgba(96, 165, 250, 0.9)' : 
+                                'rgba(239, 68, 68, 0.9)'}
+                          size={50}
+                          strokeWidth={4}
+                        />
+                        <span className={`text-lg font-bold ml-3 ${tradeStats.jasperWinRate >= 50 ? 'text-blue-400' : 'text-red-400'}`}>
+                          {tradeStats.jasperWinRate.toFixed(1)}%
+                        </span>
+                      </div>
+                    </KpiTooltip>
                   </div>
                   <div className={`flex items-center text-[10px] rounded-md px-1.5 py-0.5 ${
                     tradeStats.jasperWinRate >= 65 ? 'bg-blue-900/40 text-blue-400 border border-blue-700/30' : 
