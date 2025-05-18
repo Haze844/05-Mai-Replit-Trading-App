@@ -500,13 +500,18 @@ export default function TradeCompare() {
     moWinRate: Array(10).fill(50)
   });
   
-  // Hinweis: Diese Funktion wird verwendet, um einen Trade-Datenpunkt für die Tooltips bei Hover zu finden
-  const findTradeForTooltip = (tradeList: any[], index: number) => {
-    if (!tradeList || tradeList.length === 0 || index >= tradeList.length) return null;
-    return tradeList[tradeList.length - 1 - index] || null;
+  // Diese Variable existiert nur im Scope der Komponente und wird für die Berechnung der Tooltip-Daten verwendet
+  const combinedTradesFormatted = useMemo(() => {
+    return (filteredTrades.length > 0 ? filteredTrades : combinedTrades);
+  }, [filteredTrades, combinedTrades]);
+
+  // Diese Funktion holt den Trade für die Tooltip-Anzeige
+  const getTradeForTooltip = (trades: any[], userName: string, index: number) => {
+    const userTrades = trades.filter((t: any) => t.userName === userName);
+    return userTrades[userTrades.length - 1 - index];
   };
 
-  // Statistik-Berechnungen für die angezeigten Trades, unterteilt nach Benutzer
+// Statistik-Berechnungen für die angezeigten Trades, unterteilt nach Benutzer
   const tradeStats = useMemo(() => {
     // Verwende die gefilterten Trades für die Statistik-Berechnung
     const tradesToUse = filteredTrades.length > 0 ? filteredTrades : combinedTrades;
@@ -1973,38 +1978,97 @@ export default function TradeCompare() {
                       <div className="h-1/3 w-full bg-green-500/5 border-b border-dashed border-green-500/20"></div>
                       <div className="h-1/3 w-full bg-green-500/10"></div>
                     </div>
-                    <Sparklines 
-                      data={tradeStats.moWinHistory.length > 0 ? 
-                          tradeStats.moWinHistory.map(v => v * 100) : 
-                          [0,0,0,0,0]} 
-                      height={30} 
-                      margin={5}
-                      min={0}
-                      max={100}
-                    >
-                      <SparklinesBars 
-                        color="rgba(16, 185, 129, 0.8)" 
-                        style={{ 
-                          fill: "url(#greenGradient)",
-                          filter: "drop-shadow(0 1px 2px rgba(16, 185, 129, 0.3))" 
-                        }} 
-                      />
-                      <SparklinesSpots 
-                        size={3} 
-                        style={{ 
-                          fill: 'white',
-                          stroke: "rgba(16, 185, 129, 0.8)", 
-                          strokeWidth: 2,
-                        }} 
-                      />
-                      {/* SVG Definitionen für Gradienten */}
-                      <defs>
-                        <linearGradient id="greenGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="rgba(16, 185, 129, 0.9)" />
-                          <stop offset="100%" stopColor="rgba(16, 185, 129, 0.3)" />
-                        </linearGradient>
-                      </defs>
-                    </Sparklines>
+                    <div className="relative group">
+                      <Sparklines 
+                        data={tradeStats.moWinHistory.length > 0 ? 
+                            tradeStats.moWinHistory.map(v => v * 100) : 
+                            [0,0,0,0,0]} 
+                        height={30} 
+                        margin={5}
+                        min={0}
+                        max={100}
+                      >
+                        <SparklinesBars 
+                          color="rgba(16, 185, 129, 0.8)" 
+                          style={{ 
+                            fill: "url(#greenGradient)",
+                            filter: "drop-shadow(0 1px 2px rgba(16, 185, 129, 0.3))" 
+                          }} 
+                        />
+                        <SparklinesSpots 
+                          size={3} 
+                          style={{ 
+                            fill: 'white',
+                            stroke: "rgba(16, 185, 129, 0.8)", 
+                            strokeWidth: 2,
+                          }} 
+                        />
+                        {/* SVG Definitionen für Gradienten */}
+                        <defs>
+                          <linearGradient id="greenGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="rgba(16, 185, 129, 0.9)" />
+                            <stop offset="100%" stopColor="rgba(16, 185, 129, 0.3)" />
+                          </linearGradient>
+                        </defs>
+                      </Sparklines>
+                      
+                      {/* Tooltip-Layer für Mo-Win-Rate */}
+                      {tradeStats.moWinHistory.length > 0 && (
+                        <div className="absolute top-0 left-0 w-full h-full opacity-0 group-hover:opacity-100">
+                          {tradeStats.moWinHistory.map((win, index) => {
+                            const position = (index / (tradeStats.moWinHistory.length - 1 || 1)) * 100;
+                            // Finde den entsprechenden Trade aus der kombinierten Liste
+                            const trade = combinedTradesFormatted.find(t => 
+                              t.userName === 'Mo' && 
+                              index === tradeStats.moWinHistory.length - 1 - combinedTradesFormatted.filter(ct => ct.userName === 'Mo').indexOf(t)
+                            );
+                            
+                            if (!trade) return null;
+                            
+                            return (
+                              <div 
+                                key={`mo-win-tooltip-${index}`}
+                                className="absolute top-0 h-full cursor-pointer" 
+                                style={{ 
+                                  left: `${position}%`, 
+                                  width: `${100 / tradeStats.moWinHistory.length}%`
+                                }}
+                              >
+                                <div className="opacity-0 hover:opacity-100 absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10 bg-black/90 border border-green-500/30 rounded-md py-1.5 px-3 text-xs whitespace-nowrap pointer-events-none transition-opacity duration-150">
+                                  <div className="font-semibold mb-1 text-green-300">{trade.symbol} - {trade.setup || 'Kein Setup'}</div>
+                                  <div className="flex justify-between gap-3">
+                                    <span className="text-gray-300">Datum:</span>
+                                    <span className="text-white">{new Date(trade.date).toLocaleDateString()}</span>
+                                  </div>
+                                  <div className="flex justify-between gap-3">
+                                    <span className="text-gray-300">Ergebnis:</span>
+                                    <span className={win ? 'text-green-400' : 'text-red-400'}>
+                                      {win ? 'Gewinn' : 'Verlust'}
+                                    </span>
+                                  </div>
+                                  {trade.profitLoss !== undefined && (
+                                    <div className="flex justify-between gap-3">
+                                      <span className="text-gray-300">P/L:</span>
+                                      <span className={Number(trade.profitLoss) >= 0 ? 'text-green-400' : 'text-red-400'}>
+                                        ${Number(trade.profitLoss).toFixed(0)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {trade.rrAchieved !== undefined && (
+                                    <div className="flex justify-between gap-3">
+                                      <span className="text-gray-300">R/R:</span>
+                                      <span className={Number(trade.rrAchieved) >= 0 ? 'text-green-400' : 'text-red-400'}>
+                                        {Number(trade.rrAchieved).toFixed(1)}R
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
