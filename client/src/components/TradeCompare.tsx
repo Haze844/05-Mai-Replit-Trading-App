@@ -866,7 +866,7 @@ export default function TradeCompare() {
                   Stärken:
                 </h4>
                 <ul className="mt-1 text-xs text-blue-300/80 space-y-1 pl-4 list-disc">
-                  {jasperTrades.length > 0 ? (
+                  {tradeStats && tradeStats.jasperCount > 0 ? (
                     <>
                       {tradeStats.jasperWinRate >= 65 && (
                         <li>Hohe Erfolgsquote von {tradeStats.jasperWinRate.toFixed(0)}%</li>
@@ -879,7 +879,7 @@ export default function TradeCompare() {
                       )}
                       {/* Fallback, wenn keine spezifischen Stärken erkannt wurden */}
                       {!(tradeStats.jasperWinRate >= 65 || tradeStats.jasperAvgRR >= 1.5 || tradeStats.jasperTotalPL > 0) && (
-                        <li>Aktives Trading mit {jasperTrades.length} Trades</li>
+                        <li>Aktives Trading mit {tradeStats.jasperCount} Trades</li>
                       )}
                     </>
                   ) : (
@@ -894,7 +894,7 @@ export default function TradeCompare() {
                   Verbesserungspotenzial:
                 </h4>
                 <ul className="mt-1 text-xs text-blue-300/80 space-y-1 pl-4 list-disc">
-                  {jasperTrades.length > 0 ? (
+                  {tradeStats && tradeStats.jasperCount > 0 ? (
                     <>
                       {tradeStats.jasperWinRate < 50 && (
                         <li>Niedrige Erfolgsquote von {tradeStats.jasperWinRate.toFixed(0)}%</li>
@@ -936,7 +936,7 @@ export default function TradeCompare() {
                   Stärken:
                 </h4>
                 <ul className="mt-1 text-xs text-teal-300/80 space-y-1 pl-4 list-disc">
-                  {moTrades.length > 0 ? (
+                  {tradeStats && tradeStats.moCount > 0 ? (
                     <>
                       {tradeStats.moWinRate >= 65 && (
                         <li>Hohe Erfolgsquote von {tradeStats.moWinRate.toFixed(0)}%</li>
@@ -949,7 +949,7 @@ export default function TradeCompare() {
                       )}
                       {/* Fallback, wenn keine spezifischen Stärken erkannt wurden */}
                       {!(tradeStats.moWinRate >= 65 || tradeStats.moAvgRR >= 1.5 || tradeStats.moTotalPL > 0) && (
-                        <li>Aktives Trading mit {moTrades.length} Trades</li>
+                        <li>Aktives Trading mit {tradeStats.moCount} Trades</li>
                       )}
                     </>
                   ) : (
@@ -964,7 +964,7 @@ export default function TradeCompare() {
                   Verbesserungspotenzial:
                 </h4>
                 <ul className="mt-1 text-xs text-teal-300/80 space-y-1 pl-4 list-disc">
-                  {moTrades.length > 0 ? (
+                  {tradeStats && tradeStats.moCount > 0 ? (
                     <>
                       {tradeStats.moWinRate < 50 && (
                         <li>Niedrige Erfolgsquote von {tradeStats.moWinRate.toFixed(0)}%</li>
@@ -988,6 +988,28 @@ export default function TradeCompare() {
             </div>
           </div>
         </div>
+      </div>
+      
+      {/* Aktionsleiste für Export und erweiterte Funktionen */}
+      <div className="mb-5 bg-gradient-to-r from-black/30 to-black/20 rounded-xl p-3 border border-primary/20 backdrop-blur-sm flex justify-end space-x-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-black/40 hover:bg-black/30 border-primary/30 text-primary/80"
+                onClick={() => exportComparisonData()}
+              >
+                <FileDown className="h-4 w-4 mr-1" />
+                <span className="text-xs">Export</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="bg-black/90 border-primary/30">
+              CSV-Export der Vergleichsdaten
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       
       {/* Optimierte Statistik-Bar mit erweiterten Visualisierungen */}
