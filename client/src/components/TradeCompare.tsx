@@ -815,7 +815,7 @@ export default function TradeCompare() {
     setActiveFilters(newFilters);
     
     // Hier zusätzlich die Trades filtern, basierend auf den neuen Filtern
-    if (!isLoadingAdmin && !isLoadingMo && combinedTrades.length > 0) {
+    if (combinedTrades.length > 0) {
       // Filtern mit den neuen Filtern
       const newFilteredTrades = combinedTrades.filter((trade: any) => {
         // Symbol Filter
@@ -882,8 +882,8 @@ export default function TradeCompare() {
       console.log(`TradeCompare - Trades nach Filterung: ${newFilteredTrades.length} von ${combinedTrades.length}`);
       setFilteredTrades(newFilteredTrades);
     } else {
-      // Wenn keine Trades oder noch geladen wird, setze gefilterte Trades gleich den kombinierten Trades
-      setFilteredTrades(combinedTrades);
+      // Wenn keine Trades vorhanden sind, setze gefilterte Trades leer
+      setFilteredTrades([]);
     }
   };
 
@@ -1237,20 +1237,29 @@ export default function TradeCompare() {
                   variant="outline" 
                   size="sm" 
                   className="flex items-center gap-1 ml-2 bg-black/40 hover:bg-black/30 border-primary/30 text-primary/80 text-xs"
-                  onClick={() => exportComparisonDataToCSV({
-                    jasperCount: tradeStats.jasperCount,
-                    moCount: tradeStats.moCount,
-                    jasperWins: tradeStats.jasperWins,
-                    moWins: tradeStats.moWins,
-                    jasperLosses: tradeStats.jasperLosses,
-                    moLosses: tradeStats.moLosses,
-                    jasperWinRate: tradeStats.jasperWinRate,
-                    moWinRate: tradeStats.moWinRate,
-                    jasperAvgRR: tradeStats.jasperAvgRR,
-                    moAvgRR: tradeStats.moAvgRR,
-                    jasperTotalPL: tradeStats.jasperTotalPL,
-                    moTotalPL: tradeStats.moTotalPL
-                  })}
+                  onClick={() => {
+                    console.log("Export der gefilterten Vergleichsdaten", {
+                      filteredCount: filteredTrades.length,
+                      dateRange: activeFilters?.startDate ? 
+                        `${new Date(activeFilters.startDate).toLocaleDateString()} - ${new Date(activeFilters.endDate || '2030-12-31').toLocaleDateString()}` : 
+                        'Alle Daten'
+                    });
+                    exportComparisonDataToCSV({
+                      // Übergebe die aktuellen Statistiken basierend auf den gefilterten Trades
+                      jasperCount: tradeStats.jasperCount,
+                      moCount: tradeStats.moCount,
+                      jasperWins: tradeStats.jasperWins,
+                      moWins: tradeStats.moWins,
+                      jasperLosses: tradeStats.jasperLosses,
+                      moLosses: tradeStats.moLosses,
+                      jasperWinRate: tradeStats.jasperWinRate,
+                      moWinRate: tradeStats.moWinRate,
+                      jasperAvgRR: tradeStats.jasperAvgRR,
+                      moAvgRR: tradeStats.moAvgRR,
+                      jasperTotalPL: tradeStats.jasperTotalPL,
+                      moTotalPL: tradeStats.moTotalPL
+                    });
+                  }}
                 >
                   <FileDown className="h-3.5 w-3.5" />
                   <span>Export</span>
