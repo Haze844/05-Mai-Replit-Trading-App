@@ -2493,7 +2493,8 @@ export default function TradeCompare() {
             </DialogDescription>
             <TradeDetail 
               selectedTrade={selectedTrade} 
-              onTradeSelected={setSelectedTrade} 
+              onTradeSelected={setSelectedTrade}
+              isCompareView={true}
             />
           </DialogContent>
         </Dialog>

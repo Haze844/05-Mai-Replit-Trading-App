@@ -37,9 +37,11 @@ import {
 
 interface TradeDetailProps {
   selectedTrade: Trade | null;
+  onTradeSelected?: (trade: Trade | null) => void;
+  isCompareView?: boolean;
 }
 
-export default function TradeDetail({ selectedTrade }: TradeDetailProps) {
+export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareView = false }: TradeDetailProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [editMode, setEditMode] = useState(false);
@@ -225,8 +227,13 @@ export default function TradeDetail({ selectedTrade }: TradeDetailProps) {
   const handleSaveFeedback = () => {
     if (!selectedTrade) return;
     
+    // Spezialbehandlung für Vergleichsansicht mit IDs im Format "mo-123" oder "jasper-123"
+    const tradeId = isCompareView && typeof selectedTrade.id === 'string' && selectedTrade.id.includes('-') 
+      ? parseInt(selectedTrade.id.split('-')[1]) // Extrahiere die Nummer nach dem Bindestrich
+      : selectedTrade.id;
+    
     updateFeedbackMutation.mutate({
-      id: selectedTrade.id,
+      id: tradeId,
       gptFeedback: feedbackText,
       userId: selectedTrade.userId || 2
     }, {
@@ -236,6 +243,15 @@ export default function TradeDetail({ selectedTrade }: TradeDetailProps) {
           description: "Das Feedback wurde erfolgreich aktualisiert."
         });
         setIsEditingFeedback(false);
+        
+        // Wenn wir in der Vergleichsansicht sind, aktualisieren wir auch den Trade im Elternelement
+        if (isCompareView && onTradeSelected && selectedTrade) {
+          const updatedTrade = {
+            ...selectedTrade,
+            gptFeedback: feedbackText
+          };
+          onTradeSelected(updatedTrade);
+        }
       },
       onError: (error: any) => {
         toast({
