@@ -840,6 +840,156 @@ export default function TradeCompare() {
   return (
     <div className="container mx-auto p-4">
       
+      {/* Mini-Fazit Sektion */}
+      <div className="mb-5 bg-gradient-to-r from-black/40 to-black/20 rounded-xl p-4 border border-primary/20 backdrop-blur-sm shadow-lg">
+        <h2 className="text-sm font-semibold mb-3 flex items-center text-primary/90">
+          <Info className="h-4 w-4 mr-2 opacity-80" /> 
+          Trading Insights
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Jasper's Trading Profil */}
+          <div className="bg-gradient-to-br from-blue-950/40 to-blue-900/20 rounded-xl p-4 border border-blue-800/30 relative overflow-hidden">
+            {/* Glasmorphism-Akzent für Jasper */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -mr-16 -mt-16 opacity-50"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400/10 rounded-full blur-xl -ml-10 -mb-10 opacity-40"></div>
+            
+            <h3 className="text-sm font-semibold text-blue-300 mb-2 flex items-center relative z-10">
+              <User className="w-4 h-4 mr-1.5 text-blue-400" />
+              Jasper: Trading-Profil
+            </h3>
+            
+            <div className="space-y-3 relative z-10">
+              <div>
+                <h4 className="text-xs font-medium text-blue-200/90 flex items-center">
+                  <TrendingUp className="w-3 h-3 mr-1 text-blue-400/90" />
+                  Stärken:
+                </h4>
+                <ul className="mt-1 text-xs text-blue-300/80 space-y-1 pl-4 list-disc">
+                  {jasperTrades.length > 0 ? (
+                    <>
+                      {tradeStats.jasperWinRate >= 65 && (
+                        <li>Hohe Erfolgsquote von {tradeStats.jasperWinRate.toFixed(0)}%</li>
+                      )}
+                      {tradeStats.jasperAvgRR >= 1.5 && (
+                        <li>Ausgezeichnetes Risk/Reward mit {tradeStats.jasperAvgRR.toFixed(2)}R</li>
+                      )}
+                      {tradeStats.jasperTotalPL > 0 && (
+                        <li>Positive Gesamtperformance: ${tradeStats.jasperTotalPL.toFixed(0)}</li>
+                      )}
+                      {/* Fallback, wenn keine spezifischen Stärken erkannt wurden */}
+                      {!(tradeStats.jasperWinRate >= 65 || tradeStats.jasperAvgRR >= 1.5 || tradeStats.jasperTotalPL > 0) && (
+                        <li>Aktives Trading mit {jasperTrades.length} Trades</li>
+                      )}
+                    </>
+                  ) : (
+                    <li>Keine Daten verfügbar</li>
+                  )}
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="text-xs font-medium text-blue-200/90 flex items-center">
+                  <TrendingDown className="w-3 h-3 mr-1 text-blue-400/90" />
+                  Verbesserungspotenzial:
+                </h4>
+                <ul className="mt-1 text-xs text-blue-300/80 space-y-1 pl-4 list-disc">
+                  {jasperTrades.length > 0 ? (
+                    <>
+                      {tradeStats.jasperWinRate < 50 && (
+                        <li>Niedrige Erfolgsquote von {tradeStats.jasperWinRate.toFixed(0)}%</li>
+                      )}
+                      {tradeStats.jasperAvgRR < 1 && (
+                        <li>Risk/Reward-Management verbessern ({tradeStats.jasperAvgRR.toFixed(2)}R)</li>
+                      )}
+                      {tradeStats.jasperTotalPL < 0 && (
+                        <li>Negative Gesamtperformance: ${tradeStats.jasperTotalPL.toFixed(0)}</li>
+                      )}
+                      {/* Fallback, wenn keine spezifischen Schwächen erkannt wurden */}
+                      {!(tradeStats.jasperWinRate < 50 || tradeStats.jasperAvgRR < 1 || tradeStats.jasperTotalPL < 0) && (
+                        <li>Mehr Konsistenz in Trade-Ausführung anstreben</li>
+                      )}
+                    </>
+                  ) : (
+                    <li>Importiere Trades, um eine Analyse zu erhalten</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          {/* Mo's Trading Profil */}
+          <div className="bg-gradient-to-br from-teal-950/40 to-teal-900/20 rounded-xl p-4 border border-teal-800/30 relative overflow-hidden">
+            {/* Glasmorphism-Akzent für Mo */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl -mr-16 -mt-16 opacity-50"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-teal-400/10 rounded-full blur-xl -ml-10 -mb-10 opacity-40"></div>
+            
+            <h3 className="text-sm font-semibold text-teal-300 mb-2 flex items-center relative z-10">
+              <User className="w-4 h-4 mr-1.5 text-teal-400" />
+              Mo: Trading-Profil
+            </h3>
+            
+            <div className="space-y-3 relative z-10">
+              <div>
+                <h4 className="text-xs font-medium text-teal-200/90 flex items-center">
+                  <TrendingUp className="w-3 h-3 mr-1 text-teal-400/90" />
+                  Stärken:
+                </h4>
+                <ul className="mt-1 text-xs text-teal-300/80 space-y-1 pl-4 list-disc">
+                  {moTrades.length > 0 ? (
+                    <>
+                      {tradeStats.moWinRate >= 65 && (
+                        <li>Hohe Erfolgsquote von {tradeStats.moWinRate.toFixed(0)}%</li>
+                      )}
+                      {tradeStats.moAvgRR >= 1.5 && (
+                        <li>Ausgezeichnetes Risk/Reward mit {tradeStats.moAvgRR.toFixed(2)}R</li>
+                      )}
+                      {tradeStats.moTotalPL > 0 && (
+                        <li>Positive Gesamtperformance: ${tradeStats.moTotalPL.toFixed(0)}</li>
+                      )}
+                      {/* Fallback, wenn keine spezifischen Stärken erkannt wurden */}
+                      {!(tradeStats.moWinRate >= 65 || tradeStats.moAvgRR >= 1.5 || tradeStats.moTotalPL > 0) && (
+                        <li>Aktives Trading mit {moTrades.length} Trades</li>
+                      )}
+                    </>
+                  ) : (
+                    <li>Keine Daten verfügbar</li>
+                  )}
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="text-xs font-medium text-teal-200/90 flex items-center">
+                  <TrendingDown className="w-3 h-3 mr-1 text-teal-400/90" />
+                  Verbesserungspotenzial:
+                </h4>
+                <ul className="mt-1 text-xs text-teal-300/80 space-y-1 pl-4 list-disc">
+                  {moTrades.length > 0 ? (
+                    <>
+                      {tradeStats.moWinRate < 50 && (
+                        <li>Niedrige Erfolgsquote von {tradeStats.moWinRate.toFixed(0)}%</li>
+                      )}
+                      {tradeStats.moAvgRR < 1 && (
+                        <li>Risk/Reward-Management verbessern ({tradeStats.moAvgRR.toFixed(2)}R)</li>
+                      )}
+                      {tradeStats.moTotalPL < 0 && (
+                        <li>Negative Gesamtperformance: ${tradeStats.moTotalPL.toFixed(0)}</li>
+                      )}
+                      {/* Fallback, wenn keine spezifischen Schwächen erkannt wurden */}
+                      {!(tradeStats.moWinRate < 50 || tradeStats.moAvgRR < 1 || tradeStats.moTotalPL < 0) && (
+                        <li>Mehr Konsistenz in Trade-Ausführung anstreben</li>
+                      )}
+                    </>
+                  ) : (
+                    <li>Importiere Trades, um eine Analyse zu erhalten</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       {/* Optimierte Statistik-Bar mit erweiterten Visualisierungen */}
       <div className="mb-5 bg-gradient-to-r from-black/30 to-black/20 rounded-xl p-4 border border-primary/20 backdrop-blur-sm shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300">
         {/* Zeitraumauswahl und Filter-Controls */}
