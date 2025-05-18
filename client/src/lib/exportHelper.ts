@@ -47,24 +47,3 @@ export function exportComparisonDataToCSV(tradeStats: any) {
   link.click();
   document.body.removeChild(link);
 }
-
-/**
- * Erzeugt verbesserte KPI-Vergleichsanzeigen mit Tooltips
- */
-export function getKpiTooltipContent(title: string, jasperValue: any, moValue: any, unit: string = '') {
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="font-medium text-primary text-xs">{title}</div>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-        <span className="text-blue-400/80">Jasper:</span>
-        <span className="text-blue-300">{jasperValue}{unit}</span>
-        <span className="text-teal-400/80">Mo:</span>
-        <span className="text-teal-300">{moValue}{unit}</span>
-        <span className="text-gray-400">Differenz:</span>
-        <span className={jasperValue > moValue ? "text-blue-300" : (jasperValue < moValue ? "text-teal-300" : "text-gray-300")}>
-          {(jasperValue > moValue ? "+" : "") + (jasperValue - moValue).toFixed(typeof jasperValue === 'number' ? 2 : 0)}{unit}
-        </span>
-      </div>
-    </div>
-  );
-}
