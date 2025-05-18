@@ -2487,7 +2487,7 @@ export default function TradeCompare() {
         </CardContent>
       </Card>
       
-      {/* Trade Details - Erscheint als Modal */}
+      {/* Trade Details - Erscheint als Modal im gleichen Layout wie in Trades-Ansicht */}
       {selectedTrade && (
         <Dialog open={true} onOpenChange={(open) => !open && setSelectedTrade(null)}>
           <DialogContent className="max-w-7xl w-[90vw] max-h-[85vh] overflow-y-auto bg-black/95 border border-primary/30 shadow-xl p-0">
@@ -2497,7 +2497,20 @@ export default function TradeCompare() {
             </DialogDescription>
             <TradeDetail 
               selectedTrade={selectedTrade} 
-              onTradeSelected={setSelectedTrade}
+              onTradeSelected={(updatedTrade) => {
+                // Setze den neuen Trade in der lokalen State
+                setSelectedTrade(updatedTrade);
+                
+                // Invalidiere den Cache, um alle Daten nach Änderungen neu zu laden
+                queryClient.invalidateQueries({ queryKey: ['/api/trades'] });
+                
+                console.log("Trade in der Vergleichsansicht aktualisiert:", updatedTrade);
+                
+                // Erzwinge eine Aktualisierung der kombinierten Daten
+                setTimeout(() => {
+                  queryClient.refetchQueries({ queryKey: ['/api/trades'] });
+                }, 500);
+              }}
               isCompareView={true}
             />
           </DialogContent>
