@@ -1087,16 +1087,56 @@ export default function TradeCompare() {
                 </div>
                 
                 {/* Sparkline für Win-Rate */}
-                <div className="mt-2 p-1 bg-green-950/20 rounded-md border border-green-900/30">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] text-green-300/60">Win-Rate Trend</span>
+                <div className="mt-2 p-2 bg-gradient-to-r from-green-950/30 to-green-900/10 rounded-md border border-green-800/40 shadow-inner">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] text-green-300/80 font-medium flex items-center">
+                      <Activity className="w-3 h-3 mr-1 text-green-400/70" />
+                      Win-Rate Trend
+                    </span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-900/30 text-green-300/90">
+                      {tradeStats.moWinHistory.length} trades
+                    </span>
                   </div>
-                  <Sparklines data={tradeStats.moWinHistory.length > 0 ? 
-                            tradeStats.moWinHistory.map(v => v * 100) : 
-                            [0,0,0,0,0]} 
-                           height={20} margin={5}>
-                    <SparklinesBars color="rgba(16, 185, 129, 0.8)" />
-                  </Sparklines>
+                  <div className="bg-green-950/40 rounded p-1 backdrop-blur-sm relative overflow-hidden">
+                    {/* Highlight-Bereiche für gute Win-Rate */}
+                    <div className="absolute inset-0 flex flex-col">
+                      <div className="h-1/3 w-full border-b border-dashed border-green-500/10"></div>
+                      <div className="h-1/3 w-full bg-green-500/5 border-b border-dashed border-green-500/20"></div>
+                      <div className="h-1/3 w-full bg-green-500/10"></div>
+                    </div>
+                    <Sparklines 
+                      data={tradeStats.moWinHistory.length > 0 ? 
+                          tradeStats.moWinHistory.map(v => v * 100) : 
+                          [0,0,0,0,0]} 
+                      height={30} 
+                      margin={5}
+                      min={0}
+                      max={100}
+                    >
+                      <SparklinesBars 
+                        color="rgba(16, 185, 129, 0.8)" 
+                        style={{ 
+                          fill: "url(#greenGradient)",
+                          filter: "drop-shadow(0 1px 2px rgba(16, 185, 129, 0.3))" 
+                        }} 
+                      />
+                      <SparklinesSpots 
+                        size={3} 
+                        style={{ 
+                          fill: 'white',
+                          stroke: "rgba(16, 185, 129, 0.8)", 
+                          strokeWidth: 2,
+                        }} 
+                      />
+                      {/* SVG Definitionen für Gradienten */}
+                      <defs>
+                        <linearGradient id="greenGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="rgba(16, 185, 129, 0.9)" />
+                          <stop offset="100%" stopColor="rgba(16, 185, 129, 0.3)" />
+                        </linearGradient>
+                      </defs>
+                    </Sparklines>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1120,21 +1160,53 @@ export default function TradeCompare() {
                 </div>
                 
                 {/* Sparkline für P/L-Trend */}
-                <div className="mt-2 p-1 bg-green-950/20 rounded-md border border-green-900/30">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] text-green-300/60">P/L Trend</span>
-                    {tradeStats.moPLHistory.length > 0 && (
-                      <span className="text-[10px] text-green-300/60">
-                        {tradeStats.moPLHistory[tradeStats.moPLHistory.length - 1] >= tradeStats.moPLHistory[0] ? 
-                          <TrendingUp className="w-3 h-3 text-green-400" /> : 
-                          <TrendingDown className="w-3 h-3 text-green-400" />}
-                      </span>
-                    )}
+                <div className="mt-2 p-2 bg-gradient-to-r from-green-950/30 to-green-900/10 rounded-md border border-green-800/40 shadow-inner">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] text-green-300/80 font-medium flex items-center">
+                      <TrendingUp className="w-3 h-3 mr-1 text-green-400/70" />
+                      P/L Trend
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {tradeStats.moPLHistory.length > 0 && (
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full flex items-center gap-1 
+                          ${tradeStats.moPLHistory[tradeStats.moPLHistory.length - 1] >= tradeStats.moPLHistory[0] ? 
+                          'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                          {tradeStats.moPLHistory[tradeStats.moPLHistory.length - 1] >= tradeStats.moPLHistory[0] ? 
+                            <ArrowUpRight className="w-2.5 h-2.5" /> : 
+                            <ArrowDownRight className="w-2.5 h-2.5" />}
+                          {Math.abs(tradeStats.moPLHistory[tradeStats.moPLHistory.length - 1] - tradeStats.moPLHistory[0]).toFixed(0)}$
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <Sparklines data={tradeStats.moPLHistory.length > 0 ? tradeStats.moPLHistory : [0,0,0,0,0]} height={20} margin={5}>
-                    <SparklinesLine color="rgba(16, 185, 129, 0.8)" style={{ fill: "rgba(16, 185, 129, 0.2)" }} />
-                    <SparklinesSpots size={1.5} style={{ fill: "rgba(16, 185, 129, 0.8)" }} />
-                  </Sparklines>
+                  <div className="bg-green-950/40 rounded p-1 backdrop-blur-sm relative overflow-hidden">
+                    {/* Null-Linie für P/L */}
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-dashed border-green-500/30 h-0"></div>
+                    </div>
+                    <Sparklines 
+                      data={tradeStats.moPLHistory.length > 0 ? tradeStats.moPLHistory : [0,0,0,0,0]} 
+                      height={30} 
+                      margin={5}
+                    >
+                      <SparklinesLine 
+                        color="rgba(16, 185, 129, 0.8)" 
+                        style={{
+                          strokeWidth: 2,
+                          fill: "rgba(16, 185, 129, 0.1)",
+                          filter: "drop-shadow(0 1px 3px rgba(16, 185, 129, 0.4))"
+                        }}
+                      />
+                      <SparklinesSpots 
+                        size={3} 
+                        style={{ 
+                          fill: 'white',
+                          stroke: "rgba(16, 185, 129, 0.8)", 
+                          strokeWidth: 2,
+                        }} 
+                      />
+                    </Sparklines>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1165,13 +1237,51 @@ export default function TradeCompare() {
                 </div>
                 
                 {/* Sparkline für RR-Trend */}
-                <div className="mt-2 p-1 bg-green-950/20 rounded-md border border-green-900/30">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] text-green-300/60">R/R Trend</span>
+                <div className="mt-2 p-2 bg-gradient-to-r from-green-950/30 to-green-900/10 rounded-md border border-green-800/40 shadow-inner">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] text-green-300/80 font-medium flex items-center">
+                      <Activity className="w-3 h-3 mr-1 text-green-400/70" />
+                      R/R Trend
+                    </span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-900/30 text-green-300/90">
+                      Ø {tradeStats.moAvgRR.toFixed(2)}R
+                    </span>
                   </div>
-                  <Sparklines data={tradeStats.moRRHistory.length > 0 ? tradeStats.moRRHistory : [0,0,0,0,0]} height={20} margin={5}>
-                    <SparklinesLine color="rgba(16, 185, 129, 0.8)" />
-                  </Sparklines>
+                  <div className="bg-green-950/40 rounded p-1 backdrop-blur-sm relative overflow-hidden">
+                    {/* Referenzlinien für RR */}
+                    <div className="absolute inset-0 flex flex-col">
+                      <div className="h-1/3 w-full border-b border-dashed border-green-500/20"></div>
+                      <div className="h-1/3 w-full border-b border-dashed border-green-500/30"></div>
+                    </div>
+                    
+                    {/* 1R Linie */}
+                    <div className="absolute inset-0 flex items-center mt-6">
+                      <div className="w-full border-t border-dashed border-green-500/30 h-0"></div>
+                    </div>
+                    
+                    <Sparklines 
+                      data={tradeStats.moRRHistory.length > 0 ? tradeStats.moRRHistory : [0,0,0,0,0]} 
+                      height={30} 
+                      margin={5}
+                      min={0}
+                    >
+                      <SparklinesLine 
+                        color="rgba(16, 185, 129, 0.8)" 
+                        style={{
+                          strokeWidth: 2,
+                          filter: "drop-shadow(0 1px 3px rgba(16, 185, 129, 0.4))"
+                        }}
+                      />
+                      <SparklinesSpots 
+                        size={3} 
+                        style={{ 
+                          fill: 'white',
+                          stroke: "rgba(16, 185, 129, 0.8)", 
+                          strokeWidth: 2,
+                        }} 
+                      />
+                    </Sparklines>
+                  </div>
                 </div>
                 
                 {/* Beste/Schlechteste Trades */}
