@@ -401,8 +401,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PATCH-Route speziell für Feedback-Updates ohne ID in der URL
-  app.patch("/api/trades", isAuthenticated, async (req: Request, res: Response) => {
+  app.patch("/api/trades", async (req: Request, res: Response) => {
     try {
+      console.log("PATCH /api/trades Request erhalten:", req.body);
+      
       const { id, gptFeedback, userId } = req.body;
       
       if (!id) {
@@ -430,13 +432,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update nur das Feedback-Feld
       const updatedTrade = await storage.updateTrade(tradeId, { 
         gptFeedback,
-        userId
+        userId: userId || existingTrade.userId // Fallback auf existierende userId falls nicht angegeben
       });
       
-      return res.status(200).json(updatedTrade);
+      // Erfolgsantwort senden
+      res.status(200).json({
+        success: true,
+        message: "Feedback erfolgreich aktualisiert",
+        data: updatedTrade
+      });
     } catch (error) {
       console.error("Fehler beim Aktualisieren des Feedbacks:", error);
-      res.status(500).json({ message: errorMessage(error) });
+      res.status(500).json({ 
+        success: false,
+        message: errorMessage(error) 
+      });
     }
   });
 

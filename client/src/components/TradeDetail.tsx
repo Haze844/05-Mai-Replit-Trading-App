@@ -213,18 +213,41 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
     mutationFn: async (data: { id: number, gptFeedback: string, userId: number }) => {
       console.log("Sende Feedback-Update-Request für ID:", data.id);
       
-      // Direkte Verwendung der API ohne ID in der URL-Pfad, stattdessen im Body
-      const response = await apiRequest("PATCH", `/api/trades`, {
-        id: data.id,  // ID im Body übergeben
-        gptFeedback: data.gptFeedback,
-        userId: data.userId
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Fehler beim Speichern des Feedbacks: ${errorText}`);
+      // Manueller Fetch-Aufruf mit expliziten Headers
+      try {
+        // URL direkt mit dem Server-Pfad
+        const url = `/api/trades`;
+        
+        // Vorbereiten des Request-Body als JSON-String
+        const requestBody = JSON.stringify({
+          id: data.id,
+          gptFeedback: data.gptFeedback,
+          userId: data.userId
+        });
+        
+        console.log("Sende Request mit Body:", requestBody);
+        
+        // Eigener Fetch mit expliziten Headers
+        const response = await fetch(url, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: requestBody
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Server-Antwort bei Fehler:", errorText);
+          throw new Error(`Fehler beim Speichern des Feedbacks: ${errorText}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error("Fehler beim Feedback-Update:", error);
+        throw error;
       }
-      return await response.json();
     },
     onSuccess: () => {
       // TanStack Query v5-kompatibles Format für Invalidierung
