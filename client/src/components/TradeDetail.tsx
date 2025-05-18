@@ -228,9 +228,13 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
     if (!selectedTrade) return;
     
     // Spezialbehandlung für Vergleichsansicht mit IDs im Format "mo-123" oder "jasper-123"
-    const tradeId = isCompareView && typeof selectedTrade.id === 'string' && selectedTrade.id.includes('-') 
-      ? parseInt(selectedTrade.id.split('-')[1]) // Extrahiere die Nummer nach dem Bindestrich
-      : selectedTrade.id;
+    let tradeId = selectedTrade.id;
+    if (isCompareView && typeof selectedTrade.id === 'string') {
+      const parts = String(selectedTrade.id).split('-');
+      if (parts.length > 1) {
+        tradeId = parseInt(parts[1]); // Extrahiere die Nummer nach dem Bindestrich
+      }
+    }
     
     updateFeedbackMutation.mutate({
       id: tradeId,

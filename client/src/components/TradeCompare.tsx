@@ -814,17 +814,22 @@ export default function TradeCompare() {
     console.log("TradeCompare - Neue Filter empfangen:", newFilters);
     setActiveFilters(newFilters);
     
+    // Erzwinge ein Neuladen der Daten mit neuen Filtern
+    // Dies ist wichtig, damit die Filter korrekt auf die API-Anfragen angewendet werden
+    jasperTradesQuery.refetch();
+    moTradesQuery.refetch();
+    
     // Hier zusätzlich die Trades filtern, basierend auf den neuen Filtern
     if (combinedTrades.length > 0) {
       // Filtern mit den neuen Filtern
       const newFilteredTrades = combinedTrades.filter((trade: any) => {
         // Symbol Filter
-        if (newFilters.symbol !== 'all' && newFilters.symbols?.length > 0 && !newFilters.symbols.includes(trade.symbol)) {
+        if (newFilters.symbols?.length > 0 && !newFilters.symbols.includes(trade.symbol)) {
           return false;
         }
         
         // Account Type Filter
-        if (newFilters.accountType !== 'all' && newFilters.accountTypes?.length > 0 && !newFilters.accountTypes.includes(trade.accountType)) {
+        if (newFilters.accountTypes?.length > 0 && !newFilters.accountTypes.includes(trade.accountType)) {
           return false;
         }
         
