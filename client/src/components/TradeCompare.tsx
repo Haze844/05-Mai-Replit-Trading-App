@@ -505,10 +505,45 @@ export default function TradeCompare() {
     return (filteredTrades.length > 0 ? filteredTrades : combinedTrades);
   }, [filteredTrades, combinedTrades]);
 
-  // Diese Funktion holt den Trade für die Tooltip-Anzeige
-  const getTradeForTooltip = (trades: any[], userName: string, index: number) => {
-    const userTrades = trades.filter((t: any) => t.userName === userName);
-    return userTrades[userTrades.length - 1 - index];
+  // Hilfsfunktion für Tooltip-Komponente für alle Grafiken
+  const TradeTooltip = ({ trade, color = "green" }: { trade: any, color?: string }) => {
+    if (!trade) return null;
+    
+    const colorClass = color === "blue" ? "blue" : "green";
+    
+    return (
+      <div className={`opacity-0 hover:opacity-100 absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-20 bg-black/90 border border-${colorClass}-500/30 rounded-md py-1.5 px-3 text-xs whitespace-nowrap pointer-events-none transition-opacity duration-150`}>
+        <div className={`font-semibold mb-1 text-${colorClass}-300`}>
+          {trade.symbol} - {trade.setup || 'Kein Setup'}
+        </div>
+        <div className="flex justify-between gap-3">
+          <span className="text-gray-300">Datum:</span>
+          <span className="text-white">{new Date(trade.date).toLocaleDateString()}</span>
+        </div>
+        <div className="flex justify-between gap-3">
+          <span className="text-gray-300">Ergebnis:</span>
+          <span className={trade.isWin ? 'text-green-400' : 'text-red-400'}>
+            {trade.isWin ? 'Gewinn' : 'Verlust'}
+          </span>
+        </div>
+        {trade.profitLoss !== undefined && (
+          <div className="flex justify-between gap-3">
+            <span className="text-gray-300">P/L:</span>
+            <span className={Number(trade.profitLoss) >= 0 ? 'text-green-400' : 'text-red-400'}>
+              ${Number(trade.profitLoss).toFixed(0)}
+            </span>
+          </div>
+        )}
+        {trade.rrAchieved !== undefined && (
+          <div className="flex justify-between gap-3">
+            <span className="text-gray-300">R/R:</span>
+            <span className={Number(trade.rrAchieved) >= 0 ? 'text-green-400' : 'text-red-400'}>
+              {Number(trade.rrAchieved).toFixed(1)}R
+            </span>
+          </div>
+        )}
+      </div>
+    );
   };
 
 // Statistik-Berechnungen für die angezeigten Trades, unterteilt nach Benutzer
@@ -532,51 +567,53 @@ export default function TradeCompare() {
       return sum + (trade.rrAchieved || 0);
     }, 0) / (count || 1);
     
-    // Jasper-Statistiken
-    const jasperCount = jasperTrades.length;
-    const jasperWins = jasperTrades.filter(t => t.isWin === true).length;
-    const jasperLosses = jasperTrades.filter(t => t.isWin === false).length;
+    // Jasper-Statistiken (Filter Jasper-Trades)
+    const jasperTradesFiltered = tradesToUse.filter((t: any) => t.userName === 'Jasper');
+    const jasperCount = jasperTradesFiltered.length;
+    const jasperWins = jasperTradesFiltered.filter((t: any) => t.isWin === true).length;
+    const jasperLosses = jasperTradesFiltered.filter((t: any) => t.isWin === false).length;
     const jasperWinRate = jasperCount > 0 ? (jasperWins / jasperCount) * 100 : 0;
     
-    const jasperTotalPL = jasperTrades.reduce((sum, trade) => {
+    const jasperTotalPL = jasperTradesFiltered.reduce((sum: number, trade: any) => {
       return sum + (trade.profitLoss || 0);
     }, 0);
     
-    const jasperAvgRR = jasperTrades.reduce((sum, trade) => {
+    const jasperAvgRR = jasperTradesFiltered.reduce((sum: number, trade: any) => {
       return sum + (trade.rrAchieved || 0);
     }, 0) / (jasperCount || 1);
     
     // Datenpunkte für historische Visualisierung - Jasper
-    const jasperWinHistory = jasperTrades.slice(0, 10).map(t => t.isWin ? 1 : 0).reverse();
-    const jasperPLHistory = jasperTrades.slice(0, 10).map(t => t.profitLoss || 0).reverse();
-    const jasperRRHistory = jasperTrades.slice(0, 10).map(t => t.rrAchieved || 0).reverse();
+    const jasperWinHistory = jasperTradesFiltered.slice(0, 10).map((t: any) => t.isWin ? 1 : 0).reverse();
+    const jasperPLHistory = jasperTradesFiltered.slice(0, 10).map((t: any) => t.profitLoss || 0).reverse();
+    const jasperRRHistory = jasperTradesFiltered.slice(0, 10).map((t: any) => t.rrAchieved || 0).reverse();
     
     // Bester und schlechtester Trade für Jasper
-    const jasperBestTrade = findBestTrade(jasperTrades);
-    const jasperWorstTrade = findWorstTrade(jasperTrades);
+    const jasperBestTrade = findBestTrade(jasperTradesFiltered);
+    const jasperWorstTrade = findWorstTrade(jasperTradesFiltered);
     
-    // Mo-Statistiken
-    const moCount = moTrades.length;
-    const moWins = moTrades.filter(t => t.isWin === true).length;
-    const moLosses = moTrades.filter(t => t.isWin === false).length;
+    // Mo-Statistiken (Filter Mo-Trades)
+    const moTradesFiltered = tradesToUse.filter((t: any) => t.userName === 'Mo');
+    const moCount = moTradesFiltered.length;
+    const moWins = moTradesFiltered.filter((t: any) => t.isWin === true).length;
+    const moLosses = moTradesFiltered.filter((t: any) => t.isWin === false).length;
     const moWinRate = moCount > 0 ? (moWins / moCount) * 100 : 0;
     
-    const moTotalPL = moTrades.reduce((sum, trade) => {
+    const moTotalPL = moTradesFiltered.reduce((sum: number, trade: any) => {
       return sum + (trade.profitLoss || 0);
     }, 0);
     
-    const moAvgRR = moTrades.reduce((sum, trade) => {
+    const moAvgRR = moTradesFiltered.reduce((sum: number, trade: any) => {
       return sum + (trade.rrAchieved || 0);
     }, 0) / (moCount || 1);
     
     // Datenpunkte für historische Visualisierung - Mo
-    const moWinHistory = moTrades.slice(0, 10).map(t => t.isWin ? 1 : 0).reverse();
-    const moPLHistory = moTrades.slice(0, 10).map(t => t.profitLoss || 0).reverse();
-    const moRRHistory = moTrades.slice(0, 10).map(t => t.rrAchieved || 0).reverse();
+    const moWinHistory = moTradesFiltered.slice(0, 10).map((t: any) => t.isWin ? 1 : 0).reverse();
+    const moPLHistory = moTradesFiltered.slice(0, 10).map((t: any) => t.profitLoss || 0).reverse();
+    const moRRHistory = moTradesFiltered.slice(0, 10).map((t: any) => t.rrAchieved || 0).reverse();
     
     // Bester und schlechtester Trade für Mo
-    const moBestTrade = findBestTrade(moTrades);
-    const moWorstTrade = findWorstTrade(moTrades);
+    const moBestTrade = findBestTrade(moTradesFiltered);
+    const moWorstTrade = findWorstTrade(moTradesFiltered);
 
     // Direkte Vergleichsmetriken (Jasper vs Mo)
     const winRateDiff = jasperCount > 0 && moCount > 0 ? jasperWinRate - moWinRate : 0;
@@ -2124,28 +2161,58 @@ export default function TradeCompare() {
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-dashed border-green-500/30 h-0"></div>
                     </div>
-                    <Sparklines 
-                      data={tradeStats.moPLHistory.length > 0 ? tradeStats.moPLHistory : [0,0,0,0,0]} 
-                      height={30} 
-                      margin={5}
-                    >
-                      <SparklinesLine 
-                        color="rgba(16, 185, 129, 0.8)" 
-                        style={{
-                          strokeWidth: 2,
-                          fill: "rgba(16, 185, 129, 0.1)",
-                          filter: "drop-shadow(0 1px 3px rgba(16, 185, 129, 0.4))"
-                        }}
-                      />
-                      <SparklinesSpots 
-                        size={3} 
-                        style={{ 
-                          fill: 'white',
-                          stroke: "rgba(16, 185, 129, 0.8)", 
-                          strokeWidth: 2,
-                        }} 
-                      />
-                    </Sparklines>
+                    <div className="relative group">
+                      <Sparklines 
+                        data={tradeStats.moPLHistory.length > 0 ? tradeStats.moPLHistory : [0,0,0,0,0]} 
+                        height={30} 
+                        margin={5}
+                      >
+                        <SparklinesLine 
+                          color="rgba(16, 185, 129, 0.8)" 
+                          style={{
+                            strokeWidth: 2,
+                            fill: "rgba(16, 185, 129, 0.1)",
+                            filter: "drop-shadow(0 1px 3px rgba(16, 185, 129, 0.4))"
+                          }}
+                        />
+                        <SparklinesSpots 
+                          size={3} 
+                          style={{ 
+                            fill: 'white',
+                            stroke: "rgba(16, 185, 129, 0.8)", 
+                            strokeWidth: 2,
+                          }} 
+                        />
+                      </Sparklines>
+                      
+                      {/* Tooltip-Layer für PL-Verlauf */}
+                      {tradeStats.moPLHistory.length > 0 && (
+                        <div className="absolute top-0 left-0 w-full h-full opacity-0 group-hover:opacity-100">
+                          {tradeStats.moPLHistory.map((pl, index) => {
+                            const position = (index / (tradeStats.moPLHistory.length - 1 || 1)) * 100;
+                            
+                            // Finde den entsprechenden Trade aus moTradesFiltered
+                            const trades = combinedTradesFormatted.filter((t: any) => t.userName === 'Mo');
+                            const trade = trades[trades.length - 1 - index];
+                            
+                            if (!trade) return null;
+                            
+                            return (
+                              <div 
+                                key={`mo-pl-tooltip-${index}`}
+                                className="absolute top-0 h-full cursor-pointer" 
+                                style={{ 
+                                  left: `${position}%`, 
+                                  width: `${100 / tradeStats.moPLHistory.length}%`
+                                }}
+                              >
+                                <TradeTooltip trade={trade} color="green" />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
