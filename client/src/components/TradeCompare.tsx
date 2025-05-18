@@ -973,76 +973,144 @@ export default function TradeCompare() {
                 </div>
                 
                 {/* Beste/Schlechteste Trades */}
-                <div className="mt-3 flex flex-col gap-2">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center justify-between text-[10px] p-1.5 rounded-md bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-colors duration-200 cursor-pointer">
-                          <span className="flex items-center">
-                            <BadgeCheck className="w-3 h-3 mr-1.5 text-blue-400" />
-                            Bester Trade
-                          </span>
-                          <span className="font-medium text-blue-300">
-                            {tradeStats.jasperBestTrade?.symbol || '-'}
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      {tradeStats.jasperBestTrade && (
-                        <TooltipContent side="right" className="bg-black/95 border-blue-500/30 p-3 max-w-[280px]">
-                          <h4 className="text-sm font-medium text-blue-400 mb-1">{tradeStats.jasperBestTrade.symbol}</h4>
-                          <div className="text-xs space-y-1 text-gray-300">
-                            <div className="flex justify-between">
-                              <span>Profit/Loss:</span>
-                              <span className="font-medium text-blue-300">${tradeStats.jasperBestTrade.profitLoss?.toFixed(2)}</span>
+                <div className="mt-3 flex flex-col gap-3">
+                  <div className="group relative">
+                    <div className={`p-0.5 rounded-lg bg-gradient-to-r from-blue-500/50 via-blue-400/30 to-blue-600/50 shadow-lg transition-all duration-300 ${tradeStats.jasperBestTrade ? 'opacity-100' : 'opacity-40'}`}>
+                      <div className="bg-gradient-to-br from-black/90 to-blue-950/80 backdrop-blur-sm p-3 rounded-md relative overflow-hidden">
+                        {/* Top Indicator */}
+                        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400/0 via-blue-400/80 to-blue-400/0"></div>
+                        
+                        <div className="flex items-start justify-between">
+                          <div className="flex flex-col">
+                            <div className="flex items-center mb-1">
+                              <BadgeCheck className="w-4 h-4 mr-1.5 text-blue-400" />
+                              <h4 className="text-[11px] font-medium uppercase tracking-wide text-blue-200">Bester Trade</h4>
                             </div>
-                            <div className="flex justify-between">
-                              <span>R/R:</span>
-                              <span className="font-medium text-blue-300">{tradeStats.jasperBestTrade.rrAchieved?.toFixed(2)}R</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Datum:</span>
-                              <span className="font-medium">{new Date(tradeStats.jasperBestTrade.date).toLocaleDateString()}</span>
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-sm font-bold text-blue-300">{tradeStats.jasperBestTrade?.symbol || '-'}</span>
+                              {tradeStats.jasperBestTrade?.entryType && (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full 
+                                  ${tradeStats.jasperBestTrade.entryType === 'Long' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                                  {tradeStats.jasperBestTrade.entryType}
+                                </span>
+                              )}
                             </div>
                           </div>
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  </TooltipProvider>
+                          
+                          {tradeStats.jasperBestTrade?.profitLoss && (
+                            <div className="flex flex-col items-end">
+                              <span className="text-sm font-bold text-blue-400">
+                                +${tradeStats.jasperBestTrade.profitLoss.toFixed(0)}
+                              </span>
+                              <span className="text-[10px] text-blue-300/80">
+                                {tradeStats.jasperBestTrade.rrAchieved?.toFixed(1)}R
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Details Row */}
+                        {tradeStats.jasperBestTrade && (
+                          <div className="mt-2 pt-2 border-t border-blue-500/10 grid grid-cols-3 gap-2 text-[9px]">
+                            <div className="flex flex-col">
+                              <span className="text-blue-300/60">Datum</span>
+                              <span className="font-medium text-blue-200">
+                                {new Date(tradeStats.jasperBestTrade.date).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-blue-300/60">Setup</span>
+                              <span className="font-medium text-blue-200">
+                                {tradeStats.jasperBestTrade.setup || '-'}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-blue-300/60">Trend</span>
+                              <span className="font-medium text-blue-200">
+                                {tradeStats.jasperBestTrade.mainTrendM15 || '-'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Ausblenden wenn kein Trade vorhanden */}
+                        {!tradeStats.jasperBestTrade && (
+                          <div className="mt-2 text-[10px] italic text-blue-300/60 text-center">
+                            Kein Trade verfügbar
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                   
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center justify-between text-[10px] p-1.5 rounded-md bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors duration-200 cursor-pointer">
-                          <span className="flex items-center">
-                            <AlertTriangle className="w-3 h-3 mr-1.5 text-red-400" />
-                            Schlechtester Trade
-                          </span>
-                          <span className="font-medium text-red-300">
-                            {tradeStats.jasperWorstTrade?.symbol || '-'}
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      {tradeStats.jasperWorstTrade && (
-                        <TooltipContent side="right" className="bg-black/95 border-red-500/30 p-3 max-w-[280px]">
-                          <h4 className="text-sm font-medium text-red-400 mb-1">{tradeStats.jasperWorstTrade.symbol}</h4>
-                          <div className="text-xs space-y-1 text-gray-300">
-                            <div className="flex justify-between">
-                              <span>Profit/Loss:</span>
-                              <span className="font-medium text-red-300">${tradeStats.jasperWorstTrade.profitLoss?.toFixed(2)}</span>
+                  <div className="group relative">
+                    <div className={`p-0.5 rounded-lg bg-gradient-to-r from-red-500/50 via-red-400/30 to-red-600/50 shadow-lg transition-all duration-300 ${tradeStats.jasperWorstTrade ? 'opacity-100' : 'opacity-40'}`}>
+                      <div className="bg-gradient-to-br from-black/90 to-red-950/80 backdrop-blur-sm p-3 rounded-md relative overflow-hidden">
+                        {/* Top Indicator */}
+                        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-400/0 via-red-400/80 to-red-400/0"></div>
+                        
+                        <div className="flex items-start justify-between">
+                          <div className="flex flex-col">
+                            <div className="flex items-center mb-1">
+                              <AlertTriangle className="w-4 h-4 mr-1.5 text-red-400" />
+                              <h4 className="text-[11px] font-medium uppercase tracking-wide text-red-200">Schlechtester Trade</h4>
                             </div>
-                            <div className="flex justify-between">
-                              <span>R/R:</span>
-                              <span className="font-medium text-red-300">{tradeStats.jasperWorstTrade.rrAchieved?.toFixed(2)}R</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Datum:</span>
-                              <span className="font-medium">{new Date(tradeStats.jasperWorstTrade.date).toLocaleDateString()}</span>
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-sm font-bold text-red-300">{tradeStats.jasperWorstTrade?.symbol || '-'}</span>
+                              {tradeStats.jasperWorstTrade?.entryType && (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full 
+                                  ${tradeStats.jasperWorstTrade.entryType === 'Long' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                                  {tradeStats.jasperWorstTrade.entryType}
+                                </span>
+                              )}
                             </div>
                           </div>
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  </TooltipProvider>
+                          
+                          {tradeStats.jasperWorstTrade?.profitLoss && (
+                            <div className="flex flex-col items-end">
+                              <span className="text-sm font-bold text-red-400">
+                                ${tradeStats.jasperWorstTrade.profitLoss.toFixed(0)}
+                              </span>
+                              <span className="text-[10px] text-red-300/80">
+                                {tradeStats.jasperWorstTrade.rrAchieved?.toFixed(1)}R
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Details Row */}
+                        {tradeStats.jasperWorstTrade && (
+                          <div className="mt-2 pt-2 border-t border-red-500/10 grid grid-cols-3 gap-2 text-[9px]">
+                            <div className="flex flex-col">
+                              <span className="text-red-300/60">Datum</span>
+                              <span className="font-medium text-red-200">
+                                {new Date(tradeStats.jasperWorstTrade.date).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-red-300/60">Setup</span>
+                              <span className="font-medium text-red-200">
+                                {tradeStats.jasperWorstTrade.setup || '-'}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-red-300/60">Trend</span>
+                              <span className="font-medium text-red-200">
+                                {tradeStats.jasperWorstTrade.mainTrendM15 || '-'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Ausblenden wenn kein Trade vorhanden */}
+                        {!tradeStats.jasperWorstTrade && (
+                          <div className="mt-2 text-[10px] italic text-red-300/60 text-center">
+                            Kein Trade verfügbar
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1285,76 +1353,144 @@ export default function TradeCompare() {
                 </div>
                 
                 {/* Beste/Schlechteste Trades */}
-                <div className="mt-3 flex flex-col gap-2">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center justify-between text-[10px] p-1.5 rounded-md bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors duration-200 cursor-pointer">
-                          <span className="flex items-center">
-                            <BadgeCheck className="w-3 h-3 mr-1.5 text-green-400" />
-                            Bester Trade
-                          </span>
-                          <span className="font-medium text-green-300">
-                            {tradeStats.moBestTrade?.symbol || '-'}
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      {tradeStats.moBestTrade && (
-                        <TooltipContent side="right" className="bg-black/95 border-green-500/30 p-3 max-w-[280px]">
-                          <h4 className="text-sm font-medium text-green-400 mb-1">{tradeStats.moBestTrade.symbol}</h4>
-                          <div className="text-xs space-y-1 text-gray-300">
-                            <div className="flex justify-between">
-                              <span>Profit/Loss:</span>
-                              <span className="font-medium text-green-300">${tradeStats.moBestTrade.profitLoss?.toFixed(2)}</span>
+                <div className="mt-3 flex flex-col gap-3">
+                  <div className="group relative">
+                    <div className={`p-0.5 rounded-lg bg-gradient-to-r from-green-500/50 via-green-400/30 to-green-600/50 shadow-lg transition-all duration-300 ${tradeStats.moBestTrade ? 'opacity-100' : 'opacity-40'}`}>
+                      <div className="bg-gradient-to-br from-black/90 to-green-950/80 backdrop-blur-sm p-3 rounded-md relative overflow-hidden">
+                        {/* Top Indicator */}
+                        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-green-400/0 via-green-400/80 to-green-400/0"></div>
+                        
+                        <div className="flex items-start justify-between">
+                          <div className="flex flex-col">
+                            <div className="flex items-center mb-1">
+                              <BadgeCheck className="w-4 h-4 mr-1.5 text-green-400" />
+                              <h4 className="text-[11px] font-medium uppercase tracking-wide text-green-200">Bester Trade</h4>
                             </div>
-                            <div className="flex justify-between">
-                              <span>R/R:</span>
-                              <span className="font-medium text-green-300">{tradeStats.moBestTrade.rrAchieved?.toFixed(2)}R</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Datum:</span>
-                              <span className="font-medium">{new Date(tradeStats.moBestTrade.date).toLocaleDateString()}</span>
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-sm font-bold text-green-300">{tradeStats.moBestTrade?.symbol || '-'}</span>
+                              {tradeStats.moBestTrade?.entryType && (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full 
+                                  ${tradeStats.moBestTrade.entryType === 'Long' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                                  {tradeStats.moBestTrade.entryType}
+                                </span>
+                              )}
                             </div>
                           </div>
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  </TooltipProvider>
+                          
+                          {tradeStats.moBestTrade?.profitLoss && (
+                            <div className="flex flex-col items-end">
+                              <span className="text-sm font-bold text-green-400">
+                                +${tradeStats.moBestTrade.profitLoss.toFixed(0)}
+                              </span>
+                              <span className="text-[10px] text-green-300/80">
+                                {tradeStats.moBestTrade.rrAchieved?.toFixed(1)}R
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Details Row */}
+                        {tradeStats.moBestTrade && (
+                          <div className="mt-2 pt-2 border-t border-green-500/10 grid grid-cols-3 gap-2 text-[9px]">
+                            <div className="flex flex-col">
+                              <span className="text-green-300/60">Datum</span>
+                              <span className="font-medium text-green-200">
+                                {new Date(tradeStats.moBestTrade.date).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-green-300/60">Setup</span>
+                              <span className="font-medium text-green-200">
+                                {tradeStats.moBestTrade.setup || '-'}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-green-300/60">Trend</span>
+                              <span className="font-medium text-green-200">
+                                {tradeStats.moBestTrade.mainTrendM15 || '-'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Ausblenden wenn kein Trade vorhanden */}
+                        {!tradeStats.moBestTrade && (
+                          <div className="mt-2 text-[10px] italic text-green-300/60 text-center">
+                            Kein Trade verfügbar
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                   
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center justify-between text-[10px] p-1.5 rounded-md bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors duration-200 cursor-pointer">
-                          <span className="flex items-center">
-                            <AlertTriangle className="w-3 h-3 mr-1.5 text-red-400" />
-                            Schlechtester Trade
-                          </span>
-                          <span className="font-medium text-red-300">
-                            {tradeStats.moWorstTrade?.symbol || '-'}
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      {tradeStats.moWorstTrade && (
-                        <TooltipContent side="right" className="bg-black/95 border-red-500/30 p-3 max-w-[280px]">
-                          <h4 className="text-sm font-medium text-red-400 mb-1">{tradeStats.moWorstTrade.symbol}</h4>
-                          <div className="text-xs space-y-1 text-gray-300">
-                            <div className="flex justify-between">
-                              <span>Profit/Loss:</span>
-                              <span className="font-medium text-red-300">${tradeStats.moWorstTrade.profitLoss?.toFixed(2)}</span>
+                  <div className="group relative">
+                    <div className={`p-0.5 rounded-lg bg-gradient-to-r from-red-500/50 via-red-400/30 to-red-600/50 shadow-lg transition-all duration-300 ${tradeStats.moWorstTrade ? 'opacity-100' : 'opacity-40'}`}>
+                      <div className="bg-gradient-to-br from-black/90 to-red-950/80 backdrop-blur-sm p-3 rounded-md relative overflow-hidden">
+                        {/* Top Indicator */}
+                        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-400/0 via-red-400/80 to-red-400/0"></div>
+                        
+                        <div className="flex items-start justify-between">
+                          <div className="flex flex-col">
+                            <div className="flex items-center mb-1">
+                              <AlertTriangle className="w-4 h-4 mr-1.5 text-red-400" />
+                              <h4 className="text-[11px] font-medium uppercase tracking-wide text-red-200">Schlechtester Trade</h4>
                             </div>
-                            <div className="flex justify-between">
-                              <span>R/R:</span>
-                              <span className="font-medium text-red-300">{tradeStats.moWorstTrade.rrAchieved?.toFixed(2)}R</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Datum:</span>
-                              <span className="font-medium">{new Date(tradeStats.moWorstTrade.date).toLocaleDateString()}</span>
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-sm font-bold text-red-300">{tradeStats.moWorstTrade?.symbol || '-'}</span>
+                              {tradeStats.moWorstTrade?.entryType && (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full 
+                                  ${tradeStats.moWorstTrade.entryType === 'Long' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                                  {tradeStats.moWorstTrade.entryType}
+                                </span>
+                              )}
                             </div>
                           </div>
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  </TooltipProvider>
+                          
+                          {tradeStats.moWorstTrade?.profitLoss && (
+                            <div className="flex flex-col items-end">
+                              <span className="text-sm font-bold text-red-400">
+                                ${tradeStats.moWorstTrade.profitLoss.toFixed(0)}
+                              </span>
+                              <span className="text-[10px] text-red-300/80">
+                                {tradeStats.moWorstTrade.rrAchieved?.toFixed(1)}R
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Details Row */}
+                        {tradeStats.moWorstTrade && (
+                          <div className="mt-2 pt-2 border-t border-red-500/10 grid grid-cols-3 gap-2 text-[9px]">
+                            <div className="flex flex-col">
+                              <span className="text-red-300/60">Datum</span>
+                              <span className="font-medium text-red-200">
+                                {new Date(tradeStats.moWorstTrade.date).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-red-300/60">Setup</span>
+                              <span className="font-medium text-red-200">
+                                {tradeStats.moWorstTrade.setup || '-'}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-red-300/60">Trend</span>
+                              <span className="font-medium text-red-200">
+                                {tradeStats.moWorstTrade.mainTrendM15 || '-'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Ausblenden wenn kein Trade vorhanden */}
+                        {!tradeStats.moWorstTrade && (
+                          <div className="mt-2 text-[10px] italic text-red-300/60 text-center">
+                            Kein Trade verfügbar
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
