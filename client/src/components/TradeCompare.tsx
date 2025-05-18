@@ -35,7 +35,10 @@ import {
   CircleUser,
   BarChart,
   LayoutTemplate,
-  User
+  User,
+  FileDown,
+  MessageSquare,
+  FileText
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { Separator } from '@/components/ui/separator';
