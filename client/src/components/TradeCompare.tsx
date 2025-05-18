@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Label } from "@/components/ui/label";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Trade } from '@shared/schema';
 import TradeTable from './TradeTable';
@@ -482,6 +482,9 @@ const WeekdayHeatmap = ({ data, userTheme, userName }) => {
 
 // Hauptkomponente
 export default function TradeCompare() {
+  // TanStack Query Client für Cache-Invalidierung und Synchronisation
+  const queryClient = useQueryClient();
+  
   // State für kombinierte Trades
   const [combinedTrades, setCombinedTrades] = useState<Trade[]>([]);
   // State für gefilterte Trades (Ergebnis der Filter-Anwendung)

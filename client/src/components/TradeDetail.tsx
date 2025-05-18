@@ -278,14 +278,14 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
     console.log("Speichere Feedback für Trade mit ID:", selectedTrade.id, "vom Typ:", typeof selectedTrade.id);
     
     // Wenn es ein String ist und ein Bindestrich drin ist (Vergleichsansicht)
-    if (typeof selectedTrade.id === 'string' && selectedTrade.id.includes('-')) {
+    if (typeof selectedTrade.id === 'string' && selectedTrade.id.toString().includes('-')) {
       // Zuerst versuchen wir die originalId zu nutzen, falls vorhanden
       if (selectedTrade.originalId) {
         tradeId = selectedTrade.originalId;
         console.log("Verwende originalId für API-Request:", tradeId);
       } else {
         // Sonst extrahieren wir die Nummer aus dem String
-        const parts = selectedTrade.id.split('-');
+        const parts = selectedTrade.id.toString().split('-');
         if (parts.length > 1) {
           tradeId = parseInt(parts[1]); // Extrahiere die Nummer nach dem Bindestrich
           console.log("Extrahierte ID aus String:", tradeId);
