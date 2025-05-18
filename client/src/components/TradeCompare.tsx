@@ -500,14 +500,16 @@ export default function TradeCompare() {
     moWinRate: Array(10).fill(50)
   });
   
+  // Hinweis: Diese Funktion wird verwendet, um einen Trade-Datenpunkt für die Tooltips bei Hover zu finden
+  const findTradeForTooltip = (tradeList: any[], index: number) => {
+    if (!tradeList || tradeList.length === 0 || index >= tradeList.length) return null;
+    return tradeList[tradeList.length - 1 - index] || null;
+  };
+
   // Statistik-Berechnungen für die angezeigten Trades, unterteilt nach Benutzer
   const tradeStats = useMemo(() => {
     // Verwende die gefilterten Trades für die Statistik-Berechnung
     const tradesToUse = filteredTrades.length > 0 ? filteredTrades : combinedTrades;
-    
-    // Trades nach Benutzer unterteilen
-    const jasperTrades = tradesToUse.filter((t: any) => t.userName === 'Jasper');
-    const moTrades = tradesToUse.filter((t: any) => t.userName === 'Mo');
     
     // Gesamt-Statistiken
     const count = tradesToUse.length;
@@ -1479,38 +1481,91 @@ export default function TradeCompare() {
                       <div className="h-1/3 w-full bg-blue-500/5 border-b border-dashed border-blue-500/20"></div>
                       <div className="h-1/3 w-full bg-blue-500/10"></div>
                     </div>
-                    <Sparklines 
-                      data={tradeStats.jasperWinHistory.length > 0 ? 
-                          tradeStats.jasperWinHistory.map(v => v * 100) : 
-                          [0,0,0,0,0]} 
-                      height={30} 
-                      margin={5}
-                      min={0}
-                      max={100}
-                    >
-                      <SparklinesBars 
-                        color="rgba(59, 130, 246, 0.8)" 
-                        style={{ 
-                          fill: "url(#blueGradient)",
-                          filter: "drop-shadow(0 1px 2px rgba(37, 99, 235, 0.3))" 
-                        }} 
-                      />
-                      <SparklinesSpots 
-                        size={3} 
-                        style={{ 
-                          fill: 'white',
-                          stroke: "rgba(59, 130, 246, 0.8)", 
-                          strokeWidth: 2,
-                        }} 
-                      />
-                      {/* SVG Definitionen für Gradienten */}
-                      <defs>
-                        <linearGradient id="blueGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="rgba(59, 130, 246, 0.9)" />
-                          <stop offset="100%" stopColor="rgba(59, 130, 246, 0.3)" />
-                        </linearGradient>
-                      </defs>
-                    </Sparklines>
+                    <div className="relative group">
+                      <Sparklines 
+                        data={tradeStats.jasperWinHistory.length > 0 ? 
+                            tradeStats.jasperWinHistory.map(v => v * 100) : 
+                            [0,0,0,0,0]} 
+                        height={30} 
+                        margin={5}
+                        min={0}
+                        max={100}
+                      >
+                        <SparklinesBars 
+                          color="rgba(59, 130, 246, 0.8)" 
+                          style={{ 
+                            fill: "url(#blueGradient)",
+                            filter: "drop-shadow(0 1px 2px rgba(37, 99, 235, 0.3))" 
+                          }} 
+                        />
+                        <SparklinesSpots 
+                          size={3} 
+                          style={{ 
+                            fill: 'white',
+                            stroke: "rgba(59, 130, 246, 0.8)", 
+                            strokeWidth: 2,
+                          }} 
+                        />
+                        {/* SVG Definitionen für Gradienten */}
+                        <defs>
+                          <linearGradient id="blueGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="rgba(59, 130, 246, 0.9)" />
+                            <stop offset="100%" stopColor="rgba(59, 130, 246, 0.3)" />
+                          </linearGradient>
+                        </defs>
+                      </Sparklines>
+                      
+                      {/* Tooltip, der bei Hover erscheint */}
+                      <div className="absolute top-0 left-0 w-full h-full opacity-0 group-hover:opacity-100">
+                        {tradeStats.jasperWinHistory.length > 0 && tradeStats.jasperWinHistory.map((win, index) => {
+                          const position = (index / (tradeStats.jasperWinHistory.length - 1 || 1)) * 100;
+                          const jasperTrade = jasperTrades[jasperTrades.length - 1 - index];
+                          if (!jasperTrade) return null;
+                          
+                          return (
+                            <div 
+                              key={`win-history-${index}`}
+                              className="absolute top-0 h-full cursor-pointer" 
+                              style={{ 
+                                left: `${position}%`, 
+                                width: `${100 / tradeStats.jasperWinHistory.length}%`
+                              }}
+                              title={`${jasperTrade.symbol || 'Trade'} - ${win ? 'Gewinn' : 'Verlust'} - ${new Date(jasperTrade.date).toLocaleDateString()}`}
+                            >
+                              <div className="opacity-0 hover:opacity-100 absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10 bg-black/90 border border-blue-500/30 rounded-md py-1.5 px-3 text-xs whitespace-nowrap pointer-events-none transition-opacity duration-150">
+                                <div className="font-semibold mb-1 text-blue-300">{jasperTrade.symbol} - {jasperTrade.setup || 'Kein Setup'}</div>
+                                <div className="flex justify-between gap-3">
+                                  <span className="text-gray-300">Datum:</span>
+                                  <span className="text-white">{new Date(jasperTrade.date).toLocaleDateString()}</span>
+                                </div>
+                                <div className="flex justify-between gap-3">
+                                  <span className="text-gray-300">Ergebnis:</span>
+                                  <span className={win ? 'text-green-400' : 'text-red-400'}>
+                                    {win ? 'Gewinn' : 'Verlust'}
+                                  </span>
+                                </div>
+                                {jasperTrade.profitLoss && (
+                                  <div className="flex justify-between gap-3">
+                                    <span className="text-gray-300">P/L:</span>
+                                    <span className={jasperTrade.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}>
+                                      ${jasperTrade.profitLoss.toFixed(0)}
+                                    </span>
+                                  </div>
+                                )}
+                                {jasperTrade.rrAchieved && (
+                                  <div className="flex justify-between gap-3">
+                                    <span className="text-gray-300">R/R:</span>
+                                    <span className={jasperTrade.rrAchieved >= 0 ? 'text-green-400' : 'text-red-400'}>
+                                      {jasperTrade.rrAchieved.toFixed(1)}R
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1559,28 +1614,80 @@ export default function TradeCompare() {
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-dashed border-blue-500/30 h-0"></div>
                     </div>
-                    <Sparklines 
-                      data={tradeStats.jasperPLHistory.length > 0 ? tradeStats.jasperPLHistory : [0,0,0,0,0]} 
-                      height={30} 
-                      margin={5}
-                    >
-                      <SparklinesLine 
-                        color="rgba(59, 130, 246, 0.8)" 
-                        style={{
-                          strokeWidth: 2,
-                          fill: "rgba(59, 130, 246, 0.1)",
-                          filter: "drop-shadow(0 1px 3px rgba(37, 99, 235, 0.4))"
-                        }}
-                      />
-                      <SparklinesSpots 
-                        size={3} 
-                        style={{ 
-                          fill: 'white',
-                          stroke: "rgba(59, 130, 246, 0.8)", 
-                          strokeWidth: 2,
-                        }} 
-                      />
-                    </Sparklines>
+                    <div className="relative group">
+                      <Sparklines 
+                        data={tradeStats.jasperPLHistory.length > 0 ? tradeStats.jasperPLHistory : [0,0,0,0,0]} 
+                        height={30} 
+                        margin={5}
+                      >
+                        <SparklinesLine 
+                          color="rgba(59, 130, 246, 0.8)" 
+                          style={{
+                            strokeWidth: 2,
+                            fill: "rgba(59, 130, 246, 0.1)",
+                            filter: "drop-shadow(0 1px 3px rgba(37, 99, 235, 0.4))"
+                          }}
+                        />
+                        <SparklinesSpots 
+                          size={3} 
+                          style={{ 
+                            fill: 'white',
+                            stroke: "rgba(59, 130, 246, 0.8)", 
+                            strokeWidth: 2,
+                          }} 
+                        />
+                      </Sparklines>
+
+                      {/* Tooltip, der bei Hover erscheint */}
+                      <div className="absolute top-0 left-0 w-full h-full opacity-0 group-hover:opacity-100">
+                        {tradeStats.jasperPLHistory.length > 0 && tradeStats.jasperPLHistory.map((pl, index) => {
+                          const position = (index / (tradeStats.jasperPLHistory.length - 1 || 1)) * 100;
+                          const jasperTrade = jasperTrades[jasperTrades.length - 1 - index];
+                          if (!jasperTrade) return null;
+                          
+                          return (
+                            <div 
+                              key={`pl-history-${index}`}
+                              className="absolute top-0 h-full cursor-pointer" 
+                              style={{ 
+                                left: `${position}%`, 
+                                width: `${100 / tradeStats.jasperPLHistory.length}%`
+                              }}
+                            >
+                              <div className="opacity-0 hover:opacity-100 absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10 bg-black/90 border border-blue-500/30 rounded-md py-1.5 px-3 text-xs whitespace-nowrap pointer-events-none transition-opacity duration-150">
+                                <div className="font-semibold mb-1 text-blue-300">{jasperTrade.symbol} - {jasperTrade.setup || 'Kein Setup'}</div>
+                                <div className="flex justify-between gap-3">
+                                  <span className="text-gray-300">Datum:</span>
+                                  <span className="text-white">{new Date(jasperTrade.date).toLocaleDateString()}</span>
+                                </div>
+                                <div className="flex justify-between gap-3">
+                                  <span className="text-gray-300">Ergebnis:</span>
+                                  <span className={jasperTrade.isWin ? 'text-green-400' : 'text-red-400'}>
+                                    {jasperTrade.isWin ? 'Gewinn' : 'Verlust'}
+                                  </span>
+                                </div>
+                                {jasperTrade.profitLoss && (
+                                  <div className="flex justify-between gap-3">
+                                    <span className="text-gray-300">P/L:</span>
+                                    <span className={jasperTrade.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}>
+                                      ${jasperTrade.profitLoss.toFixed(0)}
+                                    </span>
+                                  </div>
+                                )}
+                                {jasperTrade.rrAchieved && (
+                                  <div className="flex justify-between gap-3">
+                                    <span className="text-gray-300">R/R:</span>
+                                    <span className={jasperTrade.rrAchieved >= 0 ? 'text-green-400' : 'text-red-400'}>
+                                      {jasperTrade.rrAchieved.toFixed(1)}R
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
