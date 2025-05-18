@@ -196,6 +196,18 @@ const findBestTrade = (trades) => {
   // Debugging
   console.log(`findBestTrade: Analysiere ${trades.length} Trades`);
   
+  // Wenn nur ein Trade vorhanden ist und er positiv ist, gib diesen zurück
+  if (trades.length === 1 && trades[0].profitLoss > 0) {
+    console.log(`findBestTrade: Nur ein Trade vorhanden und dieser ist positiv:`, trades[0]);
+    return trades[0];
+  }
+  
+  // Wenn nur ein Trade vorhanden ist, gib diesen als "besten" zurück
+  if (trades.length === 1) {
+    console.log(`findBestTrade: Nur ein Trade vorhanden:`, trades[0]);
+    return trades[0];
+  }
+  
   // Trades sortieren, erst für profitLoss, dann für rrAchieved (beide absteigend für besten Trade)
   try {
     // Nur gültige Trades mit numerischen Werten für profitLoss verwenden
@@ -223,7 +235,8 @@ const findBestTrade = (trades) => {
     return sortedTrades[0];
   } catch (error) {
     console.error("Fehler beim Finden des besten Trades:", error);
-    return null;
+    // Bei Fehlern, gib den ersten Trade zurück, falls vorhanden
+    return trades.length > 0 ? trades[0] : null;
   }
 };
 
@@ -237,6 +250,18 @@ const findWorstTrade = (trades) => {
   
   // Debugging
   console.log(`findWorstTrade: Analysiere ${trades.length} Trades`);
+  
+  // Wenn nur ein Trade vorhanden ist und er negativ ist, gib diesen zurück
+  if (trades.length === 1 && trades[0].profitLoss < 0) {
+    console.log(`findWorstTrade: Nur ein Trade vorhanden und dieser ist negativ:`, trades[0]);
+    return trades[0];
+  }
+  
+  // Wenn nur ein Trade vorhanden ist, gib diesen als "schlechtesten" zurück
+  if (trades.length === 1) {
+    console.log(`findWorstTrade: Nur ein Trade vorhanden:`, trades[0]);
+    return trades[0];
+  }
   
   // Trades sortieren, erst für profitLoss, dann für rrAchieved (beide aufsteigend für schlechtesten Trade)
   try {
@@ -265,7 +290,8 @@ const findWorstTrade = (trades) => {
     return sortedTrades[0];
   } catch (error) {
     console.error("Fehler beim Finden des schlechtesten Trades:", error);
-    return null;
+    // Bei Fehlern, gib den ersten Trade zurück, falls vorhanden
+    return trades.length > 0 ? trades[0] : null;
   }
 };
 
