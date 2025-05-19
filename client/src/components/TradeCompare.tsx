@@ -2501,7 +2501,7 @@ export default function TradeCompare() {
             <DialogDescription className="sr-only">
               Detailansicht eines ausgewählten Trades mit allen Parametern und Eigenschaften.
             </DialogDescription>
-            <TradeDetail 
+            <TradeCompareDetail 
               selectedTrade={selectedTrade} 
               onTradeSelected={(updatedTrade) => {
                 // Setze den neuen Trade in der lokalen State
