@@ -3,8 +3,8 @@ import { Label } from "@/components/ui/label";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Trade } from '@shared/schema';
-import TradeTable from './TradeTable';
-import TradeDetail from './TradeDetail';
+import TradeCompareTable from './TradeCompareTable';
+import TradeCompareDetail from './TradeCompareDetail';
 import { KpiTooltip, ComparisonBadge, SparklineDataTooltip } from './KpiTooltip';
 import { exportComparisonDataToCSV } from '@/lib/exportHelper';
 import { 
@@ -2468,7 +2468,7 @@ export default function TradeCompare() {
           <Tabs defaultValue="table" className="w-full">
 
             <TabsContent value="table" className="p-0 m-0">
-              <TradeTable 
+              <TradeCompareTable 
                 trades={(filteredTrades.length > 0 ? filteredTrades : combinedTrades) as any} 
                 isLoading={isLoadingAdmin || isLoadingMo}
                 showColoredRows={true}
@@ -2477,7 +2477,7 @@ export default function TradeCompare() {
                 showAccountProgress={false}
                 onTradeSelect={setSelectedTrade}
                 onActiveFiltersChange={(filters) => {
-                  console.log("TradeTable sendet Filter zurück an TradeCompare:", filters);
+                  console.log("TradeCompareTable sendet Filter zurück an TradeCompare:", filters);
                   // Nur aktualisieren, wenn Filter sich tatsächlich geändert haben
                   if (JSON.stringify(filters) !== JSON.stringify(activeFilters)) {
                     setActiveFilters(filters);
