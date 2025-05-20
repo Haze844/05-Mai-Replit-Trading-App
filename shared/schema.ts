@@ -58,7 +58,7 @@ export const trades = pgTable("trades", {
   internalTrendM5: text("internal_trend_m5").default(''),
   entryType: text("entry_type").default(''),
   entryLevel: text("entry_level").default(''),
-  liquidation: text("liquidation").default(''),
+  liquidation: text("liquidation_level").default(''), // Angepasst, um mit der DB-Struktur übereinzustimmen
   location: text("location").default(''),
   accountType: text("account_type").default('PA'), // Kontoart: EVA oder PA
   session: text("session").default(''), // Handels-Session: London, London Neverland, NY AM, NY AM Neverland, NY PM
