@@ -1244,4 +1244,364 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// DatabaseStorage-Implementierung für persistente Datenspeicherung
+import { db } from './db-selector';
+import { eq, and, between, gte, lte, desc, sql } from 'drizzle-orm';
+
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    const MemoryStore = createMemoryStore(session);
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // Bereinige abgelaufene Einträge nach einem Tag
+    });
+  }
+
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user;
+    } catch (error) {
+      console.error(`Error fetching user with id ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      return user;
+    } catch (error) {
+      console.error(`Error fetching user with username ${username}:`, error);
+      return undefined;
+    }
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    try {
+      const [createdUser] = await db.insert(users).values(user).returning();
+      return createdUser;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  }
+
+  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+    try {
+      const [updatedUser] = await db
+        .update(users)
+        .set(userData)
+        .where(eq(users.id, id))
+        .returning();
+      return updatedUser;
+    } catch (error) {
+      console.error(`Error updating user with id ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  // Trade operations
+  async getTrades(userId: number, filters: Partial<Trade> = {}): Promise<Trade[]> {
+    try {
+      console.log(`DatabaseStorage getTrades - Filters applied:`, filters);
+      
+      let query = db.select().from(trades).where(eq(trades.userId, userId));
+      
+      // Wende Filter an, falls vorhanden
+      if (filters.startDate && filters.endDate) {
+        query = query.where(
+          and(
+            gte(trades.date, filters.startDate),
+            lte(trades.date, filters.endDate)
+          )
+        );
+      }
+      
+      // Füge weitere Filter hinzu basierend auf den übergebenen Filtern
+      for (const [key, value] of Object.entries(filters)) {
+        if (value !== undefined && key !== 'startDate' && key !== 'endDate') {
+          // @ts-ignore - Dynamische Filterzuweisung
+          query = query.where(eq(trades[key], value));
+        }
+      }
+      
+      const result = await query.orderBy(desc(trades.date));
+      console.log(`DatabaseStorage getTrades - Retrieved ${result.length} trades for userId ${userId}`);
+      return result;
+    } catch (error) {
+      console.error(`Error fetching trades for user ${userId}:`, error);
+      return [];
+    }
+  }
+
+  async getTradeById(id: number): Promise<Trade | undefined> {
+    try {
+      const [trade] = await db.select().from(trades).where(eq(trades.id, id));
+      return trade;
+    } catch (error) {
+      console.error(`Error fetching trade with id ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async createTrade(trade: InsertTrade & { userId: number }): Promise<Trade> {
+    try {
+      const [createdTrade] = await db.insert(trades).values(trade).returning();
+      return createdTrade;
+    } catch (error) {
+      console.error('Error creating trade:', error);
+      throw error;
+    }
+  }
+
+  async updateTrade(id: number, tradeData: Partial<Trade>): Promise<Trade | undefined> {
+    try {
+      const [updatedTrade] = await db
+        .update(trades)
+        .set(tradeData)
+        .where(eq(trades.id, id))
+        .returning();
+      return updatedTrade;
+    } catch (error) {
+      console.error(`Error updating trade with id ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async deleteTrade(id: number): Promise<boolean> {
+    try {
+      await db.delete(trades).where(eq(trades.id, id));
+      return true;
+    } catch (error) {
+      console.error(`Error deleting trade with id ${id}:`, error);
+      return false;
+    }
+  }
+  
+  // App Settings operations
+  async getAppSettings(userId: number): Promise<AppSettings | undefined> {
+    try {
+      const [settings] = await db.select().from(appSettings).where(eq(appSettings.userId, userId));
+      return settings;
+    } catch (error) {
+      console.error(`Error fetching app settings for user ${userId}:`, error);
+      return undefined;
+    }
+  }
+
+  async createOrUpdateAppSettings(settings: InsertAppSettings): Promise<AppSettings> {
+    try {
+      // Prüfe, ob bereits Einstellungen für diesen Benutzer existieren
+      const existingSettings = await this.getAppSettings(settings.userId);
+      
+      if (existingSettings) {
+        // Update existing settings
+        const [updatedSettings] = await db
+          .update(appSettings)
+          .set(settings)
+          .where(eq(appSettings.userId, settings.userId))
+          .returning();
+        return updatedSettings;
+      } else {
+        // Create new settings
+        const [newSettings] = await db
+          .insert(appSettings)
+          .values(settings)
+          .returning();
+        return newSettings;
+      }
+    } catch (error) {
+      console.error(`Error creating/updating app settings for user ${settings.userId}:`, error);
+      throw error;
+    }
+  }
+
+  // Andere Methoden werden bei Bedarf implementiert
+  // Die restlichen Methoden der IStorage-Schnittstelle müssen implementiert werden
+  // Hier nur Beispielimplementierungen für die wichtigsten Funktionen
+  
+  // Weekly summary operations
+  async getWeeklySummary(userId: number, weekStart: Date, weekEnd: Date): Promise<WeeklySummary | undefined> {
+    try {
+      const [summary] = await db
+        .select()
+        .from(weeklySummaries)
+        .where(
+          and(
+            eq(weeklySummaries.userId, userId),
+            eq(weeklySummaries.weekStart, weekStart),
+            eq(weeklySummaries.weekEnd, weekEnd)
+          )
+        );
+      return summary;
+    } catch (error) {
+      console.error(`Error fetching weekly summary for user ${userId}:`, error);
+      return undefined;
+    }
+  }
+
+  async createWeeklySummary(summary: InsertWeeklySummary & { userId: number }): Promise<WeeklySummary> {
+    try {
+      const [createdSummary] = await db
+        .insert(weeklySummaries)
+        .values(summary)
+        .returning();
+      return createdSummary;
+    } catch (error) {
+      console.error(`Error creating weekly summary for user ${summary.userId}:`, error);
+      throw error;
+    }
+  }
+
+  async updateWeeklySummary(id: number, summary: Partial<WeeklySummary>): Promise<WeeklySummary | undefined> {
+    try {
+      const [updatedSummary] = await db
+        .update(weeklySummaries)
+        .set(summary)
+        .where(eq(weeklySummaries.id, id))
+        .returning();
+      return updatedSummary;
+    } catch (error) {
+      console.error(`Error updating weekly summary with id ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  // Die implementierten Methoden sollten vorerst ausreichen
+  // Weitere Methoden werden bei Bedarf implementiert
+
+  // Performance data operations
+  async getPerformanceData(userId: number, startDate?: Date, endDate?: Date): Promise<PerformanceData[]> {
+    return []; // Implementierung bei Bedarf
+  }
+
+  async createPerformanceData(data: InsertPerformanceData & { userId: number }): Promise<PerformanceData> {
+    throw new Error("Method not implemented");
+  }
+
+  // Setup win rate operations
+  async getSetupWinRates(userId: number): Promise<SetupWinRate[]> {
+    return []; // Implementierung bei Bedarf
+  }
+
+  async updateSetupWinRate(userId: number, setup: string, winRate: number): Promise<SetupWinRate> {
+    throw new Error("Method not implemented");
+  }
+
+  // Statistics operations
+  async calculateWeeklySummary(userId: number, weekStart: Date, weekEnd: Date): Promise<InsertWeeklySummary & { userId: number }> {
+    // Vereinfachte Implementierung
+    const summary = {
+      userId,
+      weekStart,
+      weekEnd,
+      totalRR: 0,
+      tradeCount: 0,
+      winRate: 0
+    };
+    return summary;
+  }
+
+  async calculateSetupWinRates(userId: number): Promise<void> {
+    // Implementierung bei Bedarf
+  }
+
+  // Coaching Goals operations
+  async getCoachingGoals(userId: number, completed?: boolean): Promise<CoachingGoal[]> {
+    return []; // Implementierung bei Bedarf
+  }
+
+  async getCoachingGoalById(id: number): Promise<CoachingGoal | undefined> {
+    return undefined; // Implementierung bei Bedarf
+  }
+
+  async createCoachingGoal(goal: InsertCoachingGoal): Promise<CoachingGoal> {
+    throw new Error("Method not implemented");
+  }
+
+  async updateCoachingGoal(id: number, goal: Partial<CoachingGoal>): Promise<CoachingGoal | undefined> {
+    return undefined; // Implementierung bei Bedarf
+  }
+
+  async deleteCoachingGoal(id: number): Promise<boolean> {
+    return false; // Implementierung bei Bedarf
+  }
+
+  // Coaching Feedback operations
+  async getCoachingFeedback(userId: number, acknowledged?: boolean): Promise<CoachingFeedback[]> {
+    return []; // Implementierung bei Bedarf
+  }
+
+  async createCoachingFeedback(feedback: InsertCoachingFeedback): Promise<CoachingFeedback> {
+    throw new Error("Method not implemented");
+  }
+
+  async acknowledgeCoachingFeedback(id: number): Promise<CoachingFeedback | undefined> {
+    return undefined; // Implementierung bei Bedarf
+  }
+
+  async generateCoachingFeedback(userId: number): Promise<CoachingFeedback[]> {
+    return []; // Implementierung bei Bedarf
+  }
+
+  // Trading Streak operations
+  async getTradingStreak(userId: number): Promise<TradingStreak | undefined> {
+    return undefined; // Implementierung bei Bedarf
+  }
+
+  async createTradingStreak(streak: InsertTradingStreak & { userId: number }): Promise<TradingStreak> {
+    throw new Error("Method not implemented");
+  }
+
+  async updateTradingStreak(userId: number, streak: Partial<TradingStreak>): Promise<TradingStreak | undefined> {
+    return undefined; // Implementierung bei Bedarf
+  }
+
+  async updateStreakOnTradeResult(userId: number, isWin: boolean): Promise<TradingStreak> {
+    throw new Error("Method not implemented");
+  }
+
+  async getTopStreaks(): Promise<TradingStreak[]> {
+    return []; // Implementierung bei Bedarf
+  }
+
+  async earnBadge(userId: number, badgeType: typeof badgeTypes[number]): Promise<TradingStreak | undefined> {
+    return undefined; // Implementierung bei Bedarf
+  }
+
+  // Macroeconomic Events operations
+  async getMacroEconomicEvents(startDate: Date, endDate: Date): Promise<MacroEconomicEvent[]> {
+    return []; // Implementierung bei Bedarf
+  }
+
+  async getMacroEconomicEventById(id: number): Promise<MacroEconomicEvent | undefined> {
+    return undefined; // Implementierung bei Bedarf
+  }
+
+  async createMacroEconomicEvent(event: InsertMacroEconomicEvent): Promise<MacroEconomicEvent> {
+    throw new Error("Method not implemented");
+  }
+
+  async updateMacroEconomicEvent(id: number, event: Partial<MacroEconomicEvent>): Promise<MacroEconomicEvent | undefined> {
+    return undefined; // Implementierung bei Bedarf
+  }
+}
+
+// Wähle Storage-Implementierung basierend auf Umgebungsvariable
+const storageProvider = process.env.DATABASE_PROVIDER || 'memory';
+console.log(`Verwende Storage-Provider: ${storageProvider}`);
+
+let storage: IStorage;
+
+if (storageProvider === 'neon' || storageProvider === 'postgres' || storageProvider === 'supabase') {
+  console.log('Initialisiere DatabaseStorage mit persistenter Datenspeicherung');
+  storage = new DatabaseStorage();
+} else {
+  console.log('Initialisiere MemStorage (In-Memory-Speicher, keine persistente Datenspeicherung)');
+  storage = new MemStorage();
+}
+
+export { storage };
