@@ -59,7 +59,7 @@ export const trades = pgTable("trades", {
   entryType: text("entry_type").default(''),
   entryLevel: text("entry_level").default(''),
   liquidation: text("liquidation_level").default(''), // Angepasst, um mit der DB-Struktur übereinzustimmen
-  location: text("location").default(''),
+  location: text("liquidity_level").default(''), // Angepasst, um mit der DB-Struktur übereinzustimmen
   accountType: text("account_type").default('PA'), // Kontoart: EVA oder PA
   session: text("session").default(''), // Handels-Session: London, London Neverland, NY AM, NY AM Neverland, NY PM
   rrAchieved: real("rr_achieved").default(0),
