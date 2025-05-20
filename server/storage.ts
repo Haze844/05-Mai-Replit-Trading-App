@@ -1328,7 +1328,24 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      const result = await query.orderBy(desc(trades.date));
+      const dbResult = await query.orderBy(desc(trades.date));
+      
+      // Mapping von DB-Struktur auf Frontend-Struktur
+      const result = dbResult.map(trade => {
+        return {
+          ...trade,
+          // Übersetzung der Spaltennamen für das Frontend
+          liquidation: trade.liquidationLevel,
+          location: trade.liquidityLevel,
+          riskSum: trade.positionSize,
+          rrAchieved: trade.actualRrr,
+          rrPotential: trade.potentialRrr,
+          profitLoss: trade.exitLevel ? (trade.exitLevel - trade.entryLevel) : 0,
+          isWin: trade.tradeResult === 'win',
+          chartImage: trade.chartImageUrl
+        };
+      });
+      
       console.log(`DatabaseStorage getTrades - Retrieved ${result.length} trades for userId ${userId}`);
       return result;
     } catch (error) {
@@ -1339,7 +1356,23 @@ export class DatabaseStorage implements IStorage {
 
   async getTradeById(id: number): Promise<Trade | undefined> {
     try {
-      const [trade] = await db.select().from(trades).where(eq(trades.id, id));
+      const [dbTrade] = await db.select().from(trades).where(eq(trades.id, id));
+      
+      if (!dbTrade) return undefined;
+      
+      // Übersetzung der Spaltennamen analog zu getTrades
+      const trade = {
+        ...dbTrade,
+        liquidation: dbTrade.liquidationLevel,
+        location: dbTrade.liquidityLevel,
+        riskSum: dbTrade.positionSize,
+        rrAchieved: dbTrade.actualRrr,
+        rrPotential: dbTrade.potentialRrr,
+        profitLoss: dbTrade.exitLevel ? (dbTrade.exitLevel - dbTrade.entryLevel) : 0,
+        isWin: dbTrade.tradeResult === 'win',
+        chartImage: dbTrade.chartImageUrl
+      };
+      
       return trade;
     } catch (error) {
       console.error(`Error fetching trade with id ${id}:`, error);
