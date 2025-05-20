@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, date, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -48,56 +48,61 @@ export const slTypes = ["Sweep", "zerstört"] as const;
 export const slPointsValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30] as const;
 export const accountTypeValues = ["PA", "EVA", "EK"] as const;;
 
-// Trades schema
+// Trades schema basierend auf der tatsächlichen Datenbankstruktur
 export const trades = pgTable("trades", {
   id: serial("id").primaryKey(),
-  date: timestamp("date").notNull().defaultNow(),
-  symbol: text("symbol").default(''),
-  setup: text("setup").default(''),
-  mainTrendM15: text("main_trend_m15").default(''),
-  internalTrendM5: text("internal_trend_m5").default(''),
-  entryType: text("entry_type").default(''),
-  entryLevel: text("entry_level").default(''),
-  liquidation: text("liquidation_level").default(''), // Angepasst, um mit der DB-Struktur übereinzustimmen
-  location: text("liquidity_level").default(''), // Angepasst, um mit der DB-Struktur übereinzustimmen
-  accountType: text("account_type").default('PA'), // Kontoart: EVA oder PA
-  session: text("session").default(''), // Handels-Session: London, London Neverland, NY AM, NY AM Neverland, NY PM
-  rrAchieved: real("rr_achieved").default(0),
-  rrPotential: real("rr_potential").default(0),
-  profitLoss: real("profit_loss").default(0), // Gewinn/Verlust in $
-  gptFeedback: text("gpt_feedback"),
-  chartImage: text("chart_image"),
-  isWin: boolean("is_win").default(false),
+  symbol: text("symbol"),
+  date: timestamp("date"),
+  setup: text("setup"),
+  mainTrendM15: text("main_trend_m15"),
+  internalTrendM5: text("internal_trend_m5"),
+  entryType: text("entry_type"),
+  entryLevel: text("entry_level"),
+  positionSize: real("position_size"),
+  takeProfit: real("take_profit"),
+  stopLoss: real("stop_loss"),
+  exitLevel: real("exit_level"),
+  potentialRrr: real("potential_rrr"),
+  actualRrr: real("actual_rrr"),
+  tradeDuration: text("trade_duration"),
+  tradeResult: text("trade_result"),
+  notes: text("notes"),
+  chartImageUrl: text("chart_image_url"),
+  liquidityLevel: text("liquidity_level"),
+  deviation: text("deviation"),
+  sessionNyc: boolean("session_nyc"),
+  sessionLondon: boolean("session_london"),
+  sessionAsia: boolean("session_asia"),
+  sessionTime: text("session_time"),
+  trendAlignment: text("trend_alignment"),
+  smartMoneyConcept: text("smart_money_concept"),
+  marketStructure: text("market_structure"),
+  advancedPattern: text("advanced_pattern"),
+  chartPattern: text("chart_pattern"),
+  fundamentalNews: text("fundamental_news"),
+  wickFill: text("wick_fill"),
+  spreadSize: text("spread_size"),
+  psychologicalLevel: boolean("psychological_level"),
+  tradeManagement: text("trade_management"),
+  exitReason: text("exit_reason"),
+  advancedExit: text("advanced_exit"),
+  liquidationLevel: text("liquidation_level"),
+  liquidationEntry: text("liquidation_entry"),
   userId: integer("user_id").references(() => users.id),
-  // Neue Spalten
-  trend: text("trend").default(''), // Long oder Short
-  internalTrend: text("internal_trend").default(''), // Long oder Short
-  microTrend: text("micro_trend").default(''), // Long oder Short
-  structure: text("structure").default(''), // Hauptstruktur, Internal, Micro
-  timeframeEntry: text("timeframe_entry").default(''), // M1, M5, M15, ALL TF
-  unmitZone: text("unmit_zone").default(''), // Ja, Nein, Mehrere
-  rangePoints: integer("range_points"), // Wert zwischen 0 und 300
-  marketPhase: text("market_phase").default(''), // Long, stark Long, Short, stark Short, Range
-  slType: text("sl_type").default(''), // Sweep oder zerstört
-  slPoints: integer("sl_points"), // Wert zwischen 1 und 30
-  riskSum: real("risk_sum").default(200), // Alte Risiko Summe in $, Standard 200$
-  riskPoints: integer("risk_points").default(10), // Risiko in Punkten (neu)
-  riskAmount: real("risk_amount"), // Berechnete Risikosumme basierend auf riskPoints und size
-  size: integer("size"), // Position Size in Zahlen
-  liquidationEntry: text("liquidation_entry").default('') // Liquidation Entry Timeframe: M1, M5, M15, H1
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 export const insertTradeSchema = createInsertSchema(trades).omit({
   id: true,
-  date: true,
-  gptFeedback: true,
-  chartImage: true,
+  createdAt: true,
+  updatedAt: true,
   userId: true,
 });
 
 export type InsertTrade = z.infer<typeof insertTradeSchema> & { 
-  gptFeedback?: string;
-  chartImage?: string;
+  notes?: string;
+  chartImageUrl?: string;
 };
 export type Trade = typeof trades.$inferSelect;
 
