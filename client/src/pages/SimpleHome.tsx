@@ -167,7 +167,9 @@ export default function SimpleHome() {
       if (!response.ok) {
         throw new Error("Failed to fetch trades");
       }
-      return response.json();
+      const data = await response.json();
+      console.log("API response data:", data);
+      return data;
     },
   });
 

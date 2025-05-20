@@ -103,6 +103,8 @@ export default function TradeTable({
   showHeader = true,
   showAccountProgress = true
 }: TradeTableProps) {
+  // Debug-Ausgabe der empfangenen Trades
+  console.log("TradeTable - Empfangene Trades:", trades);
   const [currentPage, setCurrentPage] = useState(1);
   const tradesPerPage = 20;
   const [tradeToDelete, setTradeToDelete] = useState<Trade | null>(null);
