@@ -216,10 +216,17 @@ export default function TradeTable({
     slTypes: Array.from(new Set(trades.map(t => t.slType).filter(Boolean))) as string[]
   };
   
+  // Debug-Ausgabe der Trade-Eigenschaften
+  if (trades && trades.length > 0) {
+    console.log("Trade-Eigenschaften (erster Trade):", Object.keys(trades[0]));
+    console.log("Trade-Werte (erster Trade):", trades[0]);
+  }
+
   // Apply filters and notify parent component of changes when filtered trades change
   const filteredTrades = trades.filter(trade => {
     // Symbol filter
     if (filters.symbols.size > 0 && trade.symbol && !filters.symbols.has(trade.symbol)) {
+      console.log(`Trade ${trade.id} gefiltert wegen Symbol: ${trade.symbol}`);
       return false;
     }
     
