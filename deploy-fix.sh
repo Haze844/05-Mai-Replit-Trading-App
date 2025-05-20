@@ -1,43 +1,128 @@
 #!/bin/bash
-# Dieses Skript bereitet das Projekt für das Deployment auf Render vor
-# Es führt notwendige Anpassungen durch und erstellt die ESM-kompatiblen Dateien
 
-# Log-Funktion für bessere Sichtbarkeit
-log() {
-  echo -e "\e[1;36m▶ $1\e[0m"
-}
+# Deployment-Fix-Skript für Replit
+echo "🚀 Starte Deployment-Fix für Replit..."
 
-# Fehler-Funktion
-error() {
-  echo -e "\e[1;31m❌ $1\e[0m"
-  exit 1
-}
-
-log "Deployment-Fix für Render wird gestartet..."
-
-# 1. Package.json für ESM anpassen
-log "Package.json für ESM anpassen..."
-sed -i 's|--outdir=dist|--outfile=dist/index.mjs|g' package.json
-sed -i 's|node dist/index.js|node dist/index.mjs|g' package.json
-log "✅ Package.json angepasst"
-
-# 2. Umgebungsvariablen für das Deployment vorbereiten
-log "Umgebungsvariablen prüfen..."
-if [ -z "$DATABASE_URL" ]; then
-  log "⚠️ Warnung: DATABASE_URL ist nicht gesetzt"
+# Dist-Verzeichnis erstellen (falls nicht vorhanden)
+if [ ! -d "dist" ]; then
+  echo "📁 Erstelle dist-Verzeichnis..."
+  mkdir -p dist
 fi
 
-if [ -z "$SESSION_SECRET" ]; then
-  log "⚠️ Warnung: SESSION_SECRET ist nicht gesetzt"
-fi
+# Einfache statische HTML-Datei zur Weiterleitung zum Server
+echo "📄 Erstelle Weiterleitung im dist-Verzeichnis..."
+cat > dist/index.html << 'EOL'
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trading Journal</title>
+  <meta http-equiv="refresh" content="0;url=/" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      height: 100vh;
+      margin: 0;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .loader {
+      width: 48px;
+      height: 48px;
+      border: 5px solid #FFF;
+      border-bottom-color: #3b82f6;
+      border-radius: 50%;
+      display: inline-block;
+      box-sizing: border-box;
+      animation: rotation 1s linear infinite;
+    }
 
-# 3. Build ausführen
-log "Build wird durchgeführt..."
-npm run build || error "Build fehlgeschlagen"
-log "✅ Build erfolgreich abgeschlossen"
+    @keyframes rotation {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    } 
+  </style>
+</head>
+<body>
+  <div>
+    <span class="loader"></span>
+    <p>Lade Trading Journal...</p>
+  </div>
+</body>
+</html>
+EOL
 
-# 4. Projekt starten
-log "Server wird gestartet..."
-npm start
+# 404.html Seite erstellen für besseres Routing
+echo "📄 Erstelle 404.html für besseres Routing..."
+cat > dist/404.html << 'EOL'
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trading Journal - Weiterleitung</title>
+  <meta http-equiv="refresh" content="0;url=/" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      height: 100vh;
+      margin: 0;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .loader {
+      width: 48px;
+      height: 48px;
+      border: 5px solid #FFF;
+      border-bottom-color: #3b82f6;
+      border-radius: 50%;
+      display: inline-block;
+      box-sizing: border-box;
+      animation: rotation 1s linear infinite;
+    }
 
-log "Deployment abgeschlossen!"
+    @keyframes rotation {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    } 
+  </style>
+</head>
+<body>
+  <div>
+    <span class="loader"></span>
+    <p>Lade Trading Journal...</p>
+  </div>
+</body>
+</html>
+EOL
+
+# Replit Deploy-Konfiguration erstellen
+echo "⚙️ Erstelle Replit-Deploy-Konfiguration..."
+cat > deploy.config.json << 'EOL'
+{
+  "deploymentTarget": "static",
+  "publicDir": "dist",
+  "buildCommand": "npm run build"
+}
+EOL
+
+echo "✅ Deployment-Fix fertig!"
+echo "🔄 Sie können jetzt das Deployment über den Deploy-Button starten."
+echo "💡 Wenn der Fehler weiterhin besteht, versuchen Sie es später noch einmal oder wenden Sie sich an den Replit-Support."

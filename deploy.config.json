@@ -1,0 +1,5 @@
+{
+  "deploymentTarget": "static",
+  "publicDir": "dist",
+  "buildCommand": "npm run build"
+}

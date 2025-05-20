@@ -1,19 +1,20 @@
 #!/bin/bash
 
-# Dieses Skript startet die Anwendung mit Neon PostgreSQL Datenbankverbindung
+# Diese Datei hilft beim Starten der Anwendung mit Neon PostgreSQL
+echo "🚀 Starte Trading Journal mit Neon PostgreSQL..."
 
-# Prüfe, ob die Datei .env.neon existiert
-if [ ! -f .env.neon ]; then
-  echo "Fehler: Die Datei .env.neon wurde nicht gefunden."
-  echo "Bitte erstelle die Datei basierend auf .env.neon.sample mit deinen Neon-Datenbank Zugangsdaten."
+# Umgebungsvariablen aus .env.neon laden
+if [ -f .env.neon ]; then
+  echo "📋 Lade Umgebungsvariablen aus .env.neon..."
+  export $(cat .env.neon | xargs)
+else
+  echo "⚠️ .env.neon nicht gefunden. Bitte stelle sicher, dass die Datei existiert."
   exit 1
 fi
 
-# Lade Umgebungsvariablen aus .env.neon
-set -a
-source .env.neon
-set +a
+# Datenbank-Anbieter auf neon setzen
+export DATABASE_PROVIDER=neon
 
-# Starte die Anwendung im Entwicklungsmodus mit tsx
-echo "Starte Trading Journal mit Neon PostgreSQL Datenbankverbindung..."
-npx tsx server/index.ts
+# Anwendung starten
+echo "🌐 Starte Server..."
+npm run dev
