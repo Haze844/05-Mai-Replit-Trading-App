@@ -1360,41 +1360,79 @@ export class DatabaseStorage implements IStorage {
   // Hilfsfunktion: Transformiere DB-Trade-Objekt in Frontend-Format
   private mapDbTradeToFrontend(dbTrade: any): Trade {
     // Berechne dynamisch profitLoss und isWin als Fallback
-    const dynamicProfitLoss = dbTrade.exitLevel && dbTrade.entryLevel 
-      ? parseFloat((dbTrade.exitLevel - dbTrade.entryLevel).toFixed(2)) 
+    const dynamicProfitLoss = dbTrade.exit_level && dbTrade.entry_level 
+      ? parseFloat((dbTrade.exit_level - dbTrade.entry_level).toFixed(2)) 
       : 0;
       
-    const dynamicIsWin = dbTrade.tradeResult 
-      ? dbTrade.tradeResult.toLowerCase() === 'win' 
+    const dynamicIsWin = dbTrade.trade_result 
+      ? dbTrade.trade_result.toLowerCase() === 'win' 
       : dynamicProfitLoss > 0;
     
     // Datum-Konvertierung, falls erforderlich
     const dateObj = dbTrade.date ? new Date(dbTrade.date) : null;
     
-    // Übersetzung der Spaltennamen (snake_case DB -> camelCase Frontend)
-    return {
-      ...dbTrade,
-      // Spezielle Feld-Mappings (DB-Spaltenname -> Frontend-Name)
-      liquidation: dbTrade.liquidationLevel || "",
-      location: dbTrade.liquidityLevel || "",
-      riskSum: dbTrade.positionSize || 0,
-      rrAchieved: dbTrade.actualRrr || 0,
-      rrPotential: dbTrade.potentialRrr || 0,
+    // Komplettes Mapping aller Felder von snake_case (DB) zu camelCase (Frontend)
+    const frontendTrade: any = {
+      id: dbTrade.id,
+      symbol: dbTrade.symbol,
+      date: dateObj,
+      setup: dbTrade.setup,
+      mainTrendM15: dbTrade.main_trend_m15,
+      internalTrendM5: dbTrade.internal_trend_m5,
+      entryType: dbTrade.entry_type,
+      entryLevel: dbTrade.entry_level,
+      positionSize: dbTrade.position_size,
+      takeProfit: dbTrade.take_profit,
+      stopLoss: dbTrade.stop_loss,
+      exitLevel: dbTrade.exit_level,
+      potentialRrr: dbTrade.potential_rrr,
+      actualRrr: dbTrade.actual_rrr,
+      tradeDuration: dbTrade.trade_duration,
+      tradeResult: dbTrade.trade_result,
+      notes: dbTrade.notes,
+      chartImageUrl: dbTrade.chart_image_url,
+      liquidityLevel: dbTrade.liquidity_level,
+      deviation: dbTrade.deviation,
+      sessionNyc: dbTrade.session_nyc,
+      sessionLondon: dbTrade.session_london,
+      sessionAsia: dbTrade.session_asia,
+      sessionTime: dbTrade.session_time,
+      trendAlignment: dbTrade.trend_alignment,
+      smartMoneyConcept: dbTrade.smart_money_concept,
+      marketStructure: dbTrade.market_structure,
+      advancedPattern: dbTrade.advanced_pattern,
+      chartPattern: dbTrade.chart_pattern,
+      fundamentalNews: dbTrade.fundamental_news,
+      wickFill: dbTrade.wick_fill,
+      spreadSize: dbTrade.spread_size,
+      psychologicalLevel: dbTrade.psychological_level,
+      tradeManagement: dbTrade.trade_management,
+      exitReason: dbTrade.exit_reason,
+      advancedExit: dbTrade.advanced_exit,
+      liquidationLevel: dbTrade.liquidation_level,
+      liquidationEntry: dbTrade.liquidation_entry,
       
       // Verwende gespeicherte Werte oder berechnete Fallbacks
-      profitLoss: dbTrade.profitLoss !== null && dbTrade.profitLoss !== undefined 
-        ? typeof dbTrade.profitLoss === 'string' ? parseFloat(dbTrade.profitLoss) : Number(dbTrade.profitLoss)
+      profitLoss: dbTrade.profit_loss !== null && dbTrade.profit_loss !== undefined 
+        ? typeof dbTrade.profit_loss === 'string' ? parseFloat(dbTrade.profit_loss) : Number(dbTrade.profit_loss)
         : dynamicProfitLoss,
-      isWin: dbTrade.isWin !== null && dbTrade.isWin !== undefined ? Boolean(dbTrade.isWin) : dynamicIsWin,
+      isWin: dbTrade.is_win !== null && dbTrade.is_win !== undefined ? Boolean(dbTrade.is_win) : dynamicIsWin,
       
-      // Weitere spezielle Feld-Übersetzungen
-      chartImage: dbTrade.chartImageUrl || null,
+      // Spezielle Frontend-spezifische Felder
+      riskSum: dbTrade.position_size || 0,
+      rrAchieved: dbTrade.rr_achieved || dbTrade.actual_rrr || 0,
+      rrPotential: dbTrade.rr_potential || dbTrade.potential_rrr || 0,
+      liquidation: dbTrade.liquidation_level || "",
+      location: dbTrade.liquidity_level || "",
+      chartImage: dbTrade.chart_image_url || null,
       
-      // Stelle sicher, dass Datumswerte als Date-Objekte vorliegen
-      date: dateObj,
-      createdAt: dbTrade.createdAt ? new Date(dbTrade.createdAt) : null,
-      updatedAt: dbTrade.updatedAt ? new Date(dbTrade.updatedAt) : null
+      // Stelle sicher, dass Zeitstempel als Date-Objekte vorliegen
+      createdAt: dbTrade.created_at ? new Date(dbTrade.created_at) : null,
+      updatedAt: dbTrade.updated_at ? new Date(dbTrade.updated_at) : null,
+      userId: dbTrade.user_id
     };
+    
+    return frontendTrade as Trade;
   }
   
   // Hilfsfunktion: Übersetze Frontend-Filter in DB-Filter
@@ -1403,14 +1441,54 @@ export class DatabaseStorage implements IStorage {
     
     const dbFilters: any = {};
     
-    // Mapping für spezielle Felder (Frontend-Name -> DB-Spaltenname)
+    // Vollständiges Mapping für alle Felder (Frontend-Name -> DB-Spaltenname)
     const fieldMapping = {
-      'liquidation': 'liquidationLevel',
-      'location': 'liquidityLevel',
-      'riskSum': 'positionSize',
-      'rrAchieved': 'actualRrr',
-      'rrPotential': 'potentialRrr',
-      'chartImage': 'chartImageUrl'
+      // Spezielle Frontend-spezifische Felder
+      'liquidation': 'liquidation_level',
+      'location': 'liquidity_level',
+      'riskSum': 'position_size',
+      'rrAchieved': 'rr_achieved',
+      'rrPotential': 'rr_potential',
+      'chartImage': 'chart_image_url',
+      
+      // Standard Datenbankfelder in camelCase -> snake_case Mapping
+      'mainTrendM15': 'main_trend_m15',
+      'internalTrendM5': 'internal_trend_m5',
+      'entryType': 'entry_type',
+      'entryLevel': 'entry_level',
+      'positionSize': 'position_size',
+      'takeProfit': 'take_profit',
+      'stopLoss': 'stop_loss',
+      'exitLevel': 'exit_level',
+      'potentialRrr': 'potential_rrr',
+      'actualRrr': 'actual_rrr',
+      'tradeDuration': 'trade_duration',
+      'tradeResult': 'trade_result',
+      'chartImageUrl': 'chart_image_url',
+      'liquidityLevel': 'liquidity_level',
+      'sessionNyc': 'session_nyc',
+      'sessionLondon': 'session_london',
+      'sessionAsia': 'session_asia',
+      'sessionTime': 'session_time',
+      'trendAlignment': 'trend_alignment',
+      'smartMoneyConcept': 'smart_money_concept',
+      'marketStructure': 'market_structure',
+      'advancedPattern': 'advanced_pattern',
+      'chartPattern': 'chart_pattern',
+      'fundamentalNews': 'fundamental_news',
+      'wickFill': 'wick_fill',
+      'spreadSize': 'spread_size',
+      'psychologicalLevel': 'psychological_level',
+      'tradeManagement': 'trade_management',
+      'exitReason': 'exit_reason',
+      'advancedExit': 'advanced_exit',
+      'liquidationLevel': 'liquidation_level',
+      'liquidationEntry': 'liquidation_entry',
+      'profitLoss': 'profit_loss',
+      'isWin': 'is_win',
+      'createdAt': 'created_at',
+      'updatedAt': 'updated_at',
+      'userId': 'user_id'
     };
     
     Object.entries(filters).forEach(([key, value]) => {
@@ -1420,7 +1498,7 @@ export class DatabaseStorage implements IStorage {
       if (key in fieldMapping) {
         dbFilters[fieldMapping[key]] = value;
       } else {
-        // Standardmäßige Feldübergabe
+        // Feldnamen, die keiner Umwandlung bedürfen (z.B. 'id', 'symbol', 'setup', 'notes', 'date')
         dbFilters[key] = value;
       }
     });
@@ -1444,30 +1522,79 @@ export class DatabaseStorage implements IStorage {
 
   // Hilfsfunktion: Übersetzt Frontend-Trade-Objekt in Datenbank-Format
   private mapFrontendTradeToDb(frontendTrade: Partial<InsertTrade>): any {
-    // Kopiere alle Felder
-    const dbTrade: any = { ...frontendTrade };
+    // Leeres DB-Objekt erstellen
+    const dbTrade: any = {};
     
-    // Mapping für spezielle Felder (Frontend-Name -> DB-Spaltenname)
+    // Vollständiges Mapping für alle Felder (Frontend-Name -> DB-Spaltenname)
     const fieldMapping = {
-      'liquidation': 'liquidationLevel',
-      'location': 'liquidityLevel',
-      'riskSum': 'positionSize',
-      'rrAchieved': 'actualRrr',
-      'rrPotential': 'potentialRrr',
-      'chartImage': 'chartImageUrl'
+      // Spezielle Frontend-spezifische Felder
+      'liquidation': 'liquidation_level',
+      'location': 'liquidity_level',
+      'riskSum': 'position_size',
+      'rrAchieved': 'rr_achieved',
+      'rrPotential': 'rr_potential',
+      'chartImage': 'chart_image_url',
+      
+      // Standard Datenbankfelder in camelCase -> snake_case Mapping
+      'mainTrendM15': 'main_trend_m15',
+      'internalTrendM5': 'internal_trend_m5',
+      'entryType': 'entry_type',
+      'entryLevel': 'entry_level',
+      'positionSize': 'position_size',
+      'takeProfit': 'take_profit',
+      'stopLoss': 'stop_loss',
+      'exitLevel': 'exit_level',
+      'potentialRrr': 'potential_rrr',
+      'actualRrr': 'actual_rrr',
+      'tradeDuration': 'trade_duration',
+      'tradeResult': 'trade_result',
+      'chartImageUrl': 'chart_image_url',
+      'liquidityLevel': 'liquidity_level',
+      'sessionNyc': 'session_nyc',
+      'sessionLondon': 'session_london',
+      'sessionAsia': 'session_asia',
+      'sessionTime': 'session_time',
+      'trendAlignment': 'trend_alignment',
+      'smartMoneyConcept': 'smart_money_concept',
+      'marketStructure': 'market_structure',
+      'advancedPattern': 'advanced_pattern',
+      'chartPattern': 'chart_pattern',
+      'fundamentalNews': 'fundamental_news',
+      'wickFill': 'wick_fill',
+      'spreadSize': 'spread_size',
+      'psychologicalLevel': 'psychological_level',
+      'tradeManagement': 'trade_management',
+      'exitReason': 'exit_reason',
+      'advancedExit': 'advanced_exit',
+      'liquidationLevel': 'liquidation_level',
+      'liquidationEntry': 'liquidation_entry',
+      'profitLoss': 'profit_loss',
+      'isWin': 'is_win',
+      'createdAt': 'created_at',
+      'updatedAt': 'updated_at',
+      'userId': 'user_id'
     };
     
-    // Wende Feldmapping an
-    Object.entries(fieldMapping).forEach(([frontendField, dbField]) => {
-      if (frontendTrade[frontendField] !== undefined) {
-        dbTrade[dbField] = frontendTrade[frontendField];
-        delete dbTrade[frontendField]; // Entferne das Frontend-Feld
+    // Kopiere alle Frontend-Felder ins DB-Format mit korrektem Mapping
+    Object.entries(frontendTrade).forEach(([key, value]) => {
+      if (value === undefined) return;
+      
+      if (key in fieldMapping) {
+        // Verwende gemappten Feldnamen für die Datenbank
+        const dbFieldName = fieldMapping[key];
+        dbTrade[dbFieldName] = value;
+        console.log(`Frontend-Feld "${key}" → DB-Feld "${dbFieldName}": ${value}`);
+      } else {
+        // Feldnamen, die keiner Umwandlung bedürfen (z.B. 'id', 'symbol', 'setup', 'notes', 'date')
+        dbTrade[key] = value;
+        console.log(`Direkte Übernahme von Feld "${key}": ${value}`);
       }
     });
     
     // Datum-Konvertierung
     if (dbTrade.date && typeof dbTrade.date === 'string') {
       dbTrade.date = new Date(dbTrade.date);
+      console.log(`Datum konvertiert zu Date-Objekt: ${dbTrade.date}`);
     }
     
     return dbTrade;
