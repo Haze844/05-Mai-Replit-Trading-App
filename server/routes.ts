@@ -803,25 +803,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`Abgeleiteter Einstiegstyp für Trade: ${entryType} basierend auf Preisen Entry: ${entryLevel}, Exit: ${exitLevel}`);
           }
           
-          // Berechne profitLoss (Gewinn/Verlust)
-          let profitLoss = tradeData.profitLoss;
-          if (profitLoss === undefined || profitLoss === null) {
-            // Prüfe, ob direkt ein pnl-Wert im Import vorhanden ist
-            if (tradeData.pnl !== undefined && tradeData.pnl !== null) {
-              profitLoss = typeof tradeData.pnl === 'string' ? parseFloat(tradeData.pnl) : tradeData.pnl;
-              console.log(`Verwende vorhandenen PnL-Wert: ${profitLoss}`);
+          // Verbesserte Berechnung von profitLoss (Gewinn/Verlust)
+          console.log("CSV-Import: Verarbeite P/L-Wert aus Daten:", JSON.stringify({
+            profitLoss: tradeData.profitLoss,
+            pnl: tradeData.pnl,
+            entryLevel, exitLevel, positionSize
+          }));
+          
+          // Funktion zur Bereinigung und Konvertierung von P/L-Werten
+          const cleanAndParseValue = (value: any): number => {
+            if (value === undefined || value === null) return 0;
+            
+            // Wenn bereits eine Zahl, keine Konvertierung nötig
+            if (typeof value === 'number') return value;
+            
+            if (typeof value === 'string') {
+              // Entferne alle nicht-numerischen Zeichen außer Punkt und Minus
+              // z.B. "$837.50" wird zu "837.50", "-$150.25" wird zu "-150.25"
+              let cleanValue = value.trim();
+              
+              // Spezialbehandlung für Werte in Klammern wie "(150.25)" die negative Zahlen repräsentieren
+              if (cleanValue.startsWith('(') && cleanValue.endsWith(')')) {
+                cleanValue = '-' + cleanValue.substring(1, cleanValue.length - 1);
+              }
+              
+              // Spezialbehandlung für Werte mit $ am Anfang
+              if (cleanValue.includes('$')) {
+                // Wert könnte Format wie "$837.50" oder "-$150.25" haben
+                cleanValue = cleanValue.replace('$', '');
+              }
+              
+              // Entferne alle Tausender-Trennzeichen (Kommas)
+              cleanValue = cleanValue.replace(/,/g, '');
+              
+              // Versuche zu parsen
+              const parsedValue = parseFloat(cleanValue);
+              
+              if (!isNaN(parsedValue)) {
+                console.log(`CSV-Import: P/L-Wert '${value}' erfolgreich konvertiert zu ${parsedValue}`);
+                return parsedValue;
+              }
+              console.log(`CSV-Import: P/L-Wert '${value}' konnte nicht konvertiert werden, verwende 0`);
             }
-            // Wenn immer noch kein Wert vorhanden ist, berechne aus Entry/Exit
-            else if (entryLevel && exitLevel) {
-              const isLong = entryType?.toLowerCase() === 'long';
-              profitLoss = isLong 
-                ? (exitLevel - entryLevel) * positionSize
-                : (entryLevel - exitLevel) * positionSize;
-              console.log(`Berechneter P/L-Wert: ${profitLoss} (${isLong ? 'Long' : 'Short'} Trade)`);
+            
+            return 0;
+          };
+          
+          // Prioritätsreihenfolge für P/L-Felder
+          const plFields = ['profitLoss', 'pnl', 'P/L', 'PL', 'Profit', 'Profit/Loss', 'Net P/L', 
+                           'P&L', 'Trade P/L', 'Result Value', 'Net Profit'];
+          
+          // Prüfe jedes mögliche Feld, zeige Debugging-Info an
+          for (const field of plFields) {
+            if (tradeData[field] !== undefined && tradeData[field] !== null) {
+              console.log(`CSV-Import: Gefundenes P/L-Feld "${field}" mit Wert:`, tradeData[field]);
             }
-          } else if (typeof profitLoss === 'string') {
-            // Sicherstellen, dass profitLoss als Zahl vorliegt
-            profitLoss = parseFloat(profitLoss);
+          }
+          
+          // Suche nach dem ersten nicht-leeren P/L-Feld
+          let profitLoss = undefined;
+          for (const field of plFields) {
+            if (tradeData[field] !== undefined && tradeData[field] !== null && tradeData[field] !== '') {
+              profitLoss = cleanAndParseValue(tradeData[field]);
+              console.log(`CSV-Import: Verwende P/L-Wert aus Feld "${field}": ${profitLoss}`);
+              break;
+            }
+          }
+          
+          // Fallback: Wenn kein P/L-Wert gefunden wurde, berechne aus Entry/Exit
+          if (profitLoss === undefined && entryLevel && exitLevel) {
+            const isLong = entryType?.toLowerCase() === 'long';
+            profitLoss = isLong 
+              ? (exitLevel - entryLevel) * positionSize
+              : (entryLevel - exitLevel) * positionSize;
+            console.log(`CSV-Import: Berechneter P/L-Wert: ${profitLoss} (${isLong ? 'Long' : 'Short'} Trade)`);
+          }
+          
+          // Wenn immer noch kein Wert gefunden wurde, setze auf 0
+          if (profitLoss === undefined) {
+            profitLoss = 0;
+            console.log("CSV-Import: Kein P/L-Wert gefunden oder berechnet, verwende 0");
           }
           
           // Berechne isWin (Gewonnen/Verloren)
