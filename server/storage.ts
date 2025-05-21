@@ -1646,34 +1646,39 @@ export class DatabaseStorage implements IStorage {
         profitLossType: trade.profitLoss !== undefined ? typeof trade.profitLoss : 'undefined'
       });
       
-      // Konvertiere Frontend-Felder in Datenbankfelder
+      // Konvertiere Frontend-Felder in Datenbankfelder mit konsistenter Mapping-Logik
       const dbTrade = this.mapFrontendTradeToDb(trade);
       
-      // Zusätzliche P/L-Wert-Konvertierung
+      // Zusätzliche P/L-Wert-Konvertierung mit korrektem Feldnamen
       if (trade.profitLoss !== undefined) {
-        dbTrade.profitLoss = this.cleanAndParseValue(trade.profitLoss);
-        console.log(`P/L-Wert konvertiert zu: ${dbTrade.profitLoss} (ursprünglicher Wert: ${trade.profitLoss})`);
+        dbTrade.profit_loss = this.cleanAndParseValue(trade.profitLoss);
+        console.log(`P/L-Wert konvertiert zu: ${dbTrade.profit_loss} (ursprünglicher Wert: ${trade.profitLoss})`);
       }
       
-      // Andere numerische Werte konvertieren
+      // Andere numerische Werte konvertieren mit korrekten Feldnamen
       if (trade.rrAchieved !== undefined && typeof trade.rrAchieved === 'string') {
-        dbTrade.actualRrr = parseFloat(trade.rrAchieved);
+        dbTrade.rr_achieved = parseFloat(trade.rrAchieved);
+        console.log(`RR Achieved konvertiert zu: ${dbTrade.rr_achieved}`);
       }
       
       if (trade.rrPotential !== undefined && typeof trade.rrPotential === 'string') {
-        dbTrade.potentialRrr = parseFloat(trade.rrPotential);
+        dbTrade.rr_potential = parseFloat(trade.rrPotential);
+        console.log(`RR Potential konvertiert zu: ${dbTrade.rr_potential}`);
       }
       
-      // Füge aktuelle Timestamps hinzu
+      // Füge aktuelle Timestamps hinzu mit korrekten Feldnamen
       const now = new Date();
-      dbTrade.createdAt = now;
-      dbTrade.updatedAt = now;
+      dbTrade.created_at = now;
+      dbTrade.updated_at = now;
+      
+      // Stelle sicher, dass die User-ID korrekt gesetzt ist
+      dbTrade.user_id = trade.userId;
       
       console.log("TradeData nach Konvertierung für DB:", {
         date: dbTrade.date,
         dateType: dbTrade.date ? typeof dbTrade.date : 'undefined',
-        profitLoss: dbTrade.profitLoss,
-        profitLossType: dbTrade.profitLoss !== undefined ? typeof dbTrade.profitLoss : 'undefined'
+        profit_loss: dbTrade.profit_loss,
+        profitLossType: dbTrade.profit_loss !== undefined ? typeof dbTrade.profit_loss : 'undefined'
       });
 
       const [createdDbTrade] = await db.insert(trades).values(dbTrade).returning();
