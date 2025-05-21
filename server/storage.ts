@@ -1306,11 +1306,15 @@ export class DatabaseStorage implements IStorage {
   // Trade operations
   async getTrades(userId: number, filters: Partial<Trade> = {}): Promise<Trade[]> {
     try {
-      console.log(`DatabaseStorage getTrades - Filters applied:`, filters);
+      console.log(`DatabaseStorage getTrades - Filters für User ${userId}:`, filters);
+      
+      // Übersetze Frontend-Filter in DB-Filter
+      const dbFilters = this.mapFrontendFilterToDb(filters);
+      console.log(`Übersetzte DB-Filter:`, dbFilters);
       
       let query = db.select().from(trades).where(eq(trades.userId, userId));
       
-      // Wende Filter an, falls vorhanden
+      // Wende Datums-Filter an, falls vorhanden
       if (filters.startDate && filters.endDate) {
         query = query.where(
           and(
@@ -1320,61 +1324,29 @@ export class DatabaseStorage implements IStorage {
         );
       }
       
-      // Füge weitere Filter hinzu basierend auf den übergebenen Filtern
-      for (const [key, value] of Object.entries(filters)) {
-        if (value !== undefined && key !== 'startDate' && key !== 'endDate') {
-          // @ts-ignore - Dynamische Filterzuweisung
-          query = query.where(eq(trades[key], value));
+      // Wende die übrigen gemappten Filter an
+      for (const [key, value] of Object.entries(dbFilters)) {
+        // Ignoriere spezielle Felder und bereits angewendete Filter
+        if (value !== undefined && key !== 'startDate' && key !== 'endDate' && key !== 'userId') {
+          try {
+            // @ts-ignore - Dynamische Filterzuweisung
+            query = query.where(eq(trades[key], value));
+          } catch (filterError) {
+            console.warn(`Filter für Feld ${key} konnte nicht angewendet werden:`, filterError);
+          }
         }
       }
       
       const dbResult = await query.orderBy(desc(trades.date));
+      console.log(`Datenbankabfrage ergab ${dbResult.length} Ergebnisse für Benutzer ${userId}`);
       
-      // Mapping von DB-Struktur auf Frontend-Struktur
+      // Wende die zentrale Mapping-Funktion auf alle Ergebnisse an
       const result = dbResult.map(trade => {
         // Debug-Ausgabe für jedes Trade-Objekt
         console.log(`Verarbeite Trade ID ${trade.id}, Symbol: ${trade.symbol}, Setup: ${trade.setup}`);
         
-        // Berechne dynamisch profitLoss und isWin
-        const profitLoss = trade.exitLevel && trade.entryLevel 
-          ? parseFloat((trade.exitLevel - trade.entryLevel).toFixed(2)) 
-          : 0;
-          
-        const isWin = trade.tradeResult 
-          ? trade.tradeResult.toLowerCase() === 'win' 
-          : profitLoss > 0;
-        
-        // WICHTIGE FEHLERBEHEBUNG: Konvertiere Datumswerte zu echten Date-Objekten
-        // Dies löst das Problem "Expected date, received string"
-        const dateFields = {
-          date: trade.date ? new Date(trade.date) : null,
-          createdAt: trade.createdAt ? new Date(trade.createdAt) : null,
-          updatedAt: trade.updatedAt ? new Date(trade.updatedAt) : null
-        };
-        
-        // Debug-Ausgabe für Datum-Konvertierung
-        console.log(`Datum für Trade #${trade.id} konvertiert:`, {
-          originalDate: trade.date,
-          convertedDate: dateFields.date,
-          dateType: dateFields.date ? typeof dateFields.date : 'null'
-        });
-        
-        return {
-          ...trade,
-          ...dateFields, // Ersetze String-Datumsfelder mit Date-Objekten
-          // Übersetzung der Spaltennamen für das Frontend
-          liquidation: trade.liquidationLevel || "",
-          location: trade.liquidityLevel || "",
-          riskSum: trade.positionSize || 0,
-          rrAchieved: trade.actualRrr || 0,
-          rrPotential: trade.potentialRrr || 0,
-          // VERBESSERT: Verwende den gespeicherten P/L-Wert aus der Datenbank, falls vorhanden
-          profitLoss: trade.profitLoss !== null && trade.profitLoss !== undefined 
-            ? typeof trade.profitLoss === 'string' ? parseFloat(trade.profitLoss) : Number(trade.profitLoss)
-            : profitLoss,
-          isWin: trade.isWin !== null && trade.isWin !== undefined ? Boolean(trade.isWin) : isWin,
-          chartImage: trade.chartImageUrl || null
-        };
+        // Verwende die zentrale Mapping-Funktion
+        return this.mapDbTradeToFrontend(trade);
       });
       
       console.log(`DatabaseStorage getTrades - Retrieved ${result.length} trades for userId ${userId}`);
@@ -1385,38 +1357,85 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Hilfsfunktion: Transformiere DB-Trade-Objekt in Frontend-Format
+  private mapDbTradeToFrontend(dbTrade: any): Trade {
+    // Berechne dynamisch profitLoss und isWin als Fallback
+    const dynamicProfitLoss = dbTrade.exitLevel && dbTrade.entryLevel 
+      ? parseFloat((dbTrade.exitLevel - dbTrade.entryLevel).toFixed(2)) 
+      : 0;
+      
+    const dynamicIsWin = dbTrade.tradeResult 
+      ? dbTrade.tradeResult.toLowerCase() === 'win' 
+      : dynamicProfitLoss > 0;
+    
+    // Datum-Konvertierung, falls erforderlich
+    const dateObj = dbTrade.date ? new Date(dbTrade.date) : null;
+    
+    // Übersetzung der Spaltennamen (snake_case DB -> camelCase Frontend)
+    return {
+      ...dbTrade,
+      // Spezielle Feld-Mappings (DB-Spaltenname -> Frontend-Name)
+      liquidation: dbTrade.liquidationLevel || "",
+      location: dbTrade.liquidityLevel || "",
+      riskSum: dbTrade.positionSize || 0,
+      rrAchieved: dbTrade.actualRrr || 0,
+      rrPotential: dbTrade.potentialRrr || 0,
+      
+      // Verwende gespeicherte Werte oder berechnete Fallbacks
+      profitLoss: dbTrade.profitLoss !== null && dbTrade.profitLoss !== undefined 
+        ? typeof dbTrade.profitLoss === 'string' ? parseFloat(dbTrade.profitLoss) : Number(dbTrade.profitLoss)
+        : dynamicProfitLoss,
+      isWin: dbTrade.isWin !== null && dbTrade.isWin !== undefined ? Boolean(dbTrade.isWin) : dynamicIsWin,
+      
+      // Weitere spezielle Feld-Übersetzungen
+      chartImage: dbTrade.chartImageUrl || null,
+      
+      // Stelle sicher, dass Datumswerte als Date-Objekte vorliegen
+      date: dateObj,
+      createdAt: dbTrade.createdAt ? new Date(dbTrade.createdAt) : null,
+      updatedAt: dbTrade.updatedAt ? new Date(dbTrade.updatedAt) : null
+    };
+  }
+  
+  // Hilfsfunktion: Übersetze Frontend-Filter in DB-Filter
+  private mapFrontendFilterToDb(filters: Partial<Trade>): any {
+    if (!filters) return {};
+    
+    const dbFilters: any = {};
+    
+    // Mapping für spezielle Felder (Frontend-Name -> DB-Spaltenname)
+    const fieldMapping = {
+      'liquidation': 'liquidationLevel',
+      'location': 'liquidityLevel',
+      'riskSum': 'positionSize',
+      'rrAchieved': 'actualRrr',
+      'rrPotential': 'potentialRrr',
+      'chartImage': 'chartImageUrl'
+    };
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      
+      // Spezielle Behandlung für bekannte gemappte Felder
+      if (key in fieldMapping) {
+        dbFilters[fieldMapping[key]] = value;
+      } else {
+        // Standardmäßige Feldübergabe
+        dbFilters[key] = value;
+      }
+    });
+    
+    return dbFilters;
+  }
+
   async getTradeById(id: number): Promise<Trade | undefined> {
     try {
       const [dbTrade] = await db.select().from(trades).where(eq(trades.id, id));
       
       if (!dbTrade) return undefined;
       
-      // Berechne dynamisch profitLoss und isWin (konsistent mit getTrades)
-      const profitLoss = dbTrade.exitLevel && dbTrade.entryLevel 
-        ? parseFloat((dbTrade.exitLevel - dbTrade.entryLevel).toFixed(2)) 
-        : 0;
-        
-      const isWin = dbTrade.tradeResult 
-        ? dbTrade.tradeResult.toLowerCase() === 'win' 
-        : profitLoss > 0;
-      
-      // Übersetzung der Spaltennamen analog zu getTrades
-      const trade = {
-        ...dbTrade,
-        liquidation: dbTrade.liquidationLevel || "",
-        location: dbTrade.liquidityLevel || "",
-        riskSum: dbTrade.positionSize || 0,
-        rrAchieved: dbTrade.actualRrr || 0,
-        rrPotential: dbTrade.potentialRrr || 0,
-        // VERBESSERT: Verwende den gespeicherten P/L-Wert aus der Datenbank, falls vorhanden
-        profitLoss: dbTrade.profitLoss !== null && dbTrade.profitLoss !== undefined 
-          ? typeof dbTrade.profitLoss === 'string' ? parseFloat(dbTrade.profitLoss) : Number(dbTrade.profitLoss)
-          : profitLoss,
-        isWin: dbTrade.isWin !== null && dbTrade.isWin !== undefined ? Boolean(dbTrade.isWin) : isWin,
-        chartImage: dbTrade.chartImageUrl || null
-      };
-      
-      return trade;
+      // Verwende die zentrale Mapping-Funktion
+      return this.mapDbTradeToFrontend(dbTrade);
     } catch (error) {
       console.error(`Error fetching trade with id ${id}:`, error);
       return undefined;
