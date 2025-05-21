@@ -102,6 +102,29 @@ async function setupDatabase() {
       );
     `);
     console.log('✅ Weekly-Summary-Tabelle erstellt');
+    
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS app_settings (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        theme TEXT DEFAULT 'dark',
+        notifications BOOLEAN DEFAULT TRUE,
+        sync_enabled BOOLEAN DEFAULT TRUE,
+        last_synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        offline_mode_enabled BOOLEAN DEFAULT FALSE,
+        device_id TEXT,
+        device_name TEXT,
+        device_type TEXT,
+        account_balance NUMERIC DEFAULT 2500,
+        eva_account_balance NUMERIC DEFAULT 1500,
+        ek_account_balance NUMERIC DEFAULT 1000,
+        account_type TEXT DEFAULT 'all',
+        goal_balance NUMERIC DEFAULT 7500,
+        eva_goal_balance NUMERIC DEFAULT 7500,
+        ek_goal_balance NUMERIC DEFAULT 5000
+      );
+    `);
+    console.log('✅ App-Settings-Tabelle erstellt');
 
     const res = await pool.query('SELECT COUNT(*) FROM users');
     if (parseInt(res.rows[0].count) === 0) {
