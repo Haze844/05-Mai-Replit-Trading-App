@@ -2002,12 +2002,12 @@ export default function TradeTable({
                   <td className="p-3 text-xs">{trade.rrAchieved}</td>
                   <td className="p-3 text-xs">{trade.riskSum ? `${trade.riskSum}$` : '-'}</td>
                   <td className="p-3 text-xs">
-                    <BadgeWinLoss isWin={trade.isWin} size="xs" />
-                  </td>
-                  <td className="p-3 text-xs">
-                    <span className={`${trade.profitLoss && trade.profitLoss > 0 ? 'text-green-500' : trade.profitLoss && trade.profitLoss < 0 ? 'text-red-500' : ''}`}>
-                      {trade.profitLoss ? `${trade.profitLoss > 0 ? '+' : ''}${trade.profitLoss.toFixed(2)}` : '-'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <BadgeWinLoss isWin={trade.isWin} size="xs" />
+                      <span className={`${trade.profitLoss && trade.profitLoss > 0 ? 'text-green-500' : trade.profitLoss && trade.profitLoss < 0 ? 'text-red-500' : ''}`}>
+                        {trade.profitLoss ? `${trade.profitLoss > 0 ? '+' : ''}${trade.profitLoss.toFixed(2)}` : '-'}
+                      </span>
+                    </div>
                   </td>
                   <td className="p-3 text-xs">
                     {trade.slType || '-'}

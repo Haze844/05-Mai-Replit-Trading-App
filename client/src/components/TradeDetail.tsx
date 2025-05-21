@@ -71,6 +71,7 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
   const [editingRRPotential, setEditingRRPotential] = useState<number | undefined>(undefined);
   const [editingSlType, setEditingSlType] = useState<string>('');
   const [editingSlPoints, setEditingSlPoints] = useState<number | undefined>(undefined);
+  const [editingProfitLoss, setEditingProfitLoss] = useState<number | undefined>(undefined);
   
   // Referenz für das geöffnete Select-Menü - muss an einer Stelle definiert werden
   const [menuOpen, setMenuOpen] = useState(false);
@@ -503,9 +504,30 @@ export default function TradeDetail({ selectedTrade, onTradeSelected, isCompareV
             <div />
             <div>
               <BadgeWinLoss isWin={selectedTrade.isWin} />
-              <span className={`ml-2 font-bold ${selectedTrade.profitLoss && selectedTrade.profitLoss > 0 ? 'text-green-500' : selectedTrade.profitLoss && selectedTrade.profitLoss < 0 ? 'text-red-500' : ''}`}>
-                {selectedTrade.profitLoss ? `${selectedTrade.profitLoss > 0 ? '+' : ''}$${selectedTrade.profitLoss.toFixed(2)}` : '-'}
-              </span>
+              {editMode ? (
+                <div className="ml-2 flex items-center">
+                  <Input
+                    type="number"
+                    className="w-24 h-7 text-xs"
+                    placeholder="P/L Wert"
+                    value={editingProfitLoss !== undefined ? editingProfitLoss : selectedTrade.profitLoss || ''}
+                    onChange={(e) => {
+                      const value = e.target.value ? parseFloat(e.target.value) : undefined;
+                      setEditingProfitLoss(value);
+                      updateField('profitLoss', value);
+                      // Automatisch auch isWin aktualisieren basierend auf P/L
+                      if (value !== undefined) {
+                        updateField('isWin', value > 0);
+                      }
+                    }}
+                  />
+                  <span className="ml-1">$</span>
+                </div>
+              ) : (
+                <span className={`ml-2 font-bold ${selectedTrade.profitLoss && selectedTrade.profitLoss > 0 ? 'text-green-500' : selectedTrade.profitLoss && selectedTrade.profitLoss < 0 ? 'text-red-500' : ''}`}>
+                  {selectedTrade.profitLoss ? `${selectedTrade.profitLoss > 0 ? '+' : ''}$${selectedTrade.profitLoss.toFixed(2)}` : '-'}
+                </span>
+              )}
             </div>
           </div>
           
