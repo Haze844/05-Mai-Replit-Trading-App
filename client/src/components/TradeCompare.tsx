@@ -548,10 +548,41 @@ export default function TradeCompare() {
     );
   };
 
+// Funktion zum Sicherstellen der berechneten Felder für einen Trade
+  const enhanceTrade = (trade) => {
+    // Kopie erstellen, um Original nicht zu verändern
+    const enhancedTrade = { ...trade };
+    
+    // Berechne profitLoss, falls nicht vorhanden
+    if (enhancedTrade.profitLoss === undefined) {
+      enhancedTrade.profitLoss = enhancedTrade.tradeResult || 0;
+    } else if (typeof enhancedTrade.profitLoss === 'string') {
+      enhancedTrade.profitLoss = parseFloat(enhancedTrade.profitLoss) || 0;
+    }
+    
+    // Berechne isWin basierend auf profitLoss
+    if (enhancedTrade.isWin === undefined) {
+      enhancedTrade.isWin = enhancedTrade.profitLoss > 0;
+    }
+    
+    // Berechne rrAchieved falls nicht vorhanden
+    if (enhancedTrade.rrAchieved === undefined) {
+      enhancedTrade.rrAchieved = enhancedTrade.actualRrr || 
+                               (enhancedTrade.profitLoss > 0 ? 
+                                Math.abs(enhancedTrade.profitLoss)/100 : 
+                                -Math.abs(enhancedTrade.profitLoss)/100);
+    } else if (typeof enhancedTrade.rrAchieved === 'string') {
+      enhancedTrade.rrAchieved = parseFloat(enhancedTrade.rrAchieved) || 0;
+    }
+    
+    return enhancedTrade;
+  };
+
 // Statistik-Berechnungen für die angezeigten Trades, unterteilt nach Benutzer
   const tradeStats = useMemo(() => {
     // IMMER die gefilterten Trades für die Statistik-Berechnung verwenden
-    const tradesToUse = filteredTrades;
+    // Aber mit den erforderlichen berechneten Feldern erweitern
+    const tradesToUse = filteredTrades.map(enhanceTrade);
     console.log(`Statistikberechnung basiert auf ${tradesToUse.length} gefilterten Trades`);
     
     // Gesamt-Statistiken
