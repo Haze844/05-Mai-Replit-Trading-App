@@ -1368,8 +1368,11 @@ export class DatabaseStorage implements IStorage {
           riskSum: trade.positionSize || 0,
           rrAchieved: trade.actualRrr || 0,
           rrPotential: trade.potentialRrr || 0,
-          profitLoss: profitLoss,
-          isWin: isWin,
+          // VERBESSERT: Verwende den gespeicherten P/L-Wert aus der Datenbank, falls vorhanden
+          profitLoss: trade.profitLoss !== null && trade.profitLoss !== undefined 
+            ? typeof trade.profitLoss === 'string' ? parseFloat(trade.profitLoss) : Number(trade.profitLoss)
+            : profitLoss,
+          isWin: trade.isWin !== null && trade.isWin !== undefined ? Boolean(trade.isWin) : isWin,
           chartImage: trade.chartImageUrl || null
         };
       });
@@ -1405,8 +1408,11 @@ export class DatabaseStorage implements IStorage {
         riskSum: dbTrade.positionSize || 0,
         rrAchieved: dbTrade.actualRrr || 0,
         rrPotential: dbTrade.potentialRrr || 0,
-        profitLoss: profitLoss,
-        isWin: isWin,
+        // VERBESSERT: Verwende den gespeicherten P/L-Wert aus der Datenbank, falls vorhanden
+        profitLoss: dbTrade.profitLoss !== null && dbTrade.profitLoss !== undefined 
+          ? typeof dbTrade.profitLoss === 'string' ? parseFloat(dbTrade.profitLoss) : Number(dbTrade.profitLoss)
+          : profitLoss,
+        isWin: dbTrade.isWin !== null && dbTrade.isWin !== undefined ? Boolean(dbTrade.isWin) : isWin,
         chartImage: dbTrade.chartImageUrl || null
       };
       
@@ -1438,12 +1444,49 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      // P/L-Wert-Konvertierung
+      // P/L-Wert-Konvertierung - VERBESSERT
       if (trade.profitLoss !== undefined) {
-        if (typeof trade.profitLoss === 'string') {
-          convertedFields.profitLoss = parseFloat(trade.profitLoss);
-          console.log(`P/L-Wert konvertiert von String "${trade.profitLoss}" zu Zahl ${convertedFields.profitLoss}`);
-        }
+        // Funktion zur verbesserten Konvertierung von P/L-Werten
+        const cleanAndParseValue = (value: any): number => {
+          if (value === undefined || value === null) return 0;
+          
+          // Wenn bereits eine Zahl, keine Konvertierung nötig
+          if (typeof value === 'number') return value;
+          
+          if (typeof value === 'string') {
+            // Entferne alle nicht-numerischen Zeichen außer Punkt und Minus
+            // z.B. "$837.50" wird zu "837.50", "-$150.25" wird zu "-150.25"
+            let cleanValue = value.trim();
+            
+            // Spezialbehandlung für Werte in Klammern wie "(150.25)" die negative Zahlen repräsentieren
+            if (cleanValue.startsWith('(') && cleanValue.endsWith(')')) {
+              cleanValue = '-' + cleanValue.substring(1, cleanValue.length - 1);
+            }
+            
+            // Spezialbehandlung für Werte mit $ am Anfang
+            if (cleanValue.includes('$')) {
+              // Wert könnte Format wie "$837.50" oder "-$150.25" haben
+              cleanValue = cleanValue.replace('$', '');
+            }
+            
+            // Entferne alle Tausender-Trennzeichen (Kommas)
+            cleanValue = cleanValue.replace(/,/g, '');
+            
+            // Versuche zu parsen
+            const parsedValue = parseFloat(cleanValue);
+            
+            if (!isNaN(parsedValue)) {
+              console.log(`CSV-Import: P/L-Wert '${value}' erfolgreich konvertiert zu ${parsedValue}`);
+              return parsedValue;
+            }
+            console.log(`CSV-Import: P/L-Wert '${value}' konnte nicht konvertiert werden, verwende 0`);
+          }
+          
+          return 0;
+        };
+        
+        convertedFields.profitLoss = cleanAndParseValue(trade.profitLoss);
+        console.log(`P/L-Wert konvertiert zu: ${convertedFields.profitLoss} (ursprünglicher Wert: ${trade.profitLoss})`);
       }
       
       // Andere numerische Werte konvertieren
@@ -1512,17 +1555,53 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      // P/L-Wert-Konvertierung - VERBESSERT: striktere Konvertierung
+      // P/L-Wert-Konvertierung - VERBESSERT: erweiterte Konvertierungslogik
       if (tradeData.profitLoss !== undefined) {
-        // Immer als Zahl speichern, unabhängig vom eingehenden Typ
-        const numericValue = typeof tradeData.profitLoss === 'string' 
-          ? parseFloat(tradeData.profitLoss) 
-          : Number(tradeData.profitLoss);
+        // Funktion zur verbesserten Konvertierung von P/L-Werten (identisch zu createTrade)
+        const cleanAndParseValue = (value: any): number => {
+          if (value === undefined || value === null) return 0;
           
+          // Wenn bereits eine Zahl, keine Konvertierung nötig
+          if (typeof value === 'number') return value;
+          
+          if (typeof value === 'string') {
+            // Entferne alle nicht-numerischen Zeichen außer Punkt und Minus
+            // z.B. "$837.50" wird zu "837.50", "-$150.25" wird zu "-150.25"
+            let cleanValue = value.trim();
+            
+            // Spezialbehandlung für Werte in Klammern wie "(150.25)" die negative Zahlen repräsentieren
+            if (cleanValue.startsWith('(') && cleanValue.endsWith(')')) {
+              cleanValue = '-' + cleanValue.substring(1, cleanValue.length - 1);
+            }
+            
+            // Spezialbehandlung für Werte mit $ am Anfang
+            if (cleanValue.includes('$')) {
+              // Wert könnte Format wie "$837.50" oder "-$150.25" haben
+              cleanValue = cleanValue.replace('$', '');
+            }
+            
+            // Entferne alle Tausender-Trennzeichen (Kommas)
+            cleanValue = cleanValue.replace(/,/g, '');
+            
+            // Versuche zu parsen
+            const parsedValue = parseFloat(cleanValue);
+            
+            if (!isNaN(parsedValue)) {
+              console.log(`Aktualisierung: P/L-Wert '${value}' erfolgreich konvertiert zu ${parsedValue}`);
+              return parsedValue;
+            }
+            console.log(`Aktualisierung: P/L-Wert '${value}' konnte nicht konvertiert werden, verwende 0`);
+          }
+          
+          return 0;
+        };
+        
+        const numericValue = cleanAndParseValue(tradeData.profitLoss);
+        
         // Nur zuweisen, wenn es eine gültige Zahl ist
         if (!isNaN(numericValue)) {
           convertedFields.profitLoss = numericValue;
-          console.log(`P/L-Wert konvertiert zu Zahl: ${numericValue} (ursprünglicher Typ: ${typeof tradeData.profitLoss})`);
+          console.log(`P/L-Wert konvertiert zu Zahl: ${numericValue} (ursprünglicher Wert: ${tradeData.profitLoss})`);
         } else {
           console.warn(`Warnung: Ungültiger P/L-Wert konnte nicht konvertiert werden: "${tradeData.profitLoss}"`);
         }
