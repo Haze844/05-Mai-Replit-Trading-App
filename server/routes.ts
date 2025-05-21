@@ -919,25 +919,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Fallback: Wenn kein P/L-Wert gefunden wurde, berechne aus Entry/Exit
-          if (profitLoss === undefined && entryLevel && exitLevel) {
+          if (plValue === undefined && entryLevel && exitLevel) {
             const isLong = entryType?.toLowerCase() === 'long';
-            profitLoss = isLong 
+            plValue = isLong 
               ? (exitLevel - entryLevel) * positionSize
               : (entryLevel - exitLevel) * positionSize;
-            console.log(`CSV-Import: Berechneter P/L-Wert: ${profitLoss} (${isLong ? 'Long' : 'Short'} Trade)`);
+            console.log(`CSV-Import: Berechneter P/L-Wert: ${plValue} (${isLong ? 'Long' : 'Short'} Trade)`);
           }
           
           // Wenn immer noch kein Wert gefunden wurde, setze auf 0
-          if (profitLoss === undefined) {
-            profitLoss = 0;
+          if (plValue === undefined) {
+            plValue = 0;
             console.log("CSV-Import: Kein P/L-Wert gefunden oder berechnet, verwende 0");
           }
           
           // Berechne isWin (Gewonnen/Verloren)
           let isWin = tradeData.isWin;
           if (isWin === undefined || isWin === null) {
-            isWin = profitLoss > 0;
-            console.log(`Abgeleiteter Win-Status: ${isWin ? 'Gewinn' : 'Verlust'} basierend auf P/L=${profitLoss}`);
+            isWin = plValue > 0;
+            console.log(`Abgeleiteter Win-Status: ${isWin ? 'Gewinn' : 'Verlust'} basierend auf P/L=${plValue}`);
           }
           
           // Berechne rrAchieved (Erreichtes Risk/Reward)
@@ -962,8 +962,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 console.log("RR konnte nicht berechnet werden, da das Risiko 0 ist");
               }
             }
-            // Wenn wir profitLoss haben aber keine Preisdaten, schätzen wir RR basierend auf P/L
-            else if (profitLoss !== undefined && profitLoss !== null) {
+            // Wenn wir plValue haben aber keine Preisdaten, schätzen wir RR basierend auf P/L
+            else if (plValue !== undefined && plValue !== null) {
               // Für Gewinne setzen wir standardmäßig RR 1.5, für Verluste -1.0
               rrAchieved = isWin ? 1.5 : -1.0;
               console.log(`Geschätztes RR basierend auf P/L: ${rrAchieved}`);
@@ -1018,13 +1018,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             rrPotential = parseFloat(rrPotential);
           }
           
-          console.log(`Berechnete Werte für Trade: entryType=${entryType}, profitLoss=${profitLoss}, isWin=${isWin}, rrAchieved=${rrAchieved}, rrPotential=${rrPotential}`);
+          console.log(`Berechnete Werte für Trade: entryType=${entryType}, profitLoss=${plValue}, isWin=${isWin}, rrAchieved=${rrAchieved}, rrPotential=${rrPotential}`);
           
           // Create trade in database with feedback
           const newTrade = await storage.createTrade({
             ...tradeData,
             userId,
-            profitLoss: profitLoss !== undefined ? profitLoss : 0,
+            profitLoss: plValue !== undefined ? plValue : 0,
             isWin: isWin !== undefined ? isWin : false,
             rrAchieved: rrAchieved !== undefined ? rrAchieved : 0,
             rrPotential: rrPotential !== undefined ? rrPotential : 0,
