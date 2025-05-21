@@ -327,8 +327,17 @@ export default function TradeImport({ userId, onImport }: TradeImportProps) {
                     }
                   }
                   
-                  // Entferne Währungssymbole und Tausendertrennzeichen für korrekte Umwandlung in Float
+                  // VERBESSERTE PROFITLOSS-VERARBEITUNG
+                  // Ähnlich wie bei der Datumsverarbeitung, die erfolgreich funktioniert
+
+                  // Detailliertes Logging aller relevanten PL-Felder
+                  console.log("IMPORT: P/L-DEBUGGING - START");
+                  console.log("IMPORT: Originaler profitLossValue:", profitLossValue);
+                  console.log("IMPORT: Typ des profitLossValue:", typeof profitLossValue);
+                  
+                  // Normalisiere den Wert für konsistente Verarbeitung
                   let profitLoss = 0;
+                  let cleanValue = "";
                   
                   // WICHTIG: Zuerst prüfen, ob der Wert bereits eine Nummer ist
                   if (typeof profitLossValue === 'number') {
@@ -338,29 +347,45 @@ export default function TradeImport({ userId, onImport }: TradeImportProps) {
                   // Verbesserte Erkennung für negative Werte wie $(272.00)
                   else if (typeof profitLossValue === 'string' && profitLossValue.includes('$(')) {
                     // Negativer Wert in Format $(272.00)
-                    const numericValue = profitLossValue.replace(/\$\(|\)/g, '');
-                    profitLoss = -parseFloat(numericValue);
-                    console.log("IMPORT: Negativer P/L (Klammer-Format) erkannt:", profitLossValue, "→", profitLoss);
+                    cleanValue = profitLossValue.replace(/\$\(|\)/g, '');
+                    profitLoss = -parseFloat(cleanValue);
+                    console.log("IMPORT: Negativer P/L (Klammer-Format) erkannt:", profitLossValue, "→", cleanValue, "→", profitLoss);
                   }
                   // Erkennung für negative Werte mit Minuszeichen und Währungssymbol wie -$272.00
                   else if (typeof profitLossValue === 'string' && profitLossValue.includes('-$')) {
-                    const numericValue = profitLossValue.replace(/[^0-9.\-,]/g, '');
-                    profitLoss = -Math.abs(parseFloat(numericValue));
-                    console.log("IMPORT: Negativer P/L (Minus-Format) erkannt:", profitLossValue, "→", profitLoss);
+                    cleanValue = profitLossValue.replace(/[^0-9.\-,]/g, '');
+                    profitLoss = -Math.abs(parseFloat(cleanValue));
+                    console.log("IMPORT: Negativer P/L (Minus-Format) erkannt:", profitLossValue, "→", cleanValue, "→", profitLoss);
+                  }
+                  // Neue Erkennung für Werte mit Minus-Zeichen wie "-272.00" oder "-272,00"
+                  else if (typeof profitLossValue === 'string' && profitLossValue.startsWith('-')) {
+                    cleanValue = profitLossValue.replace(/[^0-9.\-,]/g, '').replace(',', '.');
+                    profitLoss = parseFloat(cleanValue);
+                    console.log("IMPORT: Negativer P/L (einfaches Minus-Format) erkannt:", profitLossValue, "→", cleanValue, "→", profitLoss);
                   }
                   else if (typeof profitLossValue === 'string') {
                     // Standardverarbeitung für andere Formate
-                    const cleanProfitLossValue = String(profitLossValue)
+                    cleanValue = String(profitLossValue)
                       .replace(/[$€£¥]/g, '') // Währungssymbole entfernen
                       .replace(/\(([^)]+)\)/g, '-$1') // (123.45) zu -123.45 umwandeln
                       .replace(/[^0-9.\-,]/g, '') // Alle nicht-numerischen Zeichen außer . - , entfernen
                       .replace(',', '.'); // Komma durch Punkt ersetzen
                       
-                    profitLoss = parseFloat(cleanProfitLossValue) || 0;
-                    console.log("IMPORT: Profit/Loss erkannt und bereinigt:", profitLossValue, "→", cleanProfitLossValue, "→", profitLoss);
+                    profitLoss = parseFloat(cleanValue) || 0;
+                    console.log("IMPORT: Profit/Loss erkannt und bereinigt:", profitLossValue, "→", cleanValue, "→", profitLoss);
                   } else {
                     console.log("IMPORT: Kein gültiger P/L-Wert gefunden, verwende 0");
                   }
+                  
+                  // Zusätzliche Überprüfung, ob der Wert tatsächlich numerisch ist
+                  if (isNaN(profitLoss)) {
+                    console.log("IMPORT: WARNUNG - P/L ist NaN nach Verarbeitung, Fallback auf 0");
+                    profitLoss = 0;
+                  }
+                  
+                  // Abschließende Ausgabe des finalen P/L-Werts
+                  console.log("IMPORT: FINALER P/L-Wert nach Verarbeitung:", profitLoss);
+                  console.log("IMPORT: P/L-DEBUGGING - ENDE");
                   
                   // Setze entryType basierend auf buyPrice/sellPrice oder anderen Feldern wenn verfügbar
                   let entryType = processedRow.entryType || "";
@@ -458,7 +483,10 @@ export default function TradeImport({ userId, onImport }: TradeImportProps) {
                     internalTrendM5 = "Short";
                   }
                                     
-                  return {
+                  // Wichtig: Stelle sicher, dass profitLoss definitiv in das Datenbankobjekt übernommen wird
+                  console.log("IMPORT: Finales Trade-Objekt vor Rückgabe - P/L-Wert:", profitLoss);
+                  
+                  const finalTradeObject = {
                     userId,
                     symbol: processedRow.symbol || "",
                     setup: "", // Leeres Setup
@@ -470,11 +498,18 @@ export default function TradeImport({ userId, onImport }: TradeImportProps) {
                     location: processedRow.location || "",
                     rrAchieved,
                     rrPotential,
-                    profitLoss,
+                    profitLoss, // Stelle sicher, dass dieser Wert korrekt ist 
                     isWin,
                     date: tradeDate,
                     chartImage: row.chartImage || linkInput || "",
                   };
+                  
+                  // Zusätzliche Überprüfung vor der Rückgabe
+                  console.log("IMPORT: Überprüfe finales Objekt auf P/L:", 
+                    finalTradeObject.profitLoss, 
+                    typeof finalTradeObject.profitLoss);
+                    
+                  return finalTradeObject;
                 } catch (error) {
                   console.error("Fehler beim Verarbeiten der Zeile:", error);
                   
