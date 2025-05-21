@@ -777,10 +777,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Berechne die wichtigen Werte für den Trade, falls nicht gesetzt
-          const entryLevel = parseFloat(tradeData.entryLevel) || 0;
-          const exitLevel = parseFloat(tradeData.exitLevel) || 0;
-          const stopLoss = parseFloat(tradeData.stopLoss) || 0;
-          const takeProfit = parseFloat(tradeData.takeProfit) || 0;
+          // Sicherstellen, dass alle Preisdaten Zahlen sind
+          const entryLevel = typeof tradeData.entryLevel === 'string' ? parseFloat(tradeData.entryLevel) : (tradeData.entryLevel || 0);
+          const exitLevel = typeof tradeData.exitLevel === 'string' ? parseFloat(tradeData.exitLevel) : (tradeData.exitLevel || 0);
+          const stopLoss = typeof tradeData.stopLoss === 'string' ? parseFloat(tradeData.stopLoss) : (tradeData.stopLoss || 0);
+          const takeProfit = typeof tradeData.takeProfit === 'string' ? parseFloat(tradeData.takeProfit) : (tradeData.takeProfit || 0);
+          const positionSize = typeof tradeData.positionSize === 'string' ? parseFloat(tradeData.positionSize) : (tradeData.positionSize || 1);
+          
+          console.log(`Import - Konvertierte Preisdaten: Entry=${entryLevel}, Exit=${exitLevel}, SL=${stopLoss}, TP=${takeProfit}, Size=${positionSize}`);
           
           // Wenn kein Einstiegstyp festgelegt ist, versuche ihn aus den Preisdaten zu bestimmen
           let entryType = tradeData.entryType;
@@ -789,54 +793,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
               entryType = 'Long';
             } else if (entryLevel > exitLevel && entryLevel > 0 && exitLevel > 0) {
               entryType = 'Short';
+            } else if (tradeData.pnl && tradeData.pnl > 0) {
+              // Wenn nur P/L bekannt ist, versuche daraus den Typ abzuleiten
+              entryType = 'Long'; // Standard-Annahme für positive P/L
             } else {
               // Fallback, wenn keine sinnvolle Bestimmung möglich ist
-              entryType = 'Unbestimmt';
+              entryType = 'Long'; // Standard-Fallback auf Long
             }
             console.log(`Abgeleiteter Einstiegstyp für Trade: ${entryType} basierend auf Preisen Entry: ${entryLevel}, Exit: ${exitLevel}`);
           }
           
           // Berechne profitLoss (Gewinn/Verlust)
           let profitLoss = tradeData.profitLoss;
-          if (profitLoss === undefined && entryLevel && exitLevel) {
-            const isLong = entryType?.toLowerCase() === 'long';
-            profitLoss = isLong 
-              ? (exitLevel - entryLevel) * (tradeData.positionSize || 1)
-              : (entryLevel - exitLevel) * (tradeData.positionSize || 1);
+          if (profitLoss === undefined || profitLoss === null) {
+            // Prüfe, ob direkt ein pnl-Wert im Import vorhanden ist
+            if (tradeData.pnl !== undefined && tradeData.pnl !== null) {
+              profitLoss = typeof tradeData.pnl === 'string' ? parseFloat(tradeData.pnl) : tradeData.pnl;
+              console.log(`Verwende vorhandenen PnL-Wert: ${profitLoss}`);
+            }
+            // Wenn immer noch kein Wert vorhanden ist, berechne aus Entry/Exit
+            else if (entryLevel && exitLevel) {
+              const isLong = entryType?.toLowerCase() === 'long';
+              profitLoss = isLong 
+                ? (exitLevel - entryLevel) * positionSize
+                : (entryLevel - exitLevel) * positionSize;
+              console.log(`Berechneter P/L-Wert: ${profitLoss} (${isLong ? 'Long' : 'Short'} Trade)`);
+            }
+          } else if (typeof profitLoss === 'string') {
+            // Sicherstellen, dass profitLoss als Zahl vorliegt
+            profitLoss = parseFloat(profitLoss);
           }
           
           // Berechne isWin (Gewonnen/Verloren)
           let isWin = tradeData.isWin;
-          if (isWin === undefined && profitLoss !== undefined) {
+          if (isWin === undefined || isWin === null) {
             isWin = profitLoss > 0;
+            console.log(`Abgeleiteter Win-Status: ${isWin ? 'Gewinn' : 'Verlust'} basierend auf P/L=${profitLoss}`);
           }
           
           // Berechne rrAchieved (Erreichtes Risk/Reward)
           let rrAchieved = tradeData.rrAchieved;
-          if (rrAchieved === undefined && entryLevel && exitLevel && stopLoss) {
-            const isLong = entryType?.toLowerCase() === 'long';
-            const risk = isLong ? Math.abs(entryLevel - stopLoss) : Math.abs(stopLoss - entryLevel);
-            const reward = isLong ? Math.abs(exitLevel - entryLevel) : Math.abs(entryLevel - exitLevel);
-            
-            if (risk > 0) {
-              rrAchieved = reward / risk;
-            } else {
-              rrAchieved = 0;
+          if (rrAchieved === undefined || rrAchieved === null) {
+            // Prüfe zuerst, ob actualRrr vorhanden ist (für TradingView-Export)
+            if (tradeData.actualRrr !== undefined && tradeData.actualRrr !== null) {
+              rrAchieved = typeof tradeData.actualRrr === 'string' ? parseFloat(tradeData.actualRrr) : tradeData.actualRrr;
+              console.log(`Verwende vorhandenes actualRrr: ${rrAchieved}`);
             }
+            // Berechne aus den Preisdaten, wenn möglich
+            else if (entryLevel && exitLevel && stopLoss) {
+              const isLong = entryType?.toLowerCase() === 'long';
+              const risk = isLong ? Math.abs(entryLevel - stopLoss) : Math.abs(stopLoss - entryLevel);
+              const reward = isLong ? Math.abs(exitLevel - entryLevel) : Math.abs(entryLevel - exitLevel);
+              
+              if (risk > 0) {
+                rrAchieved = reward / risk;
+                console.log(`Berechnetes RR: ${rrAchieved.toFixed(2)} (Risiko: ${risk.toFixed(2)}, Belohnung: ${reward.toFixed(2)})`);
+              } else {
+                rrAchieved = 0;
+                console.log("RR konnte nicht berechnet werden, da das Risiko 0 ist");
+              }
+            }
+            // Wenn wir profitLoss haben aber keine Preisdaten, schätzen wir RR basierend auf P/L
+            else if (profitLoss !== undefined && profitLoss !== null) {
+              // Für Gewinne setzen wir standardmäßig RR 1.5, für Verluste -1.0
+              rrAchieved = isWin ? 1.5 : -1.0;
+              console.log(`Geschätztes RR basierend auf P/L: ${rrAchieved}`);
+            }
+            else {
+              rrAchieved = 0;
+              console.log("RR konnte nicht berechnet werden, unzureichende Daten");
+            }
+          } else if (typeof rrAchieved === 'string') {
+            // Sicherstellen, dass rrAchieved als Zahl vorliegt
+            rrAchieved = parseFloat(rrAchieved);
           }
           
           // Berechne rrPotential (Potentielles Risk/Reward)
           let rrPotential = tradeData.rrPotential;
-          if (rrPotential === undefined && entryLevel && takeProfit && stopLoss) {
-            const isLong = entryType?.toLowerCase() === 'long';
-            const risk = isLong ? Math.abs(entryLevel - stopLoss) : Math.abs(stopLoss - entryLevel);
-            const potentialReward = isLong ? Math.abs(takeProfit - entryLevel) : Math.abs(entryLevel - takeProfit);
-            
-            if (risk > 0) {
-              rrPotential = potentialReward / risk;
-            } else {
-              rrPotential = 0;
+          if (rrPotential === undefined || rrPotential === null) {
+            // Prüfe zuerst, ob potentialRrr vorhanden ist (für TradingView-Export)
+            if (tradeData.potentialRrr !== undefined && tradeData.potentialRrr !== null) {
+              rrPotential = typeof tradeData.potentialRrr === 'string' ? parseFloat(tradeData.potentialRrr) : tradeData.potentialRrr;
+              console.log(`Verwende vorhandenes potentialRrr: ${rrPotential}`);
             }
+            // Berechne aus den Preisdaten, wenn möglich
+            else if (entryLevel && takeProfit && stopLoss) {
+              const isLong = entryType?.toLowerCase() === 'long';
+              const risk = isLong ? Math.abs(entryLevel - stopLoss) : Math.abs(stopLoss - entryLevel);
+              const potentialReward = isLong ? Math.abs(takeProfit - entryLevel) : Math.abs(entryLevel - takeProfit);
+              
+              if (risk > 0) {
+                rrPotential = potentialReward / risk;
+                console.log(`Berechnetes potentielles RR: ${rrPotential.toFixed(2)} (Risiko: ${risk.toFixed(2)}, Belohnung: ${potentialReward.toFixed(2)})`);
+              } else {
+                rrPotential = 0;
+                console.log("Potentielles RR konnte nicht berechnet werden, da das Risiko 0 ist");
+              }
+            }
+            // Wenn wir rrAchieved haben, verwenden wir das als Schätzung (typischerweise höher)
+            else if (rrAchieved !== undefined && rrAchieved !== null && rrAchieved > 0) {
+              rrPotential = Math.max(rrAchieved, 1.5); // Mindestens 1.5 für Win-Trades
+              console.log(`Geschätztes potentielles RR basierend auf erreichtem RR: ${rrPotential}`);
+            }
+            // Wenn wir einen Standardwert für Wins/Losses setzen müssen
+            else if (isWin !== undefined && isWin !== null) {
+              rrPotential = isWin ? 2.0 : 1.0; // Standard R:R-Verhältnis
+              console.log(`Standard-Wert für potentielles RR gesetzt: ${rrPotential}`);
+            }
+            else {
+              rrPotential = 0;
+              console.log("Potentielles RR konnte nicht berechnet werden, unzureichende Daten");
+            }
+          } else if (typeof rrPotential === 'string') {
+            // Sicherstellen, dass rrPotential als Zahl vorliegt
+            rrPotential = parseFloat(rrPotential);
           }
           
           console.log(`Berechnete Werte für Trade: entryType=${entryType}, profitLoss=${profitLoss}, isWin=${isWin}, rrAchieved=${rrAchieved}, rrPotential=${rrPotential}`);
