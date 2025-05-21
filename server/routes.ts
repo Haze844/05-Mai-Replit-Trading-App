@@ -807,12 +807,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               const parsed = parseFloat(cleanValue);
               profitLoss = isNaN(parsed) ? 0 : parsed;
-              console.log(`CSV-Import: P/L-Wert konvertiert von "${tradeData.profitLoss}" zu ${profitLoss}`);
+              plValue = profitLoss; // Aktualisiere plValue mit dem konvertierten Wert
+              console.log(`CSV-Import: P/L-Wert konvertiert von "${tradeData.profitLoss}" zu ${plValue}`);
             }
           } else if (tradeData.pnl !== undefined) {
             // Alternativer Feldname (pnl) ebenfalls berücksichtigen
             if (typeof tradeData.pnl === 'number') {
               profitLoss = tradeData.pnl;
+              plValue = profitLoss; // Aktualisiere plValue mit dem konvertierten Wert
             } else if (typeof tradeData.pnl === 'string') {
               let cleanValue = tradeData.pnl.trim();
               
@@ -828,11 +830,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               const parsed = parseFloat(cleanValue);
               profitLoss = isNaN(parsed) ? 0 : parsed;
-              console.log(`CSV-Import: PNL-Wert konvertiert von "${tradeData.pnl}" zu ${profitLoss}`);
+              plValue = profitLoss; // Aktualisiere plValue mit dem konvertierten Wert
+              console.log(`CSV-Import: PNL-Wert konvertiert von "${tradeData.pnl}" zu ${plValue}`);
             }
           }
           
-          console.log(`Import - Konvertierte Preisdaten: Entry=${entryLevel}, Exit=${exitLevel}, SL=${stopLoss}, TP=${takeProfit}, Size=${positionSize}, P/L=${profitLoss}`);
+          console.log(`Import - Konvertierte Preisdaten: Entry=${entryLevel}, Exit=${exitLevel}, SL=${stopLoss}, TP=${takeProfit}, Size=${positionSize}, P/L=${plValue}`);
           
           // Wenn kein Einstiegstyp festgelegt ist, versuche ihn aus den Preisdaten zu bestimmen
           let entryType = tradeData.entryType;
@@ -841,7 +844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               entryType = 'Long';
             } else if (entryLevel > exitLevel && entryLevel > 0 && exitLevel > 0) {
               entryType = 'Short';
-            } else if (tradeData.pnl && tradeData.pnl > 0) {
+            } else if (plValue !== undefined && plValue !== null && plValue > 0) {
               // Wenn nur P/L bekannt ist, versuche daraus den Typ abzuleiten
               entryType = 'Long'; // Standard-Annahme für positive P/L
             } else {
