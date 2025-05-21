@@ -297,7 +297,10 @@ export default function TradeImport({ userId, onImport }: TradeImportProps) {
                     const possiblePlFields = ['P/L', 'PL', 'Profit', 'Profit/Loss', 'Net P/L', 
                                             'P&L', 'Trade P/L', 'Result Value', 'Net Profit', 
                                             'profit', 'gain', 'gain/loss', 'profit_loss', 
-                                            'profitLoss', 'pl', 'pnl'];
+                                            'profitLoss', 'pl', 'pnl', 'result', 'Result',
+                                            'Profit($)', 'Profit($)', 'Profit($)', 'P/L($)',
+                                            'Net P/L($)', 'Net_Profit', 'GrossProfit', 'NetProfit',
+                                            'Realized P/L', 'Realized_PL', 'tradePL'];
                     
                     // Log alle möglichen Felder und ihre Werte, wenn vorhanden
                     possiblePlFields.forEach(field => {
