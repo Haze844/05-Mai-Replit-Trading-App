@@ -1371,6 +1371,9 @@ export class DatabaseStorage implements IStorage {
     // Datum-Konvertierung, falls erforderlich
     const dateObj = dbTrade.date ? new Date(dbTrade.date) : null;
     
+    // Debug-Ausgabe der Datenbank-Felder
+    console.log("Rohe DB-Trade-Felder:", Object.keys(dbTrade));
+    
     // Komplettes Mapping aller Felder von snake_case (DB) zu camelCase (Frontend)
     const frontendTrade: any = {
       id: dbTrade.id,
@@ -1420,8 +1423,8 @@ export class DatabaseStorage implements IStorage {
       
       // Spezielle Frontend-spezifische Felder
       riskSum: dbTrade.position_size || 0,
-      rrAchieved: dbTrade.rr_achieved || dbTrade.actual_rrr || 0,
-      rrPotential: dbTrade.rr_potential || dbTrade.potential_rrr || 0,
+      rrAchieved: dbTrade.rr_achieved !== undefined ? dbTrade.rr_achieved : (dbTrade.actual_rrr || 0),
+      rrPotential: dbTrade.rr_potential !== undefined ? dbTrade.rr_potential : (dbTrade.potential_rrr || 0),
       liquidation: dbTrade.liquidation_level || "",
       location: dbTrade.liquidity_level || "",
       chartImage: dbTrade.chart_image_url || null,
@@ -1431,6 +1434,15 @@ export class DatabaseStorage implements IStorage {
       updatedAt: dbTrade.updated_at ? new Date(dbTrade.updated_at) : null,
       userId: dbTrade.user_id
     };
+    
+    // Debug-Ausgabe der umgewandelten Frontend-Felder
+    console.log("Frontendfelder nach Mapping:", Object.keys(frontendTrade));
+    console.log("Frontend Trade Beispiel: profitLoss=", frontendTrade.profitLoss, 
+                "isWin=", frontendTrade.isWin, 
+                "rrAchieved=", frontendTrade.rrAchieved,
+                "rrPotential=", frontendTrade.rrPotential,
+                "liquidation=", frontendTrade.liquidation,
+                "location=", frontendTrade.location);
     
     return frontendTrade as Trade;
   }
@@ -1527,7 +1539,7 @@ export class DatabaseStorage implements IStorage {
     
     // Vollständiges Mapping für alle Felder (Frontend-Name -> DB-Spaltenname)
     const fieldMapping = {
-      // Spezielle Frontend-spezifische Felder
+      // Spezielle Frontend-spezifische Felder - diese Felder haben eigene Namen im Frontend
       'liquidation': 'liquidation_level',
       'location': 'liquidity_level',
       'riskSum': 'position_size',
@@ -1575,6 +1587,14 @@ export class DatabaseStorage implements IStorage {
       'userId': 'user_id'
     };
     
+    // Debug-Ausgabe für eingehende Frontend-Daten
+    console.log("Eingehende Frontend-Daten:", 
+                { id: frontendTrade.id, 
+                 symbol: frontendTrade.symbol,
+                 setup: frontendTrade.setup,
+                 profitLoss: frontendTrade.profitLoss,
+                 isWin: frontendTrade.isWin });
+    
     // Kopiere alle Frontend-Felder ins DB-Format mit korrektem Mapping
     Object.entries(frontendTrade).forEach(([key, value]) => {
       if (value === undefined) return;
@@ -1595,6 +1615,31 @@ export class DatabaseStorage implements IStorage {
     if (dbTrade.date && typeof dbTrade.date === 'string') {
       dbTrade.date = new Date(dbTrade.date);
       console.log(`Datum konvertiert zu Date-Objekt: ${dbTrade.date}`);
+    }
+    
+    // Debug-Ausgabe der DB-Felder nach Mapping
+    console.log("DB-Felder nach Mapping:", Object.keys(dbTrade));
+    
+    // Numerische Werte konvertieren
+    if (dbTrade.profit_loss !== undefined) {
+      if (typeof dbTrade.profit_loss === 'string') {
+        dbTrade.profit_loss = this.cleanAndParseValue(dbTrade.profit_loss);
+      }
+      console.log(`Profit/Loss als numerischer Wert: ${dbTrade.profit_loss}`);
+    }
+    
+    if (dbTrade.rr_achieved !== undefined) {
+      if (typeof dbTrade.rr_achieved === 'string') {
+        dbTrade.rr_achieved = parseFloat(dbTrade.rr_achieved);
+      }
+      console.log(`RR Achieved als numerischer Wert: ${dbTrade.rr_achieved}`);
+    }
+    
+    if (dbTrade.rr_potential !== undefined) {
+      if (typeof dbTrade.rr_potential === 'string') {
+        dbTrade.rr_potential = parseFloat(dbTrade.rr_potential);
+      }
+      console.log(`RR Potential als numerischer Wert: ${dbTrade.rr_potential}`);
     }
     
     return dbTrade;
