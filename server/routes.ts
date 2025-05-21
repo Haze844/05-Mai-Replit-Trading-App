@@ -782,10 +782,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const stopLoss = parseFloat(tradeData.stopLoss) || 0;
           const takeProfit = parseFloat(tradeData.takeProfit) || 0;
           
+          // Wenn kein Einstiegstyp festgelegt ist, versuche ihn aus den Preisdaten zu bestimmen
+          let entryType = tradeData.entryType;
+          if (!entryType || entryType === '') {
+            if (exitLevel > entryLevel && entryLevel > 0 && exitLevel > 0) {
+              entryType = 'Long';
+            } else if (entryLevel > exitLevel && entryLevel > 0 && exitLevel > 0) {
+              entryType = 'Short';
+            } else {
+              // Fallback, wenn keine sinnvolle Bestimmung möglich ist
+              entryType = 'Unbestimmt';
+            }
+            console.log(`Abgeleiteter Einstiegstyp für Trade: ${entryType} basierend auf Preisen Entry: ${entryLevel}, Exit: ${exitLevel}`);
+          }
+          
           // Berechne profitLoss (Gewinn/Verlust)
           let profitLoss = tradeData.profitLoss;
           if (profitLoss === undefined && entryLevel && exitLevel) {
-            const isLong = tradeData.entryType?.toLowerCase() === 'long';
+            const isLong = entryType?.toLowerCase() === 'long';
             profitLoss = isLong 
               ? (exitLevel - entryLevel) * (tradeData.positionSize || 1)
               : (entryLevel - exitLevel) * (tradeData.positionSize || 1);
@@ -800,7 +814,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Berechne rrAchieved (Erreichtes Risk/Reward)
           let rrAchieved = tradeData.rrAchieved;
           if (rrAchieved === undefined && entryLevel && exitLevel && stopLoss) {
-            const isLong = tradeData.entryType?.toLowerCase() === 'long';
+            const isLong = entryType?.toLowerCase() === 'long';
             const risk = isLong ? Math.abs(entryLevel - stopLoss) : Math.abs(stopLoss - entryLevel);
             const reward = isLong ? Math.abs(exitLevel - entryLevel) : Math.abs(entryLevel - exitLevel);
             
@@ -814,7 +828,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Berechne rrPotential (Potentielles Risk/Reward)
           let rrPotential = tradeData.rrPotential;
           if (rrPotential === undefined && entryLevel && takeProfit && stopLoss) {
-            const isLong = tradeData.entryType?.toLowerCase() === 'long';
+            const isLong = entryType?.toLowerCase() === 'long';
             const risk = isLong ? Math.abs(entryLevel - stopLoss) : Math.abs(stopLoss - entryLevel);
             const potentialReward = isLong ? Math.abs(takeProfit - entryLevel) : Math.abs(entryLevel - takeProfit);
             
@@ -825,7 +839,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
           
-          console.log(`Berechnete Werte für Trade: profitLoss=${profitLoss}, isWin=${isWin}, rrAchieved=${rrAchieved}, rrPotential=${rrPotential}`);
+          console.log(`Berechnete Werte für Trade: entryType=${entryType}, profitLoss=${profitLoss}, isWin=${isWin}, rrAchieved=${rrAchieved}, rrPotential=${rrPotential}`);
           
           // Create trade in database with feedback
           const newTrade = await storage.createTrade({
