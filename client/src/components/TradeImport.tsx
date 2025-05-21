@@ -281,18 +281,47 @@ export default function TradeImport({ userId, onImport }: TradeImportProps) {
                   console.log("CSV-Format erkannt:", hasSpecialFormat ? "Speziell" : "Standard");
                   
                   // Versuche Profit/Loss-Wert aus verschiedenen möglichen Feldern zu extrahieren
+                  // Erweiterte Debug-Ausgabe aller verfügbaren Spalten
+                  console.log("IMPORT: Alle verfügbaren Spalten mit Werten:", 
+                    Object.entries(row).map(([key, value]) => `${key}: ${value}`).join(", "));
+                  
                   let profitLossValue;
                   
                   if (hasSpecialFormat) {
                     // Verwende pnl aus deiner speziellen CSV
                     profitLossValue = row.pnl;
-                    console.log("Spezialformat erkannt, verwende pnl:", profitLossValue);
+                    console.log("IMPORT: Spezialformat erkannt, verwende pnl:", profitLossValue);
                   } else {
                     // Standardfelder für andere Quellen - ERWEITERTE SPALTENSUCHE
-                    profitLossValue = row['P/L'] || row['PL'] || row['Profit'] || row['Profit/Loss'] || row['Net P/L'] || 
-                                      row['Profit'] || row['P&L'] || row['Trade P/L'] || row['Result Value'] || 
-                                      row['Net Profit'] || row['profit'] || row['gain'] || row['gain/loss'] ||
-                                      row['profit_loss'] || row['profitLoss'] || row['pl'] || row['pnl'] || "0";
+                    // Prüfe jede mögliche Spalte und zeige die gefundenen Werte an
+                    const possiblePlFields = ['P/L', 'PL', 'Profit', 'Profit/Loss', 'Net P/L', 
+                                            'P&L', 'Trade P/L', 'Result Value', 'Net Profit', 
+                                            'profit', 'gain', 'gain/loss', 'profit_loss', 
+                                            'profitLoss', 'pl', 'pnl'];
+                    
+                    // Log alle möglichen Felder und ihre Werte, wenn vorhanden
+                    possiblePlFields.forEach(field => {
+                      if (row[field] !== undefined) {
+                        console.log(`IMPORT: Gefundenes P/L Feld "${field}" mit Wert: ${row[field]}`);
+                      }
+                    });
+                    
+                    profitLossValue = null;
+                    
+                    // Prüfe jedes mögliche Feld in der angegebenen Reihenfolge
+                    for (const field of possiblePlFields) {
+                      if (row[field] !== undefined && row[field] !== null && row[field] !== "") {
+                        profitLossValue = row[field];
+                        console.log(`IMPORT: Verwende P/L Wert aus Feld "${field}": ${profitLossValue}`);
+                        break;
+                      }
+                    }
+                    
+                    // Fallback auf "0" nur wenn wirklich kein Wert gefunden wurde
+                    if (profitLossValue === null) {
+                      console.log("IMPORT: Kein P/L Feld gefunden, verwende Default-Wert 0");
+                      profitLossValue = "0";
+                    }
                   }
                   
                   // Entferne Währungssymbole und Tausendertrennzeichen für korrekte Umwandlung in Float
@@ -301,22 +330,22 @@ export default function TradeImport({ userId, onImport }: TradeImportProps) {
                   // WICHTIG: Zuerst prüfen, ob der Wert bereits eine Nummer ist
                   if (typeof profitLossValue === 'number') {
                     profitLoss = profitLossValue;
-                    console.log("P/L ist bereits numerisch:", profitLoss);
+                    console.log("IMPORT: P/L ist bereits numerisch:", profitLoss);
                   }
                   // Verbesserte Erkennung für negative Werte wie $(272.00)
                   else if (typeof profitLossValue === 'string' && profitLossValue.includes('$(')) {
                     // Negativer Wert in Format $(272.00)
                     const numericValue = profitLossValue.replace(/\$\(|\)/g, '');
                     profitLoss = -parseFloat(numericValue);
-                    console.log("Negativer P/L (Klammer-Format) erkannt:", profitLossValue, "→", profitLoss);
+                    console.log("IMPORT: Negativer P/L (Klammer-Format) erkannt:", profitLossValue, "→", profitLoss);
                   }
                   // Erkennung für negative Werte mit Minuszeichen und Währungssymbol wie -$272.00
                   else if (typeof profitLossValue === 'string' && profitLossValue.includes('-$')) {
                     const numericValue = profitLossValue.replace(/[^0-9.\-,]/g, '');
                     profitLoss = -Math.abs(parseFloat(numericValue));
-                    console.log("Negativer P/L (Minus-Format) erkannt:", profitLossValue, "→", profitLoss);
+                    console.log("IMPORT: Negativer P/L (Minus-Format) erkannt:", profitLossValue, "→", profitLoss);
                   }
-                  else {
+                  else if (typeof profitLossValue === 'string') {
                     // Standardverarbeitung für andere Formate
                     const cleanProfitLossValue = String(profitLossValue)
                       .replace(/[$€£¥]/g, '') // Währungssymbole entfernen
@@ -325,22 +354,80 @@ export default function TradeImport({ userId, onImport }: TradeImportProps) {
                       .replace(',', '.'); // Komma durch Punkt ersetzen
                       
                     profitLoss = parseFloat(cleanProfitLossValue) || 0;
-                    console.log("Profit/Loss erkannt und bereinigt:", profitLossValue, "→", cleanProfitLossValue, "→", profitLoss);
+                    console.log("IMPORT: Profit/Loss erkannt und bereinigt:", profitLossValue, "→", cleanProfitLossValue, "→", profitLoss);
+                  } else {
+                    console.log("IMPORT: Kein gültiger P/L-Wert gefunden, verwende 0");
                   }
                   
-                  // Setze entryType basierend auf buyPrice/sellPrice wenn verfügbar
+                  // Setze entryType basierend auf buyPrice/sellPrice oder anderen Feldern wenn verfügbar
                   let entryType = processedRow.entryType || "";
-                  if (hasSpecialFormat && row.buyPrice && row.sellPrice) {
-                    entryType = parseFloat(row.buyPrice) > 0 ? "Long" : "Short";
-                    console.log("Entry-Typ basierend auf Preis gesetzt:", entryType);
+                  
+                  // Suche mehr mögliche Felder für entryType
+                  const possibleEntryFields = ['Entry Type', 'EntryType', 'entry_type', 'Entry', 'Order Type', 
+                                              'Trade Type', 'Position Type', 'Direction', 'Side', 'Buy/Sell',
+                                              'Trade Direction', 'Position', 'OrderSide', 'Type', 'order',
+                                              'action', 'Action', 'trade_type', 'positionType'];
+                                              
+                  // Durchsuche alle möglichen Entry-Felder
+                  for (const field of possibleEntryFields) {
+                    if (row[field] !== undefined && row[field] !== null && row[field] !== "") {
+                      const value = String(row[field]).trim().toLowerCase();
+                      if (value === "long" || value === "buy" || value === "bullish") {
+                        entryType = "Long";
+                        console.log(`IMPORT: Entry-Typ aus Feld "${field}" gesetzt: ${entryType}`);
+                        break;
+                      } else if (value === "short" || value === "sell" || value === "bearish") {
+                        entryType = "Short";
+                        console.log(`IMPORT: Entry-Typ aus Feld "${field}" gesetzt: ${entryType}`);
+                        break;
+                      }
+                    }
                   }
                   
-                  // Setze Datumsfeld aus speziellen Timestamps
-                  let tradeDate = row.Date || row.date || row.Time || row.time || new Date().toISOString();
+                  // Fallback auf Price-basierte Logik
+                  if (!entryType && hasSpecialFormat && row.buyPrice && row.sellPrice) {
+                    entryType = parseFloat(row.buyPrice) > 0 ? "Long" : "Short";
+                    console.log("IMPORT: Entry-Typ basierend auf Preis gesetzt:", entryType);
+                  }
+                  
+                  console.log("IMPORT: Finaler EntryType:", entryType);
+                  
+                  // Setze Datumsfeld aus speziellen Timestamps oder anderen möglichen Datumsfeldern
+                  // Suche mehr mögliche Datumsfelder
+                  const possibleDateFields = ['Date', 'date', 'Time', 'time', 'timestamp', 'Timestamp',
+                                             'Trade Date', 'TradeDate', 'trade_date', 'DateTime', 'Date Time',
+                                             'Entry Date', 'EntryDate', 'entry_date', 'OpenTime', 'Open Time',
+                                             'CloseTime', 'Close Time', 'ExecutionTime', 'Execution Time'];
+                  
+                  // Durchsuche alle möglichen Datumsfelder und zeige gefundene an
+                  console.log("IMPORT: Suche Datumsfelder...");
+                  possibleDateFields.forEach(field => {
+                    if (row[field] !== undefined && row[field] !== null && row[field] !== "") {
+                      console.log(`IMPORT: Datumsfeld "${field}" gefunden mit Wert: ${row[field]}`);
+                    }
+                  });
+                  
+                  // Versuche das erste verfügbare Datumsfeld zu verwenden
+                  let tradeDate = null;
+                  for (const field of possibleDateFields) {
+                    if (row[field] !== undefined && row[field] !== null && row[field] !== "") {
+                      tradeDate = row[field];
+                      console.log(`IMPORT: Verwende Datum aus Feld "${field}": ${tradeDate}`);
+                      break;
+                    }
+                  }
+                  
+                  // Spezialbehandlung für besondere Formate
                   if (hasSpecialFormat && (row.boughtTimestamp || row.soldTimestamp)) {
                     // Verwende den ersten verfügbaren Timestamp
                     tradeDate = row.boughtTimestamp || row.soldTimestamp || tradeDate;
-                    console.log("Datum aus Timestamp gesetzt:", tradeDate);
+                    console.log("IMPORT: Datum aus speziellem Timestamp gesetzt:", tradeDate);
+                  }
+                  
+                  // Fallback auf aktuelles Datum, wenn kein Datum gefunden wurde
+                  if (!tradeDate) {
+                    tradeDate = new Date().toISOString();
+                    console.log("IMPORT: Kein Datum gefunden, verwende aktuelles Datum:", tradeDate);
                   }
                   
                   // Setze isWin basierend auf profitLoss
