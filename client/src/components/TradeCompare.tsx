@@ -716,10 +716,10 @@ export default function TradeCompare() {
       const data = await response.json();
       console.log(`TradeCompare - Jasper-Trades geladen: ${data.length} Trades`);
       
-      // Verwende alle Trades vom Server - die API gibt bereits nur die korrekten Trades für Jasper zurück
-      // WICHTIG: Keine weitere Filterung nach userId nötig, das macht der Server schon
-      console.log("Jasper Server Trades:", data);
-      return data;
+      // Streng nach userId 1 (Jasper) filtern
+      const jasperTrades = data.filter(trade => Number(trade.userId) === 1);
+      console.log("Jasper Trades STRENG gefiltert:", jasperTrades.length);
+      return jasperTrades;
     },
     refetchOnMount: true,
     staleTime: 0
@@ -740,10 +740,10 @@ export default function TradeCompare() {
       const data = await response.json();
       console.log(`TradeCompare - Mo-Trades geladen: ${data.length} Trades`);
       
-      // Verwende alle Trades vom Server - die API gibt bereits nur die korrekten Trades für Mo zurück
-      // WICHTIG: Keine weitere Filterung nach userId nötig, das macht der Server schon
-      console.log("Mo Server Trades:", data); 
-      return data;
+      // Streng nach userId 2 (Mo) filtern
+      const moTrades = data.filter(trade => Number(trade.userId) === 2);
+      console.log("Mo Trades STRENG gefiltert:", moTrades.length);
+      return moTrades;
     },
     refetchOnMount: true,
     staleTime: 0
