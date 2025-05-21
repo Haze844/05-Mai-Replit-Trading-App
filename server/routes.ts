@@ -1023,36 +1023,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           console.log(`Berechnete Werte für Trade: entryType=${entryType}, profitLoss=${plValue}, isWin=${isWin}, rrAchieved=${rrAchieved}, rrPotential=${rrPotential}`);
           
-          // Mappiere Frontend-Namen auf Datenbank-Namen
-          const mappedTradeData = {
-            ...tradeData,
-            user_id: userId,
-            profit_loss: plValue !== undefined ? plValue : 0,
-            is_win: isWin !== undefined ? isWin : false,
-            rr_achieved: rrAchieved !== undefined ? rrAchieved : 0,
-            rr_potential: rrPotential !== undefined ? rrPotential : 0,
+          // Erstelle eine einheitliche Funktion zur Umwandlung von Frontend-Namen zu Datenbank-Namen
+          const mapToDatabaseFormat = (tradeData) => {
+            // Basis-Mapping mit allen übertragbaren Feldern
+            const databaseData = {...tradeData};
             
-            // Spezielle Mapping-Fälle
-            liquidation_level: tradeData.liquidation || tradeData.liquidationLevel || '',
-            liquidity_level: tradeData.location || tradeData.liquidityLevel || '',
+            // Setze Standardwerte
+            databaseData.date = tradeData.date || new Date().toISOString();
             
-            // Feld-Bereinigung für Datenbank-Schema
-            gptFeedback: undefined, // Kein direkt korrespondierendes Feld in der Datenbank
+            // Feldnamen-Mapping (Frontend camelCase -> DB snake_case)
+            databaseData.user_id = userId;
+            databaseData.profit_loss = plValue !== undefined ? plValue : 0;
+            databaseData.is_win = isWin !== undefined ? isWin : false;
+            databaseData.rr_achieved = rrAchieved !== undefined ? rrAchieved : 0;
+            databaseData.rr_potential = rrPotential !== undefined ? rrPotential : 0;
             
-            // Ensure date is set if not provided
-            date: tradeData.date || new Date().toISOString(),
+            // Spezielle Feld-Mappings für Frontend-spezifische Felder
+            databaseData.liquidation_level = tradeData.liquidation || tradeData.liquidationLevel || '';
+            databaseData.liquidity_level = tradeData.location || tradeData.liquidityLevel || '';
+            
+            // Entferne Frontend-spezifische Felder, die nicht in der Datenbank existieren
+            delete databaseData.profitLoss;
+            delete databaseData.isWin;
+            delete databaseData.rrAchieved;
+            delete databaseData.rrPotential;
+            delete databaseData.userId;
+            delete databaseData.liquidation;
+            delete databaseData.location;
+            delete databaseData.riskSum;
+            delete databaseData.chartImage;
+            delete databaseData.gptFeedback; // Kein direkt korrespondierendes Feld in der Datenbank
+            
+            return databaseData;
           };
           
-          // Entferne Frontend-Felder, die nicht in der Datenbank existieren
-          delete mappedTradeData.profitLoss;
-          delete mappedTradeData.isWin;
-          delete mappedTradeData.rrAchieved;
-          delete mappedTradeData.rrPotential;
-          delete mappedTradeData.userId;
-          delete mappedTradeData.liquidation;
-          delete mappedTradeData.location;
-          delete mappedTradeData.riskSum;
-          delete mappedTradeData.chartImage;
+          // Wende die Mapping-Funktion an
+          const mappedTradeData = mapToDatabaseFormat(tradeData);
           
           console.log("CSV-Import: Mappierte Daten für Datenbank:", JSON.stringify(mappedTradeData));
           
