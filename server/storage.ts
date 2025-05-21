@@ -1419,8 +1419,47 @@ export class DatabaseStorage implements IStorage {
 
   async createTrade(trade: InsertTrade & { userId: number }): Promise<Trade> {
     try {
-      const [createdTrade] = await db.insert(trades).values(trade).returning();
-      return createdTrade;
+      // WICHTIG: Stelle sicher, dass alle Datumswerte korrekt als JavaScript Date-Objekte vorliegen
+      console.log("TradeData vor Konvertierung:", {
+        date: trade.date,
+        dateType: trade.date ? typeof trade.date : 'undefined'
+      });
+      
+      // Konvertiere das Datum, falls es als String übergeben wurde
+      const dateFields: Partial<InsertTrade> = {};
+      
+      if (trade.date) {
+        if (typeof trade.date === 'string') {
+          dateFields.date = new Date(trade.date);
+          console.log("Datum konvertiert von String zu Date-Objekt");
+        }
+      }
+      
+      // Füge aktuelle Timestamps hinzu
+      const now = new Date();
+      dateFields.createdAt = now;
+      dateFields.updatedAt = now;
+      
+      // Nutze die konvertierten Datumsfelder
+      const tradeWithDateFields = {
+        ...trade,
+        ...dateFields
+      };
+      
+      console.log("TradeData nach Konvertierung:", {
+        date: tradeWithDateFields.date,
+        dateType: tradeWithDateFields.date ? typeof tradeWithDateFields.date : 'undefined'
+      });
+
+      const [createdTrade] = await db.insert(trades).values(tradeWithDateFields).returning();
+      
+      // Stelle sicher, dass die zurückgegebenen Datumswerte auch Date-Objekte sind
+      return {
+        ...createdTrade,
+        date: createdTrade.date ? new Date(createdTrade.date) : null,
+        createdAt: createdTrade.createdAt ? new Date(createdTrade.createdAt) : null,
+        updatedAt: createdTrade.updatedAt ? new Date(createdTrade.updatedAt) : null
+      };
     } catch (error) {
       console.error('Error creating trade:', error);
       throw error;
@@ -1429,12 +1468,50 @@ export class DatabaseStorage implements IStorage {
 
   async updateTrade(id: number, tradeData: Partial<Trade>): Promise<Trade | undefined> {
     try {
+      // WICHTIG: Stelle sicher, dass Datumswerte korrekt konvertiert werden
+      console.log("updateTrade - Daten vor Konvertierung:", {
+        id,
+        date: tradeData.date,
+        dateType: tradeData.date ? typeof tradeData.date : 'undefined'
+      });
+      
+      // Konvertiere das Datum, falls es als String übergeben wurde
+      const dateFields: Partial<Trade> = {};
+      
+      if (tradeData.date) {
+        if (typeof tradeData.date === 'string') {
+          dateFields.date = new Date(tradeData.date);
+          console.log("Datum konvertiert von String zu Date-Objekt beim Update");
+        }
+      }
+      
+      // Aktualisiere den Timestamp für die Aktualisierung
+      dateFields.updatedAt = new Date();
+      
+      // Kombiniere die ursprünglichen Daten mit den konvertierten Datumsfeldern
+      const tradeWithDateFields = {
+        ...tradeData,
+        ...dateFields
+      };
+      
+      console.log("updateTrade - Daten nach Konvertierung:", {
+        date: tradeWithDateFields.date,
+        dateType: tradeWithDateFields.date ? typeof tradeWithDateFields.date : 'undefined'
+      });
+
       const [updatedTrade] = await db
         .update(trades)
-        .set(tradeData)
+        .set(tradeWithDateFields)
         .where(eq(trades.id, id))
         .returning();
-      return updatedTrade;
+        
+      // Stelle sicher, dass die zurückgegebenen Datumswerte auch Date-Objekte sind
+      return {
+        ...updatedTrade,
+        date: updatedTrade.date ? new Date(updatedTrade.date) : null,
+        createdAt: updatedTrade.createdAt ? new Date(updatedTrade.createdAt) : null,
+        updatedAt: updatedTrade.updatedAt ? new Date(updatedTrade.updatedAt) : null
+      };
     } catch (error) {
       console.error(`Error updating trade with id ${id}:`, error);
       return undefined;
