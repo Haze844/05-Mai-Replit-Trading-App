@@ -776,10 +776,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
           
+          // Berechne die wichtigen Werte für den Trade, falls nicht gesetzt
+          const entryLevel = parseFloat(tradeData.entryLevel) || 0;
+          const exitLevel = parseFloat(tradeData.exitLevel) || 0;
+          const stopLoss = parseFloat(tradeData.stopLoss) || 0;
+          const takeProfit = parseFloat(tradeData.takeProfit) || 0;
+          
+          // Berechne profitLoss (Gewinn/Verlust)
+          let profitLoss = tradeData.profitLoss;
+          if (profitLoss === undefined && entryLevel && exitLevel) {
+            const isLong = tradeData.entryType?.toLowerCase() === 'long';
+            profitLoss = isLong 
+              ? (exitLevel - entryLevel) * (tradeData.positionSize || 1)
+              : (entryLevel - exitLevel) * (tradeData.positionSize || 1);
+          }
+          
+          // Berechne isWin (Gewonnen/Verloren)
+          let isWin = tradeData.isWin;
+          if (isWin === undefined && profitLoss !== undefined) {
+            isWin = profitLoss > 0;
+          }
+          
+          // Berechne rrAchieved (Erreichtes Risk/Reward)
+          let rrAchieved = tradeData.rrAchieved;
+          if (rrAchieved === undefined && entryLevel && exitLevel && stopLoss) {
+            const isLong = tradeData.entryType?.toLowerCase() === 'long';
+            const risk = isLong ? Math.abs(entryLevel - stopLoss) : Math.abs(stopLoss - entryLevel);
+            const reward = isLong ? Math.abs(exitLevel - entryLevel) : Math.abs(entryLevel - exitLevel);
+            
+            if (risk > 0) {
+              rrAchieved = reward / risk;
+            } else {
+              rrAchieved = 0;
+            }
+          }
+          
+          // Berechne rrPotential (Potentielles Risk/Reward)
+          let rrPotential = tradeData.rrPotential;
+          if (rrPotential === undefined && entryLevel && takeProfit && stopLoss) {
+            const isLong = tradeData.entryType?.toLowerCase() === 'long';
+            const risk = isLong ? Math.abs(entryLevel - stopLoss) : Math.abs(stopLoss - entryLevel);
+            const potentialReward = isLong ? Math.abs(takeProfit - entryLevel) : Math.abs(entryLevel - takeProfit);
+            
+            if (risk > 0) {
+              rrPotential = potentialReward / risk;
+            } else {
+              rrPotential = 0;
+            }
+          }
+          
+          console.log(`Berechnete Werte für Trade: profitLoss=${profitLoss}, isWin=${isWin}, rrAchieved=${rrAchieved}, rrPotential=${rrPotential}`);
+          
           // Create trade in database with feedback
           const newTrade = await storage.createTrade({
             ...tradeData,
             userId,
+            profitLoss: profitLoss !== undefined ? profitLoss : 0,
+            isWin: isWin !== undefined ? isWin : false,
+            rrAchieved: rrAchieved !== undefined ? rrAchieved : 0,
+            rrPotential: rrPotential !== undefined ? rrPotential : 0,
             gptFeedback: isLinkImport ? '' : gptFeedback, // Kein Feedback für Link-Imports
             // Ensure date is set if not provided
             date: tradeData.date || new Date().toISOString(),
