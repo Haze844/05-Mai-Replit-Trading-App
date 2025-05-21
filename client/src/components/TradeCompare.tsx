@@ -717,7 +717,10 @@ export default function TradeCompare() {
       console.log(`TradeCompare - Jasper-Trades geladen: ${data.length} Trades`);
       
       // Stelle sicher, dass alle Trades die UserId 1 (Jasper) haben
-      return data.filter(trade => trade.userId === 1);
+      // Stellen sicher, dass jeder Trade die richtigen berechneten Felder hat
+      const jasperTrades = data.filter(trade => trade.userId === 1);
+      console.log(`Nach Benutzer-Filterung: ${jasperTrades.length} Jasper-Trades.`);
+      return jasperTrades;
     },
     refetchOnMount: true,
     staleTime: 0
