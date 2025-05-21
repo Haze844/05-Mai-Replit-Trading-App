@@ -1631,7 +1631,9 @@ export default function TradeCompare() {
                       <div className="absolute top-0 left-0 w-full h-full opacity-0 group-hover:opacity-100">
                         {tradeStats.jasperWinHistory.length > 0 && tradeStats.jasperWinHistory.map((win, index) => {
                           const position = (index / (tradeStats.jasperWinHistory.length - 1 || 1)) * 100;
-                          const jasperTrade = jasperTrades[jasperTrades.length - 1 - index];
+                          // Hole den jasperTrade aus den gefilterten Trades (nach Benutzer-ID)
+                          const jasperTradesFiltered = filteredTrades.filter(t => t.userId === 1);
+                          const jasperTrade = jasperTradesFiltered[jasperTradesFiltered.length - 1 - index];
                           if (!jasperTrade) return null;
                           
                           return (
@@ -1754,7 +1756,9 @@ export default function TradeCompare() {
                       <div className="absolute top-0 left-0 w-full h-full opacity-0 group-hover:opacity-100">
                         {tradeStats.jasperPLHistory.length > 0 && tradeStats.jasperPLHistory.map((pl, index) => {
                           const position = (index / (tradeStats.jasperPLHistory.length - 1 || 1)) * 100;
-                          const jasperTrade = jasperTrades[jasperTrades.length - 1 - index];
+                          // Hole den jasperTrade aus den gefilterten Trades (nach Benutzer-ID)
+                          const jasperTradesFiltered = filteredTrades.filter(t => t.userId === 1);
+                          const jasperTrade = jasperTradesFiltered[jasperTradesFiltered.length - 1 - index];
                           if (!jasperTrade) return null;
                           
                           return (
