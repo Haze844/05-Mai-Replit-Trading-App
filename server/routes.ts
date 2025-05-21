@@ -784,7 +784,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const takeProfit = typeof tradeData.takeProfit === 'string' ? parseFloat(tradeData.takeProfit) : (tradeData.takeProfit || 0);
           const positionSize = typeof tradeData.positionSize === 'string' ? parseFloat(tradeData.positionSize) : (tradeData.positionSize || 1);
           
-          console.log(`Import - Konvertierte Preisdaten: Entry=${entryLevel}, Exit=${exitLevel}, SL=${stopLoss}, TP=${takeProfit}, Size=${positionSize}`);
+          // P/L-Wert korrekt als Zahl konvertieren mit spezieller Behandlung für verschiedene Formate
+          let profitLoss = 0;
+          if (tradeData.profitLoss !== undefined) {
+            if (typeof tradeData.profitLoss === 'number') {
+              profitLoss = tradeData.profitLoss;
+            } else if (typeof tradeData.profitLoss === 'string') {
+              let cleanValue = tradeData.profitLoss.trim();
+              
+              // Werte in Klammern (negativer Wert) verarbeiten: "(150.25)" -> "-150.25"
+              if (cleanValue.startsWith('(') && cleanValue.endsWith(')')) {
+                cleanValue = '-' + cleanValue.substring(1, cleanValue.length - 1);
+              }
+              
+              // Dollarzeichen entfernen: "$100" -> "100"
+              if (cleanValue.includes('$')) {
+                cleanValue = cleanValue.replace('$', '');
+              }
+              
+              // Tausendertrennzeichen entfernen: "1,000.25" -> "1000.25"
+              cleanValue = cleanValue.replace(/,/g, '');
+              
+              const parsed = parseFloat(cleanValue);
+              profitLoss = isNaN(parsed) ? 0 : parsed;
+              console.log(`CSV-Import: P/L-Wert konvertiert von "${tradeData.profitLoss}" zu ${profitLoss}`);
+            }
+          } else if (tradeData.pnl !== undefined) {
+            // Alternativer Feldname (pnl) ebenfalls berücksichtigen
+            if (typeof tradeData.pnl === 'number') {
+              profitLoss = tradeData.pnl;
+            } else if (typeof tradeData.pnl === 'string') {
+              let cleanValue = tradeData.pnl.trim();
+              
+              if (cleanValue.startsWith('(') && cleanValue.endsWith(')')) {
+                cleanValue = '-' + cleanValue.substring(1, cleanValue.length - 1);
+              }
+              
+              if (cleanValue.includes('$')) {
+                cleanValue = cleanValue.replace('$', '');
+              }
+              
+              cleanValue = cleanValue.replace(/,/g, '');
+              
+              const parsed = parseFloat(cleanValue);
+              profitLoss = isNaN(parsed) ? 0 : parsed;
+              console.log(`CSV-Import: PNL-Wert konvertiert von "${tradeData.pnl}" zu ${profitLoss}`);
+            }
+          }
+          
+          console.log(`Import - Konvertierte Preisdaten: Entry=${entryLevel}, Exit=${exitLevel}, SL=${stopLoss}, TP=${takeProfit}, Size=${positionSize}, P/L=${profitLoss}`);
           
           // Wenn kein Einstiegstyp festgelegt ist, versuche ihn aus den Preisdaten zu bestimmen
           let entryType = tradeData.entryType;
@@ -861,11 +909,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Suche nach dem ersten nicht-leeren P/L-Feld
-          let profitLoss = undefined;
+          let plValue = undefined;
           for (const field of plFields) {
             if (tradeData[field] !== undefined && tradeData[field] !== null && tradeData[field] !== '') {
-              profitLoss = cleanAndParseValue(tradeData[field]);
-              console.log(`CSV-Import: Verwende P/L-Wert aus Feld "${field}": ${profitLoss}`);
+              plValue = cleanAndParseValue(tradeData[field]);
+              console.log(`CSV-Import: Verwende P/L-Wert aus Feld "${field}": ${plValue}`);
               break;
             }
           }
