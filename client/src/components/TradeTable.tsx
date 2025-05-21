@@ -57,7 +57,9 @@ import {
   FilePlus,
   ListPlus,
   LayoutDashboard,
-  Trash2
+  Trash2,
+  PenLine,
+  Info
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
