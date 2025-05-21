@@ -2073,8 +2073,8 @@ export default function TradeCompare() {
                             const position = (index / (tradeStats.moWinHistory.length - 1 || 1)) * 100;
                             // Finde den entsprechenden Trade aus der kombinierten Liste
                             const trade = combinedTradesFormatted.find(t => 
-                              t.userName === 'Mo' && 
-                              index === tradeStats.moWinHistory.length - 1 - combinedTradesFormatted.filter(ct => ct.userName === 'Mo').indexOf(t)
+                              t.userId === 2 && 
+                              index === tradeStats.moWinHistory.length - 1 - combinedTradesFormatted.filter(ct => ct.userId === 2).indexOf(t)
                             );
                             
                             if (!trade) return null;
@@ -2209,7 +2209,7 @@ export default function TradeCompare() {
                             const position = (index / (tradeStats.moPLHistory.length - 1 || 1)) * 100;
                             
                             // Finde den entsprechenden Trade aus moTradesFiltered
-                            const trades = combinedTradesFormatted.filter((t: any) => t.userName === 'Mo');
+                            const trades = combinedTradesFormatted.filter((t: any) => t.userId === 2);
                             const trade = trades[trades.length - 1 - index];
                             
                             if (!trade) return null;
