@@ -759,13 +759,25 @@ export default function TradeCompare() {
       // Vergewissern, dass die Trades dem richtigen Benutzer gehören (userId === 2)
       const formattedMoTrades = moTrades
         .filter(trade => trade.userId === 2) // Nur Trades von Mo (userId 2)
-        .map(trade => ({
-          ...trade,
-          id: `mo-${trade.id}`,    // Eindeutige ID für die Tabelle
-          originalId: trade.id,    // Original-ID für API-Anfragen beibehalten
-          userColor: USER_COLORS.mo,
-          userId: 2 // Konsistente Benutzer-ID verwenden anstatt userName
-        }));
+        .map(trade => {
+          // Berechne die abgeleiteten Felder, falls sie nicht existieren
+          const tradeResult = trade.tradeResult || 0;
+          const profitLoss = trade.profitLoss !== undefined ? trade.profitLoss : tradeResult;
+          const isWin = trade.isWin !== undefined ? trade.isWin : profitLoss > 0;
+          const rrAchieved = trade.rrAchieved !== undefined ? trade.rrAchieved : 
+                            (trade.actualRrr || (profitLoss > 0 ? Math.abs(profitLoss)/100 : -Math.abs(profitLoss)/100));
+          
+          return {
+            ...trade,
+            id: `mo-${trade.id}`,    // Eindeutige ID für die Tabelle
+            originalId: trade.id,    // Original-ID für API-Anfragen beibehalten
+            userColor: USER_COLORS.mo,
+            userId: 2, // Konsistente Benutzer-ID verwenden anstatt userName
+            profitLoss, // Stellen sicher, dass diese Felder für Statistiken verfügbar sind
+            isWin,
+            rrAchieved
+          };
+        });
 
       console.log("TradeCompare - Formatierte Trades nach Filterung:", { 
         jasper: formattedAdminTrades.length, 
