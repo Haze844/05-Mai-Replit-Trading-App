@@ -1512,37 +1512,55 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      // P/L-Wert-Konvertierung
+      // P/L-Wert-Konvertierung - VERBESSERT: striktere Konvertierung
       if (tradeData.profitLoss !== undefined) {
-        if (typeof tradeData.profitLoss === 'string') {
-          convertedFields.profitLoss = parseFloat(tradeData.profitLoss);
-          console.log(`P/L-Wert konvertiert von String "${tradeData.profitLoss}" zu Zahl ${convertedFields.profitLoss}`);
+        // Immer als Zahl speichern, unabhängig vom eingehenden Typ
+        const numericValue = typeof tradeData.profitLoss === 'string' 
+          ? parseFloat(tradeData.profitLoss) 
+          : Number(tradeData.profitLoss);
+          
+        // Nur zuweisen, wenn es eine gültige Zahl ist
+        if (!isNaN(numericValue)) {
+          convertedFields.profitLoss = numericValue;
+          console.log(`P/L-Wert konvertiert zu Zahl: ${numericValue} (ursprünglicher Typ: ${typeof tradeData.profitLoss})`);
+        } else {
+          console.warn(`Warnung: Ungültiger P/L-Wert konnte nicht konvertiert werden: "${tradeData.profitLoss}"`);
         }
       }
       
-      // Andere numerische Werte konvertieren
-      if (tradeData.rrAchieved !== undefined && typeof tradeData.rrAchieved === 'string') {
-        convertedFields.rrAchieved = parseFloat(tradeData.rrAchieved);
-        console.log(`rrAchieved konvertiert von String "${tradeData.rrAchieved}" zu Zahl ${convertedFields.rrAchieved}`);
-      }
-      
-      if (tradeData.rrPotential !== undefined && typeof tradeData.rrPotential === 'string') {
-        convertedFields.rrPotential = parseFloat(tradeData.rrPotential);
-        console.log(`rrPotential konvertiert von String "${tradeData.rrPotential}" zu Zahl ${convertedFields.rrPotential}`);
-      }
-      
-      // Andere mögliche numerische Felder
-      ['positionSize', 'takeProfit', 'stopLoss', 'exitLevel', 'potentialRrr', 'actualRrr'].forEach(field => {
-        if (tradeData[field] !== undefined && typeof tradeData[field] === 'string') {
-          convertedFields[field] = parseFloat(tradeData[field]);
-          console.log(`${field} konvertiert von String "${tradeData[field]}" zu Zahl ${convertedFields[field]}`);
+      // Andere numerische Werte konvertieren - VERBESSERT: striktere Konvertierung
+      const numericFields = ['rrAchieved', 'rrPotential', 'positionSize', 'takeProfit', 'stopLoss', 
+        'exitLevel', 'potentialRrr', 'actualRrr', 'riskSum', 'riskPoints'];
+        
+      numericFields.forEach(field => {
+        if (tradeData[field] !== undefined) {
+          // Immer als Zahl speichern, unabhängig vom eingehenden Typ
+          const numericValue = typeof tradeData[field] === 'string' 
+            ? parseFloat(tradeData[field]) 
+            : Number(tradeData[field]);
+            
+          // Nur zuweisen, wenn es eine gültige Zahl ist
+          if (!isNaN(numericValue)) {
+            convertedFields[field] = numericValue;
+            console.log(`${field} konvertiert zu Zahl: ${numericValue} (ursprünglicher Typ: ${typeof tradeData[field]})`);
+          } else {
+            console.warn(`Warnung: Ungültiger Wert für ${field} konnte nicht konvertiert werden: "${tradeData[field]}"`);
+          }
         }
       });
+      
+      // Boolean-Konvertierung für isWin
+      if (tradeData.isWin !== undefined) {
+        // Sicherstellen, dass isWin immer als boolean gespeichert wird
+        convertedFields.isWin = Boolean(tradeData.isWin);
+        console.log(`isWin konvertiert zu Boolean: ${convertedFields.isWin}`);
+      }
       
       // Aktualisiere den Timestamp für die Aktualisierung
       convertedFields.updatedAt = new Date();
       
       // Kombiniere die ursprünglichen Daten mit den konvertierten Feldern
+      // WICHTIG: Die konvertierten Felder müssen Vorrang haben
       const tradeWithConvertedFields = {
         ...tradeData,
         ...convertedFields
