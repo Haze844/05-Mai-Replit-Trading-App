@@ -1008,7 +1008,7 @@ export default function TradeCompare() {
                 <ul className="mt-1 text-xs text-blue-300/80 space-y-1 pl-4 list-disc">
                   {tradeStats && tradeStats.jasperCount > 0 ? (
                     <>
-                      {tradeStats.jasperWinRate >= 65 && (
+                      {tradeStats.jasperWinRate >= 50 && (
                         <li>
                           <KpiTooltip 
                             title="Win-Rate Vergleich" 
@@ -1016,11 +1016,11 @@ export default function TradeCompare() {
                             moValue={tradeStats.moWinRate.toFixed(0) + "%"}
                             unit="%"
                           >
-                            <span className="hover:underline cursor-help">Hohe Erfolgsquote von {tradeStats.jasperWinRate.toFixed(0)}%</span>
+                            <span className="hover:underline cursor-help">Erfolgsquote von {tradeStats.jasperWinRate.toFixed(0)}%</span>
                           </KpiTooltip>
                         </li>
                       )}
-                      {tradeStats.jasperAvgRR >= 1.5 && (
+                      {tradeStats.jasperAvgRR > 0 && (
                         <li>
                           <KpiTooltip 
                             title="Risk/Reward Verhältnis" 
@@ -1028,26 +1028,21 @@ export default function TradeCompare() {
                             moValue={tradeStats.moAvgRR.toFixed(2)}
                             unit="R"
                           >
-                            <span className="hover:underline cursor-help">Ausgezeichnetes Risk/Reward mit {tradeStats.jasperAvgRR.toFixed(2)}R</span>
+                            <span className="hover:underline cursor-help">Risk/Reward von {tradeStats.jasperAvgRR.toFixed(2)}R</span>
                           </KpiTooltip>
                         </li>
                       )}
-                      {tradeStats.jasperTotalPL > 0 && (
-                        <li>
-                          <KpiTooltip 
-                            title="Gesamtgewinn/-verlust" 
-                            jasperValue={tradeStats.jasperTotalPL.toFixed(0)} 
-                            moValue={tradeStats.moTotalPL.toFixed(0)}
-                            unit="$"
-                          >
-                            <span className="hover:underline cursor-help">Positive Gesamtperformance: ${tradeStats.jasperTotalPL.toFixed(0)}</span>
-                          </KpiTooltip>
-                        </li>
-                      )}
-                      {/* Fallback, wenn keine spezifischen Stärken erkannt wurden */}
-                      {!(tradeStats.jasperWinRate >= 65 || tradeStats.jasperAvgRR >= 1.5 || tradeStats.jasperTotalPL > 0) && (
-                        <li>Aktives Trading mit {tradeStats.jasperCount} Trades</li>
-                      )}
+                      <li>
+                        <KpiTooltip 
+                          title="Gesamtgewinn/-verlust" 
+                          jasperValue={tradeStats.jasperTotalPL.toFixed(0)} 
+                          moValue={tradeStats.moTotalPL.toFixed(0)}
+                          unit="$"
+                        >
+                          <span className="hover:underline cursor-help">Performance: ${tradeStats.jasperTotalPL.toFixed(0)}</span>
+                        </KpiTooltip>
+                      </li>
+                      <li>Aktives Trading mit {tradeStats.jasperCount} Trades</li>
                     </>
                   ) : (
                     <li>Keine Daten verfügbar</li>
