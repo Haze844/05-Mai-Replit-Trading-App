@@ -1674,8 +1674,8 @@ export default function TradeTable({
                 <Popover>
                   <PopoverTrigger asChild>
                     <div className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors">
-                      P/L ($)
-                      <DollarSign className="h-3 w-3 ml-1" />
+                      Kommentar
+                      <PenLine className="h-3 w-3 ml-1" />
                     </div>
                   </PopoverTrigger>
                   <PopoverContent className="w-56" align="start">
