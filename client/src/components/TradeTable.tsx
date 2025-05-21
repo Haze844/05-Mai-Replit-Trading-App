@@ -529,7 +529,12 @@ export default function TradeTable({
   // Calculate pagination for filtered trades
   const indexOfLastTrade = currentPage * tradesPerPage;
   const indexOfFirstTrade = indexOfLastTrade - tradesPerPage;
-  const currentTrades = filteredTrades.slice(indexOfFirstTrade, indexOfLastTrade);
+  // Debug-Ausgabe für TradeTable
+  console.log("TradeTable - Pagination-Werte:", {indexOfFirstTrade, indexOfLastTrade, filteredTradesLength: filteredTrades.length});
+  
+  // Statt die normale Paginierung zu verwenden, zeigen wir zunächst alle verfügbaren Trades an
+  // um das Problem zu identifizieren
+  const currentTrades = filteredTrades.length > 0 ? [...filteredTrades] : [];
   const totalPages = Math.ceil(filteredTrades.length / tradesPerPage);
   
   // Handle page change
