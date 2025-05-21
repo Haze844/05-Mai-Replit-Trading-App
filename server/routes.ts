@@ -348,7 +348,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/trades", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const tradeData = insertTradeSchema.parse(req.body);
+      // WICHTIG: Wir müssen das Datum manuell konvertieren, bevor wir es durch das Schema validieren
+      const requestData = { ...req.body };
+      
+      // Protokollieren der eingehenden Daten, um das Problem zu identifizieren
+      console.log("POST /api/trades - Eingehende Daten:", {
+        date: requestData.date,
+        dateType: requestData.date ? typeof requestData.date : 'undefined'
+      });
+      
+      // Kopieren wir die Daten, um das Datum darin zu konvertieren
+      // Das Originalobjekt bleibt unangetastet, um Fehler zu vermeiden
+      const modifiedData = { ...requestData };
+      
+      // Manuelles Pre-Processing des Datums vor der Schema-Validierung
+      if (modifiedData.date && typeof modifiedData.date === 'string') {
+        try {
+          // Das Datum wird bereits in createTrade in ein echtes Date-Objekt konvertiert,
+          // also entfernen wir es hier, damit die Validierung es nicht als Zeichenfolge ablehnt
+          delete modifiedData.date;
+          console.log("Datum aus der Validierung entfernt, wird später als Date-Objekt hinzugefügt");
+        } catch (dateError) {
+          console.error("Fehler bei der Datums-Konvertierung:", dateError);
+        }
+      }
+      
+      // Jetzt können wir die Validierung durchführen, ohne Datumsprobleme zu bekommen
+      const tradeData = insertTradeSchema.parse(modifiedData);
       const userId = Number(req.body.userId);
       
       if (!userId) {
@@ -370,7 +396,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           date.setDate(date.getDate() - (dayOfWeek === 0 ? 2 : 1));
           console.log("Weekend date detected, converted to Friday:", date);
         }
-        console.log("Trade date from request:", req.body.date);
+        console.log("Trade date from request:", req.body.date, "converted to:", date);
       } else {
         // Always create a date that's a weekday (Wednesday)
         date = new Date();
@@ -379,7 +405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Generated weekday (Wednesday) date for trade:", date);
       }
       
-      console.log("Final parsed date for trade:", date, "Day of week:", date.getDay());
+      console.log("Final parsed date for trade:", date, "Day of week:", date.getDay(), "Type:", typeof date);
       
       // Generate GPT feedback
       const gptFeedback = await generateTradeFeedback({
