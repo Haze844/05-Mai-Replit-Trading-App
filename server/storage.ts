@@ -1422,36 +1422,58 @@ export class DatabaseStorage implements IStorage {
       // WICHTIG: Stelle sicher, dass alle Datumswerte korrekt als JavaScript Date-Objekte vorliegen
       console.log("TradeData vor Konvertierung:", {
         date: trade.date,
-        dateType: trade.date ? typeof trade.date : 'undefined'
+        dateType: trade.date ? typeof trade.date : 'undefined',
+        profitLoss: trade.profitLoss,
+        profitLossType: trade.profitLoss !== undefined ? typeof trade.profitLoss : 'undefined'
       });
       
       // Konvertiere das Datum, falls es als String übergeben wurde
-      const dateFields: Partial<InsertTrade> = {};
+      const convertedFields: Partial<InsertTrade> = {};
       
+      // Datumskonvertierung
       if (trade.date) {
         if (typeof trade.date === 'string') {
-          dateFields.date = new Date(trade.date);
+          convertedFields.date = new Date(trade.date);
           console.log("Datum konvertiert von String zu Date-Objekt");
         }
       }
       
+      // P/L-Wert-Konvertierung
+      if (trade.profitLoss !== undefined) {
+        if (typeof trade.profitLoss === 'string') {
+          convertedFields.profitLoss = parseFloat(trade.profitLoss);
+          console.log(`P/L-Wert konvertiert von String "${trade.profitLoss}" zu Zahl ${convertedFields.profitLoss}`);
+        }
+      }
+      
+      // Andere numerische Werte konvertieren
+      if (trade.rrAchieved !== undefined && typeof trade.rrAchieved === 'string') {
+        convertedFields.rrAchieved = parseFloat(trade.rrAchieved);
+      }
+      
+      if (trade.rrPotential !== undefined && typeof trade.rrPotential === 'string') {
+        convertedFields.rrPotential = parseFloat(trade.rrPotential);
+      }
+      
       // Füge aktuelle Timestamps hinzu
       const now = new Date();
-      dateFields.createdAt = now;
-      dateFields.updatedAt = now;
+      convertedFields.createdAt = now;
+      convertedFields.updatedAt = now;
       
-      // Nutze die konvertierten Datumsfelder
-      const tradeWithDateFields = {
+      // Nutze die konvertierten Felder
+      const tradeWithConvertedFields = {
         ...trade,
-        ...dateFields
+        ...convertedFields
       };
       
       console.log("TradeData nach Konvertierung:", {
-        date: tradeWithDateFields.date,
-        dateType: tradeWithDateFields.date ? typeof tradeWithDateFields.date : 'undefined'
+        date: tradeWithConvertedFields.date,
+        dateType: tradeWithConvertedFields.date ? typeof tradeWithConvertedFields.date : 'undefined',
+        profitLoss: tradeWithConvertedFields.profitLoss,
+        profitLossType: tradeWithConvertedFields.profitLoss !== undefined ? typeof tradeWithConvertedFields.profitLoss : 'undefined'
       });
 
-      const [createdTrade] = await db.insert(trades).values(tradeWithDateFields).returning();
+      const [createdTrade] = await db.insert(trades).values(tradeWithConvertedFields).returning();
       
       // Stelle sicher, dass die zurückgegebenen Datumswerte auch Date-Objekte sind
       return {
