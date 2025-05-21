@@ -154,18 +154,42 @@ export default function TradeCompareDetail({ selectedTrade, onTradeSelected, isC
   const saveChanges = () => {
     if (!selectedTrade) return;
     
+    // Extraktion der richtigen ID, entweder originalId oder aus dem String mit Präfix
+    let tradeId;
+    let userId = selectedTrade.userId || 2;
+    
+    if (selectedTrade.originalId) {
+      // Wenn originalId vorhanden ist, verwende diese
+      tradeId = selectedTrade.originalId;
+    } else if (typeof selectedTrade.id === 'string' && selectedTrade.id.includes('-')) {
+      // Bei String-IDs wie "mo-2" oder "jasper-1", extrahiere die Nummer
+      const parts = selectedTrade.id.split('-');
+      if (parts.length > 1) {
+        tradeId = parseInt(parts[1], 10);
+        // Optional: Setze userId basierend auf dem Präfix
+        userId = parts[0] === 'jasper' ? 1 : 2;
+      } else {
+        tradeId = selectedTrade.id; // Fallback
+      }
+    } else {
+      // Fallback für den Fall, dass die ID bereits eine Zahl ist
+      tradeId = selectedTrade.id;
+    }
+    
     // Konsolenausgabe für Debugging
     console.log("Speichere Änderungen:", {
-      id: selectedTrade.id,
+      originalId: selectedTrade.id,
+      tradeId,
+      userId,
       ...editData
     });
     
-    // Werte aus editData mit der ID kombinieren und an die Mutation übergeben
+    // Werte aus editData mit der korrekten ID kombinieren und an die Mutation übergeben
     updateTradeMutation.mutate({
-      id: selectedTrade.id,
+      id: tradeId,
       ...editData,
       // userId ist wichtig, damit die API weiß, zu welchem Benutzer der Trade gehört
-      userId: selectedTrade.userId || 2
+      userId
     });
     
     // Bearbeitungsmodus beenden und Toast anzeigen
@@ -201,10 +225,39 @@ export default function TradeCompareDetail({ selectedTrade, onTradeSelected, isC
   const handleChartImageChange = (base64Image: string | null) => {
     if (!selectedTrade) return;
     
+    // Extraktion der richtigen ID, entweder originalId oder aus dem String mit Präfix
+    let tradeId;
+    let userId = selectedTrade.userId || 2;
+    
+    if (selectedTrade.originalId) {
+      // Wenn originalId vorhanden ist, verwende diese
+      tradeId = selectedTrade.originalId;
+    } else if (typeof selectedTrade.id === 'string' && selectedTrade.id.includes('-')) {
+      // Bei String-IDs wie "mo-2" oder "jasper-1", extrahiere die Nummer
+      const parts = selectedTrade.id.split('-');
+      if (parts.length > 1) {
+        tradeId = parseInt(parts[1], 10);
+        // Optional: Setze userId basierend auf dem Präfix
+        userId = parts[0] === 'jasper' ? 1 : 2;
+      } else {
+        tradeId = selectedTrade.id; // Fallback
+      }
+    } else {
+      // Fallback für den Fall, dass die ID bereits eine Zahl ist
+      tradeId = selectedTrade.id;
+    }
+    
+    // Debug-Ausgabe
+    console.log("Aktualisiere Chart für Trade:", {
+      originalId: selectedTrade.id,
+      tradeId,
+      userId
+    });
+    
     updateChartImageMutation.mutate({
-      id: selectedTrade.id,
+      id: tradeId,
       chartImage: base64Image,
-      userId: selectedTrade.userId || 2 // Wichtig: userId hinzufügen, Fallback auf 2 (Mo) falls nicht gesetzt
+      userId // Wichtig: userId basierend auf dem Präfix
     });
   };
   
