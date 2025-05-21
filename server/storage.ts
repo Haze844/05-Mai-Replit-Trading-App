@@ -1858,56 +1858,79 @@ export class DatabaseStorage implements IStorage {
       });
       
       // Konvertiere Frontend-Felder in Datenbankfelder mit zentraler Mapping-Funktion
+      // Die mapFrontendTradeToDb-Funktion kümmert sich bereits um alle Typkonvertierungen
       const dbTradeData = this.mapFrontendTradeToDb(frontendTradeData);
       
-      // Numerische Werte konvertieren für die Datenbank
-      const numericFields = ['profitLoss', 'positionSize', 'takeProfit', 'stopLoss', 
-        'exitLevel', 'potentialRrr', 'actualRrr', 'riskPoints'];
-        
-      numericFields.forEach(field => {
-        if (dbTradeData[field] !== undefined) {
-          // Immer als Zahl speichern, unabhängig vom eingehenden Typ
-          const numericValue = typeof dbTradeData[field] === 'string' 
-            ? parseFloat(dbTradeData[field]) 
-            : Number(dbTradeData[field]);
-            
-          // Nur zuweisen, wenn es eine gültige Zahl ist
-          if (!isNaN(numericValue)) {
-            dbTradeData[field] = numericValue;
-            console.log(`${field} konvertiert zu Zahl: ${numericValue}`);
-          } else {
-            console.warn(`Warnung: Ungültiger Wert für ${field} konnte nicht konvertiert werden: "${dbTradeData[field]}"`);
-          }
-        }
-      });
+      // Stelle sicher, dass die ID nicht geändert wird
+      delete dbTradeData.id;
       
-      // Boolean-Konvertierung für isWin
-      if (frontendTradeData.isWin !== undefined) {
-        dbTradeData.isWin = Boolean(frontendTradeData.isWin);
-        console.log(`isWin konvertiert zu Boolean: ${dbTradeData.isWin}`);
-      }
+      // Stelle sicher, dass die User-ID nicht geändert wird (mit korrektem Spaltennamen)
+      delete dbTradeData.userid;
       
-      // Aktualisiere den Timestamp
-      dbTradeData.updatedAt = new Date();
+      // Aktualisiere den Timestamp mit korrektem Spaltennamen
+      dbTradeData.updatedat = new Date();
+      delete dbTradeData.updatedAt; // Falls dieses Feld existiert, entfernen
       
       console.log("TradeData nach Konvertierung für DB-Update:", {
         id,
-        liquidationLevel: dbTradeData.liquidationLevel,
-        liquidityLevel: dbTradeData.liquidityLevel,
-        positionSize: dbTradeData.positionSize,
-        actualRrr: dbTradeData.actualRrr,
-        potentialRrr: dbTradeData.potentialRrr,
-        profitLoss: dbTradeData.profitLoss
+        liquidationlevel: dbTradeData.liquidationlevel,
+        liquiditylevel: dbTradeData.liquiditylevel,
+        positionsize: dbTradeData.positionsize,
+        actualrrr: dbTradeData.actualrrr,
+        potentialrrr: dbTradeData.potentialrrr,
+        profitloss: dbTradeData.profitloss,
+        iswin: dbTradeData.iswin
       });
-
-      const [updatedDbTrade] = await db
-        .update(trades)
-        .set(dbTradeData)
-        .where(eq(trades.id, id))
-        .returning();
-        
+      
+      // Verwende Raw SQL anstelle von Drizzle ORM, um das Problem mit den Spaltennamen zu umgehen
+      let updateParts = [];
+      const values = [];
+      let paramIndex = 1;
+      
+      // Erzeuge UPDATE-Anweisung mit korrekten Spaltennamen
+      for (const [key, value] of Object.entries(dbTradeData)) {
+        if (value !== undefined) {
+          updateParts.push(`${key} = $${paramIndex}`);
+          values.push(value);
+          paramIndex++;
+        }
+      }
+      
+      // Keine Änderungen, wenn keine Felder zum Aktualisieren vorhanden sind
+      if (updateParts.length === 0) {
+        console.log(`Keine Änderungen für Trade mit ID ${id}`);
+        return await this.getTradeById(id);
+      }
+      
+      // SQL für das Update erzeugen
+      const queryStr = `
+        UPDATE trades
+        SET ${updateParts.join(', ')}
+        WHERE id = $${paramIndex}
+        RETURNING *
+      `;
+      
+      // ID als letzten Parameter hinzufügen
+      values.push(id);
+      
+      console.log("SQL-Abfrage zum Aktualisieren eines Trades:", queryStr);
+      console.log("Parameter-Anzahl:", values.length);
+      
+      const result = await db.execute(queryStr, values);
+      const updatedDbTrade = result.rows?.[0];
+      
+      if (!updatedDbTrade) {
+        console.error(`Kein Trade mit ID ${id} gefunden oder Update fehlgeschlagen`);
+        return undefined;
+      }
+      
+      console.log(`Trade mit ID ${id} erfolgreich aktualisiert`);
+      
+      // Wandle die PostgreSQL-Namen in Frontend-Namen um
+      const frontendTrade = this.convertPostgresFieldsToFrontend(updatedDbTrade);
+      
       // Wandle das aktualisierte DB-Trade-Objekt zurück ins Frontend-Format mit zentraler Mapping-Funktion
-      return this.mapDbTradeToFrontend(updatedDbTrade);
+      return this.mapDbTradeToFrontend(frontendTrade);
     } catch (error) {
       console.error(`Error updating trade with id ${id}:`, error);
       return undefined;
@@ -1927,8 +1950,38 @@ export class DatabaseStorage implements IStorage {
   // App Settings operations
   async getAppSettings(userId: number): Promise<AppSettings | undefined> {
     try {
-      const [settings] = await db.select().from(appSettings).where(eq(appSettings.userId, userId));
-      return settings;
+      // Verwende Raw SQL, um das Problem mit camelCase vs. lowercase zu umgehen
+      const result = await db.execute(
+        `SELECT * FROM app_settings WHERE userid = $1`,
+        [userId]
+      );
+      
+      const settings = result.rows?.[0];
+      
+      if (!settings) {
+        return undefined;
+      }
+      
+      // Konvertiere Datenbank-Feldnamen zu Frontend-Feldnamen
+      const mappedSettings: any = {};
+      
+      for (const [key, value] of Object.entries(settings)) {
+        // Konvertiere lowercase zu camelCase für bestimmte Felder
+        if (key === 'userid') {
+          mappedSettings.userId = value;
+        } else if (key === 'deviceid') {
+          mappedSettings.deviceId = value;
+        } else if (key === 'createdat') {
+          mappedSettings.createdAt = value;
+        } else if (key === 'updatedat') {
+          mappedSettings.updatedAt = value;
+        } else {
+          // Für andere Felder, behalte den Originalnamen bei
+          mappedSettings[key] = value;
+        }
+      }
+      
+      return mappedSettings as AppSettings;
     } catch (error) {
       console.error(`Error fetching app settings for user ${userId}:`, error);
       return undefined;
@@ -1940,21 +1993,128 @@ export class DatabaseStorage implements IStorage {
       // Prüfe, ob bereits Einstellungen für diesen Benutzer existieren
       const existingSettings = await this.getAppSettings(settings.userId);
       
+      // Konvertiere Frontend-Feldnamen zu Datenbank-Feldnamen
+      const dbSettings: any = {
+        userid: settings.userId
+      };
+      
+      // Kopiere alle anderen Einstellungen
+      for (const [key, value] of Object.entries(settings)) {
+        if (key === 'userId') {
+          // Bereits verarbeitet
+          continue;
+        } else if (key === 'deviceId') {
+          dbSettings.deviceid = value;
+        } else if (key === 'darkMode') {
+          dbSettings.darkmode = value;
+        } else if (key === 'createdAt') {
+          dbSettings.createdat = value;
+        } else if (key === 'updatedAt') {
+          dbSettings.updatedat = value;
+        } else {
+          // Für andere Felder den Namen in Kleinbuchstaben umwandeln
+          dbSettings[key.toLowerCase()] = value;
+        }
+      }
+      
+      // Aktualisiere den Timestamp
+      dbSettings.updatedat = new Date();
+      
       if (existingSettings) {
-        // Update existing settings
-        const [updatedSettings] = await db
-          .update(appSettings)
-          .set(settings)
-          .where(eq(appSettings.userId, settings.userId))
-          .returning();
-        return updatedSettings;
+        // Verwende Raw SQL für das Update
+        const updateFields = Object.entries(dbSettings)
+          .filter(([key, _]) => key !== 'userid') // Entferne userId aus den zu aktualisierenden Feldern
+          .map(([key, _], index) => `${key} = $${index + 2}`)
+          .join(', ');
+          
+        const updateValues = [
+          settings.userId,
+          ...Object.entries(dbSettings)
+            .filter(([key, _]) => key !== 'userid')
+            .map(([_, value]) => value)
+        ];
+        
+        const query = `
+          UPDATE app_settings
+          SET ${updateFields}
+          WHERE userid = $1
+          RETURNING *
+        `;
+        
+        console.log("SQL-Abfrage zum Aktualisieren von App-Einstellungen:", query);
+        console.log("Parameter:", updateValues);
+        
+        const result = await db.execute(query, updateValues);
+        const updatedDbSettings = result.rows?.[0];
+        
+        if (!updatedDbSettings) {
+          throw new Error(`Keine App-Einstellungen für Benutzer ${settings.userId} gefunden oder Update fehlgeschlagen`);
+        }
+        
+        // Konvertiere die Datenbank-Feldnamen zurück zu Frontend-Feldnamen
+        const mappedSettings: any = {};
+        
+        for (const [key, value] of Object.entries(updatedDbSettings)) {
+          if (key === 'userid') {
+            mappedSettings.userId = value;
+          } else if (key === 'deviceid') {
+            mappedSettings.deviceId = value;
+          } else if (key === 'darkmode') {
+            mappedSettings.darkMode = value;
+          } else if (key === 'createdat') {
+            mappedSettings.createdAt = value;
+          } else if (key === 'updatedat') {
+            mappedSettings.updatedAt = value;
+          } else {
+            // Für andere Felder, behalte den Originalnamen bei
+            mappedSettings[key] = value;
+          }
+        }
+        
+        return mappedSettings as AppSettings;
       } else {
-        // Create new settings
-        const [newSettings] = await db
-          .insert(appSettings)
-          .values(settings)
-          .returning();
-        return newSettings;
+        // Verwende Raw SQL für das Insert
+        const columns = Object.keys(dbSettings).join(', ');
+        const placeholders = Object.keys(dbSettings).map((_, i) => `$${i + 1}`).join(', ');
+        const values = Object.values(dbSettings);
+        
+        const query = `
+          INSERT INTO app_settings (${columns})
+          VALUES (${placeholders})
+          RETURNING *
+        `;
+        
+        console.log("SQL-Abfrage zum Erstellen von App-Einstellungen:", query);
+        console.log("Parameter:", values);
+        
+        const result = await db.execute(query, values);
+        const newDbSettings = result.rows?.[0];
+        
+        if (!newDbSettings) {
+          throw new Error(`Fehler beim Erstellen von App-Einstellungen für Benutzer ${settings.userId}`);
+        }
+        
+        // Konvertiere die Datenbank-Feldnamen zurück zu Frontend-Feldnamen
+        const mappedSettings: any = {};
+        
+        for (const [key, value] of Object.entries(newDbSettings)) {
+          if (key === 'userid') {
+            mappedSettings.userId = value;
+          } else if (key === 'deviceid') {
+            mappedSettings.deviceId = value;
+          } else if (key === 'darkmode') {
+            mappedSettings.darkMode = value;
+          } else if (key === 'createdat') {
+            mappedSettings.createdAt = value;
+          } else if (key === 'updatedat') {
+            mappedSettings.updatedAt = value;
+          } else {
+            // Für andere Felder, behalte den Originalnamen bei
+            mappedSettings[key] = value;
+          }
+        }
+        
+        return mappedSettings as AppSettings;
       }
     } catch (error) {
       console.error(`Error creating/updating app settings for user ${settings.userId}:`, error);
