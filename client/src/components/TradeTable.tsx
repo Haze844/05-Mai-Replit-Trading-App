@@ -1930,9 +1930,9 @@ export default function TradeTable({
                   <td className="p-3"><Skeleton className="h-5 w-16" /></td>
                 </tr>
               ))
-            ) : currentTrades.length > 0 ? (
-              // Trades list
-              currentTrades.map((trade) => (
+            ) : trades.length > 0 ? (
+              // WICHTIGE ÄNDERUNG: Verwende die originalen Trades direkt!
+              console.log("Render Trades direkt:", trades) || trades.map((trade) => (
                 <tr 
                   key={trade.id} 
                   className={`border-b border-border hover:bg-muted/50 cursor-pointer ${showColoredRows && trade.userColor ? trade.userColor : ''}`} 
