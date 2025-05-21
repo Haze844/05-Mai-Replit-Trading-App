@@ -300,7 +300,7 @@ const findWorstTrade = (trades) => {
 };
 
 // Funktion zur Generierung von Wochentags-Heatmap-Daten
-const generateWeekdayHeatmapData = (trades, userName = null) => {
+const generateWeekdayHeatmapData = (trades, userId = null) => {
   // Definiere Wochentage und Sitzungen
   const weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
   const sessions = ['Morgen', 'Mittag', 'Abend', 'Nacht'];
@@ -326,8 +326,8 @@ const generateWeekdayHeatmapData = (trades, userName = null) => {
   
   // Füllen der Heatmap mit Daten
   trades.forEach(trade => {
-    // Wenn userName angegeben, filtere nach diesem
-    if (userName && trade.userName !== userName) return;
+    // Wenn userId angegeben, filtere nach diesem
+    if (userId && trade.userId !== userId) return;
     
     const tradeDate = new Date(trade.date);
     
@@ -372,7 +372,7 @@ const generateWeekdayHeatmapData = (trades, userName = null) => {
 };
 
 // Wochentags-Heatmap-Komponente
-const WeekdayHeatmap = ({ data, userTheme, userName }) => {
+const WeekdayHeatmap = ({ data, userTheme, userName }) => { // userName wird hier nur für den Anzeigetext verwendet
   // Finde die maximale Anzahl von Trades in einer Zelle für die Farbskalierung
   const maxCount = Math.max(
     ...data.flatMap(day => day.sessions.map(session => session.count)), 
@@ -871,15 +871,13 @@ export default function TradeCompare() {
           }
         }
         
-        // User Filter - benutzt 'userName' als optionale Property
+        // User Filter - benutzt userId für die Benutzeridentifikation
         if (newFilters.user && newFilters.user !== 'all') {
-          // Typensicherer Ansatz, da 'userName' nicht im Trade-Interface ist
-          const tradeWithUserName = trade as any; // Expliziter Cast zu any
-          
-          if (newFilters.user === 'jasper' && tradeWithUserName.userName !== 'Jasper') {
+          // Filterung basierend auf userId
+          if (newFilters.user === 'jasper' && trade.userId !== 1) {
             return false;
           }
-          if (newFilters.user === 'mo' && tradeWithUserName.userName !== 'Mo') {
+          if (newFilters.user === 'mo' && trade.userId !== 2) {
             return false;
           }
         }
