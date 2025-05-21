@@ -716,9 +716,8 @@ export default function TradeCompare() {
       const data = await response.json();
       console.log(`TradeCompare - Jasper-Trades geladen: ${data.length} Trades`);
       
-      // WICHTIG: Nutze ALLE Trades vom Server, ohne weitere Benutzer-ID-Filterung
-      // Die API gibt bereits nur die Trades für die angeforderte Benutzer-ID zurück
-      return data;
+      // Stelle sicher, dass alle Trades die UserId 1 (Jasper) haben
+      return data.filter(trade => trade.userId === 1);
     },
     refetchOnMount: true,
     staleTime: 0
@@ -739,9 +738,8 @@ export default function TradeCompare() {
       const data = await response.json();
       console.log(`TradeCompare - Mo-Trades geladen: ${data.length} Trades`);
       
-      // WICHTIG: Nutze ALLE Trades vom Server, ohne weitere Benutzer-ID-Filterung
-      // Die API gibt bereits nur die Trades für die angeforderte Benutzer-ID zurück
-      return data;
+      // Stelle sicher, dass alle Trades die UserId 2 (Mo) haben
+      return data.filter(trade => trade.userId === 2);
     },
     refetchOnMount: true,
     staleTime: 0
