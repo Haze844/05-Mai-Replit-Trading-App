@@ -1308,10 +1308,29 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`DatabaseStorage getTrades - Filters für User ${userId}:`, filters);
       
-      // Verwende Raw SQL anstelle von Drizzle ORM, um das Problem mit den Spaltennamen zu umgehen
+      // Überprüfe zuerst, ob die Tabelle existiert
+      try {
+        const tableCheck = await db.execute(
+          `SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = 'trades'
+          )`
+        );
+        
+        if (!tableCheck.rows?.[0]?.exists) {
+          console.error("Die Tabelle 'trades' existiert nicht in der Datenbank!");
+          return [];
+        }
+      } catch (tableCheckError) {
+        console.error("Fehler bei der Überprüfung der Tabelle:", tableCheckError);
+        // Wir machen trotzdem weiter, um zu sehen, ob der Hauptquery funktioniert
+      }
+      
+      // Verwende Raw SQL mit Anführungszeichen für Tabellen- und Spaltennamen
       let queryStr = `
-        SELECT * FROM trades 
-        WHERE userid = $1
+        SELECT * FROM "trades" 
+        WHERE "userid" = $1
       `;
       
       // Parameter für die Abfrage
@@ -1320,7 +1339,7 @@ export class DatabaseStorage implements IStorage {
       
       // Datumsfilter hinzufügen
       if (filters.startDate && filters.endDate) {
-        queryStr += ` AND date >= $${paramIndex} AND date <= $${paramIndex+1}`;
+        queryStr += ` AND "date" >= $${paramIndex} AND "date" <= $${paramIndex+1}`;
         queryParams.push(new Date(filters.startDate));
         queryParams.push(new Date(filters.endDate));
         paramIndex += 2;
@@ -1344,7 +1363,8 @@ export class DatabaseStorage implements IStorage {
       for (const [key, value] of Object.entries(dbFilters)) {
         if (value !== undefined && key !== 'userid') {
           try {
-            queryStr += ` AND ${key} = $${paramIndex}`;
+            // Verwende Anführungszeichen für Spaltennamen
+            queryStr += ` AND "${key}" = $${paramIndex}`;
             queryParams.push(value);
             paramIndex++;
             console.log(`Filter für Feld ${key} = ${value} hinzugefügt`);
@@ -1355,31 +1375,47 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Sortierung nach Datum absteigend hinzufügen
-      queryStr += ` ORDER BY date DESC`;
+      queryStr += ` ORDER BY "date" DESC`;
       
       console.log("Ausgeführte SQL-Abfrage:", queryStr);
       console.log("Abfrageparameter:", queryParams);
       
       // Führe die Abfrage aus
-      const result = await db.execute(queryStr, queryParams);
-      const dbResult = result.rows || [];
-      
-      console.log(`Datenbankabfrage ergab ${dbResult.length} Ergebnisse für Benutzer ${userId}`);
-      
-      // Wende die zentrale Mapping-Funktion auf alle Ergebnisse an
-      const trades = dbResult.map(trade => {
-        // Debug-Ausgabe für jedes Trade-Objekt
-        console.log(`Verarbeite Trade ID ${trade.id}, Symbol: ${trade.symbol}, Setup: ${trade.setup}`);
+      try {
+        const result = await db.execute(queryStr, queryParams);
+        const dbResult = result.rows || [];
         
-        // Wandle die PostgreSQL-Namen in Frontend-Namen um
-        const frontendTrade = this.convertPostgresFieldsToFrontend(trade);
+        console.log(`Datenbankabfrage ergab ${dbResult.length} Ergebnisse für Benutzer ${userId}`);
         
-        // Verwende die zentrale Mapping-Funktion
-        return this.mapDbTradeToFrontend(frontendTrade);
-      });
-      
-      console.log(`DatabaseStorage getTrades - Retrieved ${trades.length} trades for userId ${userId}`);
-      return trades;
+        // Wende die zentrale Mapping-Funktion auf alle Ergebnisse an
+        const trades = dbResult.map(trade => {
+          // Debug-Ausgabe für jedes Trade-Objekt mit Nullcheck
+          const tradeId = trade.id || 'unbekannt';
+          const tradeSymbol = trade.symbol || 'k.A.';
+          const tradeSetup = trade.setup || 'k.A.';
+          console.log(`Verarbeite Trade ID ${tradeId}, Symbol: ${tradeSymbol}, Setup: ${tradeSetup}`);
+          
+          // Wandle die PostgreSQL-Namen in Frontend-Namen um
+          const frontendTrade = this.convertPostgresFieldsToFrontend(trade);
+          
+          // Verwende die zentrale Mapping-Funktion
+          return this.mapDbTradeToFrontend(frontendTrade);
+        });
+        
+        console.log(`DatabaseStorage getTrades - Retrieved ${trades.length} trades for userId ${userId}`);
+        return trades;
+      } catch (queryError) {
+        console.error("Fehler bei der Ausführung der SQL-Abfrage:", queryError);
+        
+        // Versuche einen alternativen Ansatz mit Drizzle ORM
+        console.log("Versuche alternative Abfrage mit Drizzle ORM...");
+        const result = await db.select().from(trades).where(eq(trades.userId, userId));
+        
+        console.log(`Alternative Abfrage ergab ${result.length} Ergebnisse`);
+        
+        // Wende die zentrale Mapping-Funktion auf alle Ergebnisse an
+        return result.map(trade => this.mapDbTradeToFrontend(trade));
+      }
     } catch (error) {
       console.error(`Error fetching trades for user ${userId}:`, error);
       return [];
