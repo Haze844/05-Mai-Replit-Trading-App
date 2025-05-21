@@ -1962,9 +1962,8 @@ export default function TradeTable({
                   <td className="p-3 text-xs">{trade.symbol}</td>
                   <td className="p-3 text-xs">{trade.setup}</td>
                   <td className="p-3 text-xs">
-                    <span className={`${trade.profitLoss && Number(trade.profitLoss) > 0 ? 'text-green-500' : trade.profitLoss && Number(trade.profitLoss) < 0 ? 'text-red-500' : ''}`}>
-                      {trade.profitLoss !== undefined && trade.profitLoss !== null ? `${Number(trade.profitLoss) > 0 ? '+' : ''}${Number(trade.profitLoss).toFixed(2)}` : '-'}
-                    </span>
+                    {/* Diese Spalte wurde bewusst leergelassen, da wir die P/L-Anzeige in der Status-Spalte haben */}
+                    -
                   </td>
                   <td className="p-3 text-xs">
                     {trade.trend ? <BadgeTrend trend={trade.trend} size="xs" /> : '-'}

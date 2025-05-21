@@ -288,26 +288,44 @@ export default function TradeImport({ userId, onImport }: TradeImportProps) {
                     profitLossValue = row.pnl;
                     console.log("Spezialformat erkannt, verwende pnl:", profitLossValue);
                   } else {
-                    // Standardfelder für andere Quellen
+                    // Standardfelder für andere Quellen - ERWEITERTE SPALTENSUCHE
                     profitLossValue = row['P/L'] || row['PL'] || row['Profit'] || row['Profit/Loss'] || row['Net P/L'] || 
-                                      row['Profit'] || row['P&L'] || row['Trade P/L'] || row['Result Value'] || "0";
+                                      row['Profit'] || row['P&L'] || row['Trade P/L'] || row['Result Value'] || 
+                                      row['Net Profit'] || row['profit'] || row['gain'] || row['gain/loss'] ||
+                                      row['profit_loss'] || row['profitLoss'] || row['pl'] || row['pnl'] || "0";
                   }
                   
                   // Entferne Währungssymbole und Tausendertrennzeichen für korrekte Umwandlung in Float
                   let profitLoss = 0;
                   
+                  // WICHTIG: Zuerst prüfen, ob der Wert bereits eine Nummer ist
+                  if (typeof profitLossValue === 'number') {
+                    profitLoss = profitLossValue;
+                    console.log("P/L ist bereits numerisch:", profitLoss);
+                  }
                   // Verbesserte Erkennung für negative Werte wie $(272.00)
-                  if (typeof profitLossValue === 'string' && profitLossValue.includes('$(')) {
+                  else if (typeof profitLossValue === 'string' && profitLossValue.includes('$(')) {
                     // Negativer Wert in Format $(272.00)
                     const numericValue = profitLossValue.replace(/\$\(|\)/g, '');
                     profitLoss = -parseFloat(numericValue);
-                    console.log("Negativer P/L erkannt:", profitLossValue, "→", profitLoss);
-                  } else {
+                    console.log("Negativer P/L (Klammer-Format) erkannt:", profitLossValue, "→", profitLoss);
+                  }
+                  // Erkennung für negative Werte mit Minuszeichen und Währungssymbol wie -$272.00
+                  else if (typeof profitLossValue === 'string' && profitLossValue.includes('-$')) {
+                    const numericValue = profitLossValue.replace(/[^0-9.\-,]/g, '');
+                    profitLoss = -Math.abs(parseFloat(numericValue));
+                    console.log("Negativer P/L (Minus-Format) erkannt:", profitLossValue, "→", profitLoss);
+                  }
+                  else {
                     // Standardverarbeitung für andere Formate
-                    const cleanProfitLossValue = String(profitLossValue).replace(/[^0-9.\-,]/g, '')
-                                                                       .replace(',', '.');
+                    const cleanProfitLossValue = String(profitLossValue)
+                      .replace(/[$€£¥]/g, '') // Währungssymbole entfernen
+                      .replace(/\(([^)]+)\)/g, '-$1') // (123.45) zu -123.45 umwandeln
+                      .replace(/[^0-9.\-,]/g, '') // Alle nicht-numerischen Zeichen außer . - , entfernen
+                      .replace(',', '.'); // Komma durch Punkt ersetzen
+                      
                     profitLoss = parseFloat(cleanProfitLossValue) || 0;
-                    console.log("Profit/Loss erkannt:", profitLossValue, "→", profitLoss);
+                    console.log("Profit/Loss erkannt und bereinigt:", profitLossValue, "→", cleanProfitLossValue, "→", profitLoss);
                   }
                   
                   // Setze entryType basierend auf buyPrice/sellPrice wenn verfügbar
