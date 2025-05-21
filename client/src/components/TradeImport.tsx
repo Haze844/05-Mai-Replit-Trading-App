@@ -327,8 +327,8 @@ export default function TradeImport({ userId, onImport }: TradeImportProps) {
                     }
                   }
                   
-                  // VERBESSERTE PROFITLOSS-VERARBEITUNG
-                  // Ähnlich wie bei der Datumsverarbeitung, die erfolgreich funktioniert
+                  // SPEZIELLE VERARBEITUNG FÜR DAS MIT BEISPIELDATEI IDENTIFIZIERTE FORMAT
+                  // Format aus der Beispieldatei: $837.50
 
                   // Detailliertes Logging aller relevanten PL-Felder
                   console.log("IMPORT: P/L-DEBUGGING - START");
@@ -339,42 +339,53 @@ export default function TradeImport({ userId, onImport }: TradeImportProps) {
                   let profitLoss = 0;
                   let cleanValue = "";
                   
-                  // WICHTIG: Zuerst prüfen, ob der Wert bereits eine Nummer ist
-                  if (typeof profitLossValue === 'number') {
-                    profitLoss = profitLossValue;
-                    console.log("IMPORT: P/L ist bereits numerisch:", profitLoss);
-                  }
-                  // Verbesserte Erkennung für negative Werte wie $(272.00)
-                  else if (typeof profitLossValue === 'string' && profitLossValue.includes('$(')) {
-                    // Negativer Wert in Format $(272.00)
-                    cleanValue = profitLossValue.replace(/\$\(|\)/g, '');
-                    profitLoss = -parseFloat(cleanValue);
-                    console.log("IMPORT: Negativer P/L (Klammer-Format) erkannt:", profitLossValue, "→", cleanValue, "→", profitLoss);
-                  }
-                  // Erkennung für negative Werte mit Minuszeichen und Währungssymbol wie -$272.00
-                  else if (typeof profitLossValue === 'string' && profitLossValue.includes('-$')) {
-                    cleanValue = profitLossValue.replace(/[^0-9.\-,]/g, '');
-                    profitLoss = -Math.abs(parseFloat(cleanValue));
-                    console.log("IMPORT: Negativer P/L (Minus-Format) erkannt:", profitLossValue, "→", cleanValue, "→", profitLoss);
-                  }
-                  // Neue Erkennung für Werte mit Minus-Zeichen wie "-272.00" oder "-272,00"
-                  else if (typeof profitLossValue === 'string' && profitLossValue.startsWith('-')) {
-                    cleanValue = profitLossValue.replace(/[^0-9.\-,]/g, '').replace(',', '.');
-                    profitLoss = parseFloat(cleanValue);
-                    console.log("IMPORT: Negativer P/L (einfaches Minus-Format) erkannt:", profitLossValue, "→", cleanValue, "→", profitLoss);
-                  }
-                  else if (typeof profitLossValue === 'string') {
-                    // Standardverarbeitung für andere Formate
-                    cleanValue = String(profitLossValue)
-                      .replace(/[$€£¥]/g, '') // Währungssymbole entfernen
-                      .replace(/\(([^)]+)\)/g, '-$1') // (123.45) zu -123.45 umwandeln
-                      .replace(/[^0-9.\-,]/g, '') // Alle nicht-numerischen Zeichen außer . - , entfernen
-                      .replace(',', '.'); // Komma durch Punkt ersetzen
-                      
-                    profitLoss = parseFloat(cleanValue) || 0;
-                    console.log("IMPORT: Profit/Loss erkannt und bereinigt:", profitLossValue, "→", cleanValue, "→", profitLoss);
-                  } else {
-                    console.log("IMPORT: Kein gültiger P/L-Wert gefunden, verwende 0");
+                  try {
+                    // BEISPIELFORMAT: $837.50 - Direkt aus der Beispieldatei
+                    if (typeof profitLossValue === 'string' && profitLossValue.startsWith('$') && !profitLossValue.startsWith('-') && !profitLossValue.includes('(')) {
+                      cleanValue = profitLossValue.replace('$', '').trim();
+                      profitLoss = parseFloat(cleanValue);
+                      console.log("IMPORT: P/L im Beispielformat erkannt:", profitLossValue, "→", cleanValue, "→", profitLoss);
+                    }
+                    // WICHTIG: Zuerst prüfen, ob der Wert bereits eine Nummer ist
+                    else if (typeof profitLossValue === 'number') {
+                      profitLoss = profitLossValue;
+                      console.log("IMPORT: P/L ist bereits numerisch:", profitLoss);
+                    }
+                    // Verbesserte Erkennung für negative Werte wie $(272.00)
+                    else if (typeof profitLossValue === 'string' && profitLossValue.includes('$(')) {
+                      // Negativer Wert in Format $(272.00)
+                      cleanValue = profitLossValue.replace(/\$\(|\)/g, '');
+                      profitLoss = -parseFloat(cleanValue);
+                      console.log("IMPORT: Negativer P/L (Klammer-Format) erkannt:", profitLossValue, "→", cleanValue, "→", profitLoss);
+                    }
+                    // Erkennung für negative Werte mit Minuszeichen und Währungssymbol wie -$272.00
+                    else if (typeof profitLossValue === 'string' && profitLossValue.includes('-$')) {
+                      cleanValue = profitLossValue.replace(/[^0-9.\-,]/g, '');
+                      profitLoss = -Math.abs(parseFloat(cleanValue));
+                      console.log("IMPORT: Negativer P/L (Minus-Format) erkannt:", profitLossValue, "→", cleanValue, "→", profitLoss);
+                    }
+                    // Neue Erkennung für Werte mit Minus-Zeichen wie "-272.00" oder "-272,00"
+                    else if (typeof profitLossValue === 'string' && profitLossValue.startsWith('-')) {
+                      cleanValue = profitLossValue.replace(/[^0-9.\-,]/g, '').replace(',', '.');
+                      profitLoss = parseFloat(cleanValue);
+                      console.log("IMPORT: Negativer P/L (einfaches Minus-Format) erkannt:", profitLossValue, "→", cleanValue, "→", profitLoss);
+                    }
+                    else if (typeof profitLossValue === 'string') {
+                      // Standardverarbeitung für andere Formate
+                      cleanValue = String(profitLossValue)
+                        .replace(/[$€£¥]/g, '') // Währungssymbole entfernen
+                        .replace(/\(([^)]+)\)/g, '-$1') // (123.45) zu -123.45 umwandeln
+                        .replace(/[^0-9.\-,]/g, '') // Alle nicht-numerischen Zeichen außer . - , entfernen
+                        .replace(',', '.'); // Komma durch Punkt ersetzen
+                        
+                      profitLoss = parseFloat(cleanValue) || 0;
+                      console.log("IMPORT: Profit/Loss erkannt und bereinigt:", profitLossValue, "→", cleanValue, "→", profitLoss);
+                    } else {
+                      console.log("IMPORT: Kein gültiger P/L-Wert gefunden, verwende 0");
+                    }
+                  } catch (error) {
+                    console.error("IMPORT: Fehler bei P/L-Verarbeitung:", error);
+                    profitLoss = 0;
                   }
                   
                   // Zusätzliche Überprüfung, ob der Wert tatsächlich numerisch ist

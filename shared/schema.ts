@@ -88,6 +88,12 @@ export const trades = pgTable("trades", {
   advancedExit: text("advanced_exit"),
   liquidationLevel: text("liquidation_level"),
   liquidationEntry: text("liquidation_entry"),
+  // Hinzufügen der profitLoss und isWin Felder für die CSV-Import-Funktion
+  profitLoss: real("profit_loss").default(0),
+  isWin: boolean("is_win").default(false),
+  // Hinzufügen von rrAchieved und rrPotential als echte Datenbankfelder
+  rrAchieved: real("rr_achieved").default(0),
+  rrPotential: real("rr_potential").default(0),
   userId: integer("user_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
