@@ -1915,7 +1915,7 @@ export default function TradeCompareTable({
                 >
                   {showUserColumn && (
                     <td className="p-3 text-xs font-medium">
-                      {trade.userName || '-'}
+                      {trade.userId === 1 ? 'Jasper' : trade.userId === 2 ? 'Mo' : '-'}
                     </td>
                   )}
                   <td className="p-3 text-xs">
