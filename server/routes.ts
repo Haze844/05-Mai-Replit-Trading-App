@@ -207,14 +207,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return next();
     }
     
-    // Demo-Mode: Für Entwicklung - nicht in Produktion verwenden
-    // Hardcoded User ID verwenden (Mo = 2)
-    const defaultUserId = 2;
+    // WICHTIG: Prüfen, ob ein spezifischer userId-Parameter in der Anfrage übergeben wurde
+    // z.B. durch ?userId=1 für Jasper oder ?userId=2 für Mo
+    let requestedUserId = 1; // Default auf Jasper (1) statt Mo (2)
+    
+    if (req.query.userId) {
+      requestedUserId = parseInt(req.query.userId as string, 10);
+      console.log(`Expliziter userId-Parameter gefunden: ${requestedUserId}`);
+    } else if (req.body && req.body.userId) {
+      requestedUserId = parseInt(req.body.userId, 10);
+      console.log(`Expliziter userId-Parameter im Body gefunden: ${requestedUserId}`);
+    }
     
     // GET-Anfragen behandeln
     if (req.method === "GET") {
-      req.query.userId = String(defaultUserId);
-      console.log("GET Anfrage akzeptiert für nicht-authentifizierten Benutzer mit userId:", defaultUserId);
+      req.query.userId = String(requestedUserId);
+      console.log("GET Anfrage akzeptiert für nicht-authentifizierten Benutzer mit userId:", requestedUserId);
       return next();
     }
     
@@ -224,13 +232,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (Array.isArray(req.body)) {
           // Array von Objekten (z.B. beim Bulk-Import)
           req.body.forEach((item) => {
-            item.userId = defaultUserId;
+            item.userId = requestedUserId;
           });
         } else {
           // Einzelnes Objekt
-          req.body.userId = defaultUserId;
+          req.body.userId = requestedUserId;
         }
-        console.log("POST Anfrage akzeptiert für nicht-authentifizierten Benutzer mit userId:", defaultUserId);
+        console.log("POST Anfrage akzeptiert für nicht-authentifizierten Benutzer mit userId:", requestedUserId);
         return next();
       }
     }
@@ -238,8 +246,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // PUT-Anfragen behandeln (besonders wichtig für Trade-Aktualisierungen)
     if (req.method === "PUT") {
       if (req.body) {
-        req.body.userId = defaultUserId;
-        console.log("PUT Anfrage akzeptiert für nicht-authentifizierten Benutzer mit userId:", defaultUserId);
+        req.body.userId = requestedUserId;
+        console.log("PUT Anfrage akzeptiert für nicht-authentifizierten Benutzer mit userId:", requestedUserId);
         console.log("PUT Request Body:", req.body);
         return next();
       }
@@ -247,8 +255,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // DELETE-Anfragen für Trades behandeln
     if (req.method === "DELETE" && req.path.startsWith("/api/trades/")) {
-      req.query.userId = String(defaultUserId);
-      console.log("DELETE Anfrage akzeptiert für nicht-authentifizierten Benutzer mit userId:", defaultUserId);
+      req.query.userId = String(requestedUserId);
+      console.log("DELETE Anfrage akzeptiert für nicht-authentifizierten Benutzer mit userId:", requestedUserId);
       return next();
     }
     
