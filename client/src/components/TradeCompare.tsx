@@ -716,8 +716,9 @@ export default function TradeCompare() {
       const data = await response.json();
       console.log(`TradeCompare - Jasper-Trades geladen: ${data.length} Trades`);
       
-      // Stellen Sie sicher, dass nur Trades mit userId=1 zurückgegeben werden
-      return data.filter((trade: any) => trade.userId === 1);
+      // WICHTIG: Nutze ALLE Trades vom Server, ohne weitere Benutzer-ID-Filterung
+      // Die API gibt bereits nur die Trades für die angeforderte Benutzer-ID zurück
+      return data;
     },
     refetchOnMount: true,
     staleTime: 0
@@ -738,8 +739,9 @@ export default function TradeCompare() {
       const data = await response.json();
       console.log(`TradeCompare - Mo-Trades geladen: ${data.length} Trades`);
       
-      // Stellen Sie sicher, dass nur Trades mit userId=2 zurückgegeben werden
-      return data.filter((trade: any) => trade.userId === 2);
+      // WICHTIG: Nutze ALLE Trades vom Server, ohne weitere Benutzer-ID-Filterung
+      // Die API gibt bereits nur die Trades für die angeforderte Benutzer-ID zurück
+      return data;
     },
     refetchOnMount: true,
     staleTime: 0
@@ -762,9 +764,8 @@ export default function TradeCompare() {
 
       // Jasper-Trades Farbmarkierung und Benutzerinfo hinzufügen
       // Ein eindeutiger Key für jeden Trade wird durch Präfix "jasper-" erzeugt
-      // Vergewissern, dass die Trades dem richtigen Benutzer gehören (userId === 1)
+      // Die userId-Filterung wurde bereits vom Server durchgeführt
       const formattedAdminTrades = adminTrades
-        .filter(trade => trade.userId === 1) // Nur Trades von Jasper (userId 1)
         .map(trade => {
           // Berechne die abgeleiteten Felder, falls sie nicht existieren
           const tradeResult = trade.tradeResult || 0;
@@ -787,9 +788,8 @@ export default function TradeCompare() {
 
       // Mo-Trades Farbmarkierung und Benutzerinfo hinzufügen
       // Ein eindeutiger Key für jeden Trade wird durch Präfix "mo-" erzeugt
-      // Vergewissern, dass die Trades dem richtigen Benutzer gehören (userId === 2)
+      // Die userId-Filterung wurde bereits vom Server durchgeführt
       const formattedMoTrades = moTrades
-        .filter(trade => trade.userId === 2) // Nur Trades von Mo (userId 2)
         .map(trade => {
           // Berechne die abgeleiteten Felder, falls sie nicht existieren
           const tradeResult = trade.tradeResult || 0;
