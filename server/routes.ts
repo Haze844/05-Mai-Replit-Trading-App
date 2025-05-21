@@ -1023,18 +1023,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           console.log(`Berechnete Werte für Trade: entryType=${entryType}, profitLoss=${plValue}, isWin=${isWin}, rrAchieved=${rrAchieved}, rrPotential=${rrPotential}`);
           
-          // Create trade in database with feedback
-          const newTrade = await storage.createTrade({
+          // Mappiere Frontend-Namen auf Datenbank-Namen
+          const mappedTradeData = {
             ...tradeData,
-            userId,
-            profitLoss: plValue !== undefined ? plValue : 0,
-            isWin: isWin !== undefined ? isWin : false,
-            rrAchieved: rrAchieved !== undefined ? rrAchieved : 0,
-            rrPotential: rrPotential !== undefined ? rrPotential : 0,
-            gptFeedback: isLinkImport ? '' : gptFeedback, // Kein Feedback für Link-Imports
+            user_id: userId,
+            profit_loss: plValue !== undefined ? plValue : 0,
+            is_win: isWin !== undefined ? isWin : false,
+            rr_achieved: rrAchieved !== undefined ? rrAchieved : 0,
+            rr_potential: rrPotential !== undefined ? rrPotential : 0,
+            
+            // Spezielle Mapping-Fälle
+            liquidation_level: tradeData.liquidation || tradeData.liquidationLevel || '',
+            liquidity_level: tradeData.location || tradeData.liquidityLevel || '',
+            
+            // Feld-Bereinigung für Datenbank-Schema
+            gptFeedback: undefined, // Kein direkt korrespondierendes Feld in der Datenbank
+            
             // Ensure date is set if not provided
             date: tradeData.date || new Date().toISOString(),
-          });
+          };
+          
+          // Entferne Frontend-Felder, die nicht in der Datenbank existieren
+          delete mappedTradeData.profitLoss;
+          delete mappedTradeData.isWin;
+          delete mappedTradeData.rrAchieved;
+          delete mappedTradeData.rrPotential;
+          delete mappedTradeData.userId;
+          delete mappedTradeData.liquidation;
+          delete mappedTradeData.location;
+          delete mappedTradeData.riskSum;
+          delete mappedTradeData.chartImage;
+          
+          console.log("CSV-Import: Mappierte Daten für Datenbank:", JSON.stringify(mappedTradeData));
+          
+          // Create trade in database with mapped data
+          const newTrade = await storage.createTrade(mappedTradeData);
           
           importedTrades.push(newTrade);
         } catch (error) {
