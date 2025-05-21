@@ -1490,40 +1490,74 @@ export class DatabaseStorage implements IStorage {
 
   async updateTrade(id: number, tradeData: Partial<Trade>): Promise<Trade | undefined> {
     try {
-      // WICHTIG: Stelle sicher, dass Datumswerte korrekt konvertiert werden
+      // WICHTIG: Stelle sicher, dass alle Werte korrekt konvertiert werden
       console.log("updateTrade - Daten vor Konvertierung:", {
         id,
         date: tradeData.date,
-        dateType: tradeData.date ? typeof tradeData.date : 'undefined'
+        dateType: tradeData.date ? typeof tradeData.date : 'undefined',
+        profitLoss: tradeData.profitLoss,
+        profitLossType: tradeData.profitLoss !== undefined ? typeof tradeData.profitLoss : 'undefined',
+        rrAchieved: tradeData.rrAchieved,
+        rrPotential: tradeData.rrPotential
       });
       
-      // Konvertiere das Datum, falls es als String übergeben wurde
-      const dateFields: Partial<Trade> = {};
+      // Konvertiere Felder falls nötig
+      const convertedFields: Partial<Trade> = {};
       
+      // Datumskonvertierung
       if (tradeData.date) {
         if (typeof tradeData.date === 'string') {
-          dateFields.date = new Date(tradeData.date);
+          convertedFields.date = new Date(tradeData.date);
           console.log("Datum konvertiert von String zu Date-Objekt beim Update");
         }
       }
       
-      // Aktualisiere den Timestamp für die Aktualisierung
-      dateFields.updatedAt = new Date();
+      // P/L-Wert-Konvertierung
+      if (tradeData.profitLoss !== undefined) {
+        if (typeof tradeData.profitLoss === 'string') {
+          convertedFields.profitLoss = parseFloat(tradeData.profitLoss);
+          console.log(`P/L-Wert konvertiert von String "${tradeData.profitLoss}" zu Zahl ${convertedFields.profitLoss}`);
+        }
+      }
       
-      // Kombiniere die ursprünglichen Daten mit den konvertierten Datumsfeldern
-      const tradeWithDateFields = {
+      // Andere numerische Werte konvertieren
+      if (tradeData.rrAchieved !== undefined && typeof tradeData.rrAchieved === 'string') {
+        convertedFields.rrAchieved = parseFloat(tradeData.rrAchieved);
+        console.log(`rrAchieved konvertiert von String "${tradeData.rrAchieved}" zu Zahl ${convertedFields.rrAchieved}`);
+      }
+      
+      if (tradeData.rrPotential !== undefined && typeof tradeData.rrPotential === 'string') {
+        convertedFields.rrPotential = parseFloat(tradeData.rrPotential);
+        console.log(`rrPotential konvertiert von String "${tradeData.rrPotential}" zu Zahl ${convertedFields.rrPotential}`);
+      }
+      
+      // Andere mögliche numerische Felder
+      ['positionSize', 'takeProfit', 'stopLoss', 'exitLevel', 'potentialRrr', 'actualRrr'].forEach(field => {
+        if (tradeData[field] !== undefined && typeof tradeData[field] === 'string') {
+          convertedFields[field] = parseFloat(tradeData[field]);
+          console.log(`${field} konvertiert von String "${tradeData[field]}" zu Zahl ${convertedFields[field]}`);
+        }
+      });
+      
+      // Aktualisiere den Timestamp für die Aktualisierung
+      convertedFields.updatedAt = new Date();
+      
+      // Kombiniere die ursprünglichen Daten mit den konvertierten Feldern
+      const tradeWithConvertedFields = {
         ...tradeData,
-        ...dateFields
+        ...convertedFields
       };
       
       console.log("updateTrade - Daten nach Konvertierung:", {
-        date: tradeWithDateFields.date,
-        dateType: tradeWithDateFields.date ? typeof tradeWithDateFields.date : 'undefined'
+        date: tradeWithConvertedFields.date,
+        dateType: tradeWithConvertedFields.date ? typeof tradeWithConvertedFields.date : 'undefined',
+        profitLoss: tradeWithConvertedFields.profitLoss,
+        profitLossType: tradeWithConvertedFields.profitLoss !== undefined ? typeof tradeWithConvertedFields.profitLoss : 'undefined'
       });
 
       const [updatedTrade] = await db
         .update(trades)
-        .set(tradeWithDateFields)
+        .set(tradeWithConvertedFields)
         .where(eq(trades.id, id))
         .returning();
         
