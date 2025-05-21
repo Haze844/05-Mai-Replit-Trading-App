@@ -1308,53 +1308,157 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`DatabaseStorage getTrades - Filters für User ${userId}:`, filters);
       
-      // Übersetze Frontend-Filter in DB-Filter
-      const dbFilters = this.mapFrontendFilterToDb(filters);
-      console.log(`Übersetzte DB-Filter:`, dbFilters);
+      // Verwende Raw SQL anstelle von Drizzle ORM, um das Problem mit den Spaltennamen zu umgehen
+      let queryStr = `
+        SELECT * FROM trades 
+        WHERE userid = $1
+      `;
       
-      let query = db.select().from(trades).where(eq(trades.userId, userId));
+      // Parameter für die Abfrage
+      const queryParams: any[] = [userId];
+      let paramIndex = 2;
       
-      // Wende Datums-Filter an, falls vorhanden
+      // Datumsfilter hinzufügen
       if (filters.startDate && filters.endDate) {
-        query = query.where(
-          and(
-            gte(trades.date, filters.startDate),
-            lte(trades.date, filters.endDate)
-          )
-        );
+        queryStr += ` AND date >= $${paramIndex} AND date <= $${paramIndex+1}`;
+        queryParams.push(new Date(filters.startDate));
+        queryParams.push(new Date(filters.endDate));
+        paramIndex += 2;
+        
+        console.log(`Datums-Filter angewendet: ${new Date(filters.startDate).toISOString()} bis ${new Date(filters.endDate).toISOString()}`);
       }
       
-      // Wende die übrigen gemappten Filter an
+      // Wandle Frontend-Filter in PostgreSQL-kompatible Spaltennamen um
+      const dbFilters: Record<string, any> = {};
+      
+      // Spezielle Felder mappen
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value === undefined || value === null || key === 'startDate' || key === 'endDate') return;
+        
+        // Für alle anderen Felder: Umwandlung in Kleinbuchstaben
+        const dbFieldName = key.toLowerCase();
+        dbFilters[dbFieldName] = value;
+      });
+      
+      // Weitere Filter hinzufügen
       for (const [key, value] of Object.entries(dbFilters)) {
-        // Ignoriere spezielle Felder und bereits angewendete Filter
-        if (value !== undefined && key !== 'startDate' && key !== 'endDate' && key !== 'userId') {
+        if (value !== undefined && key !== 'userid') {
           try {
-            // @ts-ignore - Dynamische Filterzuweisung
-            query = query.where(eq(trades[key], value));
+            queryStr += ` AND ${key} = $${paramIndex}`;
+            queryParams.push(value);
+            paramIndex++;
+            console.log(`Filter für Feld ${key} = ${value} hinzugefügt`);
           } catch (filterError) {
             console.warn(`Filter für Feld ${key} konnte nicht angewendet werden:`, filterError);
           }
         }
       }
       
-      const dbResult = await query.orderBy(desc(trades.date));
+      // Sortierung nach Datum absteigend hinzufügen
+      queryStr += ` ORDER BY date DESC`;
+      
+      console.log("Ausgeführte SQL-Abfrage:", queryStr);
+      console.log("Abfrageparameter:", queryParams);
+      
+      // Führe die Abfrage aus
+      const result = await db.execute(queryStr, queryParams);
+      const dbResult = result.rows || [];
+      
       console.log(`Datenbankabfrage ergab ${dbResult.length} Ergebnisse für Benutzer ${userId}`);
       
       // Wende die zentrale Mapping-Funktion auf alle Ergebnisse an
-      const result = dbResult.map(trade => {
+      const trades = dbResult.map(trade => {
         // Debug-Ausgabe für jedes Trade-Objekt
         console.log(`Verarbeite Trade ID ${trade.id}, Symbol: ${trade.symbol}, Setup: ${trade.setup}`);
         
+        // Wandle die PostgreSQL-Namen in Frontend-Namen um
+        const frontendTrade = this.convertPostgresFieldsToFrontend(trade);
+        
         // Verwende die zentrale Mapping-Funktion
-        return this.mapDbTradeToFrontend(trade);
+        return this.mapDbTradeToFrontend(frontendTrade);
       });
       
-      console.log(`DatabaseStorage getTrades - Retrieved ${result.length} trades for userId ${userId}`);
-      return result;
+      console.log(`DatabaseStorage getTrades - Retrieved ${trades.length} trades for userId ${userId}`);
+      return trades;
     } catch (error) {
       console.error(`Error fetching trades for user ${userId}:`, error);
       return [];
     }
+  }
+  
+  // Hilfsfunktion: Konvertiert PostgreSQL-Feldnamen zurück in Frontend-Format
+  private convertPostgresFieldsToFrontend(pgTrade: any): any {
+    const result: any = { ...pgTrade };
+    
+    // Liste der Felder, basierend auf der tatsächlichen Datenbankstruktur
+    // Die Namen stammen aus der Abfrage: SELECT column_name FROM information_schema.columns WHERE table_name = 'trades'
+    const fieldMapping: Record<string, string> = {
+      'actualrrr': 'actualRrr',
+      'advancedexit': 'advancedExit',
+      'advancedpattern': 'advancedPattern',
+      'chartimageurl': 'chartImageUrl',
+      'chartpattern': 'chartPattern',
+      'createdat': 'createdAt',
+      'entrylevel': 'entryLevel',
+      'entrytype': 'entryType',
+      'exitlevel': 'exitLevel',
+      'exitreason': 'exitReason',
+      'fundamentalnews': 'fundamentalNews',
+      'internaltrendm5': 'internalTrendM5',
+      'iswin': 'isWin',
+      'liquidationentry': 'liquidationEntry',
+      'liquidationlevel': 'liquidationLevel',
+      'liquiditylevel': 'liquidityLevel',
+      'main_trend_m15': 'mainTrendM15',   // Beachte den Unterstrich hier!
+      'marketstructure': 'marketStructure',
+      'positionsize': 'positionSize',
+      'potentialrrr': 'potentialRrr',
+      'profitloss': 'profitLoss',
+      'psychologicallevel': 'psychologicalLevel',
+      'rr_achieved': 'rrAchieved',        // Beachte den Unterstrich hier!
+      'rrpotential': 'rrPotential',
+      'sessionasia': 'sessionAsia',
+      'sessionlondon': 'sessionLondon',
+      'sessionnyc': 'sessionNyc',
+      'sessiontime': 'sessionTime',
+      'smartmoneyconcept': 'smartMoneyConcept',
+      'spreadsize': 'spreadSize',
+      'stoploss': 'stopLoss',
+      'takeprofit': 'takeProfit',
+      'tradeduration': 'tradeDuration',
+      'trademanagement': 'tradeManagement',
+      'traderesult': 'tradeResult',
+      'trendalignment': 'trendAlignment',
+      'updatedat': 'updatedAt',
+      'userid': 'userId',
+      'wickfill': 'wickFill'
+    };
+    
+    // Erstelle zusätzliche Frontend-spezifische Felder
+    if (pgTrade.liquidationlevel !== undefined) {
+      result.liquidation = pgTrade.liquidationlevel;
+    }
+    
+    if (pgTrade.liquiditylevel !== undefined) {
+      result.location = pgTrade.liquiditylevel;
+    }
+    
+    if (pgTrade.chartimageurl !== undefined) {
+      result.chartImage = pgTrade.chartimageurl;
+    }
+    
+    if (pgTrade.positionsize !== undefined) {
+      result.riskSum = pgTrade.positionsize;
+    }
+    
+    // Wandle PostgreSQL-Feldnamen in Frontend-Namen um
+    for (const [pgField, frontendField] of Object.entries(fieldMapping)) {
+      if (pgTrade[pgField] !== undefined) {
+        result[frontendField] = pgTrade[pgField];
+      }
+    }
+    
+    return result;
   }
 
   // Hilfsfunktion: Transformiere DB-Trade-Objekt in Frontend-Format
@@ -1413,44 +1517,76 @@ export class DatabaseStorage implements IStorage {
     return dbTrade as Trade;
   }
   
-  // Hilfsfunktion: Übersetzt camelCase-Namen in PostgreSQL-konforme Spaltennamen (kleinbuchstaben ohne Unterstriche)
-  private mapColumnNameToPostgres(camelCaseName: string): string {
-    // Umwandlung von camelCase zu lowercase ohne Unterstriche
-    // z.B. mainTrendM15 -> maintrendm15
-    return camelCaseName.toLowerCase();
-  }
-  
   // Hilfsfunktion: Übersetze Frontend-Filter in DB-Filter
   private mapFrontendFilterToDb(filters: Partial<Trade>): any {
     if (!filters) return {};
     
     const dbFilters: any = {};
     
-    // Mapping für besondere Frontend-Felder
-    const specialFieldMapping: Record<string, string> = {
+    // Mapping basierend auf der tatsächlichen Datenbankstruktur
+    const fieldMapping: Record<string, string> = {
+      // Frontend-spezifische Felder
       'liquidation': 'liquidationlevel',
       'location': 'liquiditylevel',
       'chartImage': 'chartimageurl',
       'riskSum': 'positionsize',
-      'mainTrendM15': 'main_trend_m15', // Spezielles Feld, das unverändert geblieben ist
-      'rrAchieved': 'rr_achieved',      // Spezielles Feld mit Unterstrich
-      'rrPotential': 'rrpotential'      // Ohne Unterstrich in der DB
+      
+      // Reguläre Felder
+      'mainTrendM15': 'main_trend_m15',   // Beachte den Unterstrich hier!
+      'internalTrendM5': 'internaltrendm5',
+      'entryType': 'entrytype',
+      'entryLevel': 'entrylevel',
+      'positionSize': 'positionsize',
+      'takeProfit': 'takeprofit',
+      'stopLoss': 'stoploss',
+      'exitLevel': 'exitlevel',
+      'potentialRrr': 'potentialrrr',
+      'actualRrr': 'actualrrr',
+      'tradeDuration': 'tradeduration',
+      'tradeResult': 'traderesult',
+      'chartImageUrl': 'chartimageurl',
+      'liquidityLevel': 'liquiditylevel',
+      'sessionNyc': 'sessionnyc',
+      'sessionLondon': 'sessionlondon',
+      'sessionAsia': 'sessionasia',
+      'sessionTime': 'sessiontime',
+      'trendAlignment': 'trendalignment',
+      'smartMoneyConcept': 'smartmoneyconcept',
+      'marketStructure': 'marketstructure',
+      'advancedPattern': 'advancedpattern',
+      'chartPattern': 'chartpattern',
+      'fundamentalNews': 'fundamentalnews',
+      'wickFill': 'wickfill',
+      'spreadSize': 'spreadsize',
+      'psychologicalLevel': 'psychologicallevel',
+      'tradeManagement': 'trademanagement',
+      'exitReason': 'exitreason',
+      'advancedExit': 'advancedexit',
+      'liquidationLevel': 'liquidationlevel',
+      'liquidationEntry': 'liquidationentry',
+      'profitLoss': 'profitloss',
+      'isWin': 'iswin',
+      'createdAt': 'createdat',
+      'updatedAt': 'updatedat',
+      'userId': 'userid',
+      'rrAchieved': 'rr_achieved',       // Beachte den Unterstrich hier!
+      'rrPotential': 'rrpotential'
     };
     
     // Kopiere alle Frontend-Felder und wandle sie in PostgreSQL-Format um
     Object.entries(filters).forEach(([key, value]) => {
       if (value === undefined || value === null) return;
       
-      // Spezielle Behandlung für bekannte besondere Felder
-      if (key in specialFieldMapping) {
-        const dbFieldName = specialFieldMapping[key];
+      // Spezielle Behandlung für bekannte Felder mit Mapping
+      if (key in fieldMapping) {
+        const dbFieldName = fieldMapping[key];
         dbFilters[dbFieldName] = value;
         console.log(`Frontend-Feld "${key}" → DB-Feld "${dbFieldName}": ${value}`);
       } else {
-        // Alle anderen Felder werden automatisch zu Kleinbuchstaben ohne Unterstriche umgewandelt
-        const dbFieldName = this.mapColumnNameToPostgres(key);
+        // Für unbekannte Felder: Umwandlung in Kleinbuchstaben
+        const dbFieldName = key.toLowerCase();
         dbFilters[dbFieldName] = value;
-        console.log(`Frontend-Feld "${key}" → DB-Feld "${dbFieldName}": ${value}`);
+        console.log(`Unbekanntes Frontend-Feld "${key}" → DB-Feld "${dbFieldName}": ${value}`);
       }
     });
     
@@ -1460,12 +1596,22 @@ export class DatabaseStorage implements IStorage {
 
   async getTradeById(id: number): Promise<Trade | undefined> {
     try {
-      const [dbTrade] = await db.select().from(trades).where(eq(trades.id, id));
+      // Verwende Raw SQL anstelle von Drizzle ORM, um das Problem mit den Spaltennamen zu umgehen
+      const queryStr = `
+        SELECT * FROM trades 
+        WHERE id = $1
+      `;
       
-      if (!dbTrade) return undefined;
+      const result = await db.execute(queryStr, [id]);
+      const trade = result.rows?.[0];
+      
+      if (!trade) return undefined;
+      
+      // Wandle die PostgreSQL-Namen in Frontend-Namen um
+      const frontendTrade = this.convertPostgresFieldsToFrontend(trade);
       
       // Verwende die zentrale Mapping-Funktion
-      return this.mapDbTradeToFrontend(dbTrade);
+      return this.mapDbTradeToFrontend(frontendTrade);
     } catch (error) {
       console.error(`Error fetching trade with id ${id}:`, error);
       return undefined;
