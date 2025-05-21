@@ -1055,6 +1055,96 @@ export default function TradeTable({
                 <Popover>
                   <PopoverTrigger asChild>
                     <div className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors">
+                      P/L ($)
+                      <DollarSign className="h-3 w-3 ml-1" />
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56" align="start">
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm">P/L filtern</h4>
+                      <div className="space-y-2 px-1">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="pl-neg-1000" 
+                            checked={filters.plRanges.has('< -1000')}
+                            onCheckedChange={() => toggleFilter('plRanges', '< -1000')}
+                          />
+                          <Label htmlFor="pl-neg-1000" className="text-sm cursor-pointer text-red-500">
+                            &lt; -$1000
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="pl-neg-500-1000" 
+                            checked={filters.plRanges.has('-1000 to -500')}
+                            onCheckedChange={() => toggleFilter('plRanges', '-1000 to -500')}
+                          />
+                          <Label htmlFor="pl-neg-500-1000" className="text-sm cursor-pointer text-red-400">
+                            -$1000 bis -$500
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="pl-neg-500-0" 
+                            checked={filters.plRanges.has('-500 to 0')}
+                            onCheckedChange={() => toggleFilter('plRanges', '-500 to 0')}
+                          />
+                          <Label htmlFor="pl-neg-500-0" className="text-sm cursor-pointer text-red-300">
+                            -$500 bis $0
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="pl-0-500" 
+                            checked={filters.plRanges.has('0 to 500')}
+                            onCheckedChange={() => toggleFilter('plRanges', '0 to 500')}
+                          />
+                          <Label htmlFor="pl-0-500" className="text-sm cursor-pointer text-green-300">
+                            $0 bis $500
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="pl-500-1000" 
+                            checked={filters.plRanges.has('500 to 1000')}
+                            onCheckedChange={() => toggleFilter('plRanges', '500 to 1000')}
+                          />
+                          <Label htmlFor="pl-500-1000" className="text-sm cursor-pointer text-green-400">
+                            $500 bis $1000
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="pl-1000-plus" 
+                            checked={filters.plRanges.has('> 1000')}
+                            onCheckedChange={() => toggleFilter('plRanges', '> 1000')}
+                          />
+                          <Label htmlFor="pl-1000-plus" className="text-sm cursor-pointer text-green-500">
+                            &gt; $1000
+                          </Label>
+                        </div>
+                      </div>
+                      {filters.plRanges.size > 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full text-xs"
+                          onClick={() => {
+                            setFilters({...filters, plRanges: new Set()});
+                            setCurrentPage(1);
+                          }}
+                        >
+                          Filter zurücksetzen
+                        </Button>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </th>
+              <th className="p-3 text-left whitespace-nowrap">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors">
                       Trend
                       <TrendingUp className="h-3 w-3 ml-1" />
                     </div>
