@@ -570,8 +570,9 @@ export default function TradeCompare() {
       return sum + (trade.rrAchieved || 0);
     }, 0) / (count || 1);
     
-    // Jasper-Statistiken (Filter Jasper-Trades)
-    const jasperTradesFiltered = tradesToUse.filter((t: any) => t.userName === 'Jasper');
+    // Jasper-Statistiken (Filter Jasper-Trades - userId 1)
+    const jasperTradesFiltered = tradesToUse.filter((t: any) => t.userId === 1);
+    console.log("Jasper Trades gefiltert:", jasperTradesFiltered.length);
     const jasperCount = jasperTradesFiltered.length;
     const jasperWins = jasperTradesFiltered.filter((t: any) => t.isWin === true).length;
     const jasperLosses = jasperTradesFiltered.filter((t: any) => t.isWin === false).length;
@@ -594,8 +595,9 @@ export default function TradeCompare() {
     const jasperBestTrade = findBestTrade(jasperTradesFiltered);
     const jasperWorstTrade = findWorstTrade(jasperTradesFiltered);
     
-    // Mo-Statistiken (Filter Mo-Trades)
-    const moTradesFiltered = tradesToUse.filter((t: any) => t.userName === 'Mo');
+    // Mo-Statistiken (Filter Mo-Trades - userId 2)
+    const moTradesFiltered = tradesToUse.filter((t: any) => t.userId === 2);
+    console.log("Mo Trades gefiltert:", moTradesFiltered.length);
     const moCount = moTradesFiltered.length;
     const moWins = moTradesFiltered.filter((t: any) => t.isWin === true).length;
     const moLosses = moTradesFiltered.filter((t: any) => t.isWin === false).length;
