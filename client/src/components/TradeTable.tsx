@@ -103,8 +103,24 @@ export default function TradeTable({
   showHeader = true,
   showAccountProgress = true
 }: TradeTableProps) {
-  // Debug-Ausgabe der empfangenen Trades
+  // Erweiterte Debug-Ausgabe der empfangenen Trades
   console.log("TradeTable - Empfangene Trades:", trades);
+  console.log("TradeTable - Anzahl der Trades:", trades.length);
+  
+  // Detaillierte Inspektion des ersten Trades (falls vorhanden)
+  if (trades.length > 0) {
+    const firstTrade = trades[0];
+    console.log("TradeTable - Erster Trade:", {
+      id: firstTrade.id,
+      symbol: firstTrade.symbol,
+      setup: firstTrade.setup,
+      profitLoss: firstTrade.profitLoss,
+      isWin: firstTrade.isWin,
+      // Alle wichtigen Felder, die für die Anzeige verwendet werden
+      liquidation: firstTrade.liquidation,
+      location: firstTrade.location
+    });
+  }
   const [currentPage, setCurrentPage] = useState(1);
   const tradesPerPage = 20;
   const [tradeToDelete, setTradeToDelete] = useState<Trade | null>(null);
