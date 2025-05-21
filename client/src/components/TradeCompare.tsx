@@ -652,14 +652,41 @@ export default function TradeCompare() {
     const moWorstTrade = findWorstTrade(moTradesFiltered);
 
     // Direkte Vergleichsmetriken (Jasper vs Mo)
-    const winRateDiff = jasperCount > 0 && moCount > 0 ? jasperWinRate - moWinRate : 0;
-    const plDiff = jasperTotalPL - moTotalPL;
-    const rrDiff = jasperCount > 0 && moCount > 0 ? jasperAvgRR - moAvgRR : 0;
+    // Wenn nur einer der Benutzer Trades hat, setzen wir den Unterschied so, dass dieser Benutzer führend ist
+    const winRateDiff = jasperCount > 0 && moCount > 0 ? 
+                       jasperWinRate - moWinRate : 
+                       jasperCount > 0 ? 100 : moCount > 0 ? -100 : 0;
+                       
+    const plDiff = jasperCount > 0 || moCount > 0 ? 
+                  jasperTotalPL - moTotalPL : 
+                  0;
+                  
+    const rrDiff = jasperCount > 0 && moCount > 0 ? 
+                  jasperAvgRR - moAvgRR : 
+                  jasperCount > 0 ? 2 : moCount > 0 ? -2 : 0;
     
-    // Wer hat bessere Performance?
-    const winRateLeader = winRateDiff > 0 ? 'Jasper' : winRateDiff < 0 ? 'Mo' : 'Gleichstand';
-    const plLeader = plDiff > 0 ? 'Jasper' : plDiff < 0 ? 'Mo' : 'Gleichstand';
-    const rrLeader = rrDiff > 0 ? 'Jasper' : rrDiff < 0 ? 'Mo' : 'Gleichstand';
+    // Wer hat bessere Performance? 
+    // Wenn nur ein Benutzer Trades hat, wird dieser automatisch als führend angezeigt
+    const winRateLeader = jasperCount === 0 && moCount === 0 ? 'Keine Daten' :
+                         jasperCount === 0 ? 'Mo' :
+                         moCount === 0 ? 'Jasper' :
+                         winRateDiff > 0 ? 'Jasper' : 
+                         winRateDiff < 0 ? 'Mo' : 
+                         'Gleichstand';
+                         
+    const plLeader = jasperCount === 0 && moCount === 0 ? 'Keine Daten' :
+                    jasperCount === 0 ? 'Mo' :
+                    moCount === 0 ? 'Jasper' :
+                    plDiff > 0 ? 'Jasper' : 
+                    plDiff < 0 ? 'Mo' : 
+                    'Gleichstand';
+                    
+    const rrLeader = jasperCount === 0 && moCount === 0 ? 'Keine Daten' :
+                    jasperCount === 0 ? 'Mo' :
+                    moCount === 0 ? 'Jasper' :
+                    rrDiff > 0 ? 'Jasper' : 
+                    rrDiff < 0 ? 'Mo' : 
+                    'Gleichstand';
     
     return {
       count,
