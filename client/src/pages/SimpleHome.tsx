@@ -154,6 +154,7 @@ export default function SimpleHome() {
   } = useQuery({
     queryKey: ["/api/trades", userId, filters],
     queryFn: async () => {
+      console.log("SimpleHome - Fetching trades für userId:", userId);
       const queryParams = new URLSearchParams();
       queryParams.append("userId", userId.toString());
       
@@ -163,12 +164,25 @@ export default function SimpleHome() {
       if (filters.internalTrendM5 && filters.internalTrendM5 !== "all") queryParams.append("internalTrendM5", filters.internalTrendM5);
       if (filters.entryType && filters.entryType !== "all") queryParams.append("entryType", filters.entryType);
       
-      const response = await fetch(`/api/trades?${queryParams.toString()}`);
+      const queryUrl = `/api/trades?${queryParams.toString()}`;
+      console.log("SimpleHome - API request URL:", queryUrl);
+      
+      const response = await fetch(queryUrl);
       if (!response.ok) {
+        console.error("SimpleHome - Fehler beim Abrufen der Trades:", response.status, response.statusText);
         throw new Error("Failed to fetch trades");
       }
+      
       const data = await response.json();
-      console.log("API response data:", data);
+      console.log("SimpleHome - API response data:", data);
+      console.log("SimpleHome - Trades count:", data ? data.length : 0);
+      
+      // Zusätzliche Prüfung der Trades-Eigenschaften
+      if (data && data.length > 0) {
+        console.log("SimpleHome - Erster Trade:", data[0]);
+        console.log("SimpleHome - Trade-Schlüssel:", Object.keys(data[0]));
+      }
+      
       return data;
     },
   });
