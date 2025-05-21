@@ -238,6 +238,12 @@ export default function TradeTable({
     console.log("Trade-Werte (erster Trade):", trades[0]);
   }
 
+  // ⚠️ FILTER-BYPASS: Temporär alle Filter deaktivieren ⚠️
+  // Dies zeigt alle Trades an, die aus der API kommen, ohne Filter anzuwenden
+  console.log("WICHTIG: Filter temporär deaktiviert - zeige alle Trades direkt");
+  const filteredTrades = [...trades];
+  
+  /* Original Filter-Code wurde temporär auskommentiert
   // Apply filters and notify parent component of changes when filtered trades change
   const filteredTrades = trades.filter(trade => {
     // Symbol filter
@@ -255,6 +261,7 @@ export default function TradeTable({
     if (filters.mainTrends.size > 0 && trade.mainTrendM15 && !filters.mainTrends.has(trade.mainTrendM15)) {
       return false;
     }
+  */
     
     // Internal trend filter
     if (filters.internalTrends.size > 0 && trade.internalTrendM5 && !filters.internalTrends.has(trade.internalTrendM5)) {
