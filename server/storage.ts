@@ -1344,8 +1344,24 @@ export class DatabaseStorage implements IStorage {
           ? trade.tradeResult.toLowerCase() === 'win' 
           : profitLoss > 0;
         
+        // WICHTIGE FEHLERBEHEBUNG: Konvertiere Datumswerte zu echten Date-Objekten
+        // Dies löst das Problem "Expected date, received string"
+        const dateFields = {
+          date: trade.date ? new Date(trade.date) : null,
+          createdAt: trade.createdAt ? new Date(trade.createdAt) : null,
+          updatedAt: trade.updatedAt ? new Date(trade.updatedAt) : null
+        };
+        
+        // Debug-Ausgabe für Datum-Konvertierung
+        console.log(`Datum für Trade #${trade.id} konvertiert:`, {
+          originalDate: trade.date,
+          convertedDate: dateFields.date,
+          dateType: dateFields.date ? typeof dateFields.date : 'null'
+        });
+        
         return {
           ...trade,
+          ...dateFields, // Ersetze String-Datumsfelder mit Date-Objekten
           // Übersetzung der Spaltennamen für das Frontend
           liquidation: trade.liquidationLevel || "",
           location: trade.liquidityLevel || "",
