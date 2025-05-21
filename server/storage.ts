@@ -1442,248 +1442,186 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Hilfsfunktion: Übersetzt Frontend-Trade-Objekt in Datenbank-Format
+  private mapFrontendTradeToDb(frontendTrade: Partial<InsertTrade>): any {
+    // Kopiere alle Felder
+    const dbTrade: any = { ...frontendTrade };
+    
+    // Mapping für spezielle Felder (Frontend-Name -> DB-Spaltenname)
+    const fieldMapping = {
+      'liquidation': 'liquidationLevel',
+      'location': 'liquidityLevel',
+      'riskSum': 'positionSize',
+      'rrAchieved': 'actualRrr',
+      'rrPotential': 'potentialRrr',
+      'chartImage': 'chartImageUrl'
+    };
+    
+    // Wende Feldmapping an
+    Object.entries(fieldMapping).forEach(([frontendField, dbField]) => {
+      if (frontendTrade[frontendField] !== undefined) {
+        dbTrade[dbField] = frontendTrade[frontendField];
+        delete dbTrade[frontendField]; // Entferne das Frontend-Feld
+      }
+    });
+    
+    // Datum-Konvertierung
+    if (dbTrade.date && typeof dbTrade.date === 'string') {
+      dbTrade.date = new Date(dbTrade.date);
+    }
+    
+    return dbTrade;
+  }
+  
+  // Hilfsfunktion: Bereinigt und konvertiert P/L-Werte in numerische Werte
+  private cleanAndParseValue(value: any): number {
+    if (value === undefined || value === null) return 0;
+    
+    // Wenn bereits eine Zahl, keine Konvertierung nötig
+    if (typeof value === 'number') return value;
+    
+    if (typeof value === 'string') {
+      // Entferne alle nicht-numerischen Zeichen außer Punkt und Minus
+      let cleanValue = value.trim();
+      
+      // Spezialbehandlung für Werte in Klammern wie "(150.25)" die negative Zahlen repräsentieren
+      if (cleanValue.startsWith('(') && cleanValue.endsWith(')')) {
+        cleanValue = '-' + cleanValue.substring(1, cleanValue.length - 1);
+      }
+      
+      // Spezialbehandlung für Werte mit $ oder € Symbolen
+      if (cleanValue.includes('$') || cleanValue.includes('€')) {
+        cleanValue = cleanValue.replace(/[$€]/g, '');
+      }
+      
+      // Entferne alle Tausender-Trennzeichen (Kommas)
+      cleanValue = cleanValue.replace(/,/g, '');
+      
+      // Versuche zu parsen
+      const parsedValue = parseFloat(cleanValue);
+      
+      if (!isNaN(parsedValue)) {
+        console.log(`P/L-Wert '${value}' erfolgreich konvertiert zu ${parsedValue}`);
+        return parsedValue;
+      }
+      console.log(`P/L-Wert '${value}' konnte nicht konvertiert werden, verwende 0`);
+    }
+    
+    return 0;
+  }
+
   async createTrade(trade: InsertTrade & { userId: number }): Promise<Trade> {
     try {
-      // WICHTIG: Stelle sicher, dass alle Datumswerte korrekt als JavaScript Date-Objekte vorliegen
-      console.log("TradeData vor Konvertierung:", {
+      console.log("TradeData vor der Konvertierung:", {
         date: trade.date,
         dateType: trade.date ? typeof trade.date : 'undefined',
         profitLoss: trade.profitLoss,
         profitLossType: trade.profitLoss !== undefined ? typeof trade.profitLoss : 'undefined'
       });
       
-      // Konvertiere das Datum, falls es als String übergeben wurde
-      const convertedFields: Partial<InsertTrade> = {};
+      // Konvertiere Frontend-Felder in Datenbankfelder
+      const dbTrade = this.mapFrontendTradeToDb(trade);
       
-      // Datumskonvertierung
-      if (trade.date) {
-        if (typeof trade.date === 'string') {
-          convertedFields.date = new Date(trade.date);
-          console.log("Datum konvertiert von String zu Date-Objekt");
-        }
-      }
-      
-      // P/L-Wert-Konvertierung - VERBESSERT
+      // Zusätzliche P/L-Wert-Konvertierung
       if (trade.profitLoss !== undefined) {
-        // Funktion zur verbesserten Konvertierung von P/L-Werten
-        const cleanAndParseValue = (value: any): number => {
-          if (value === undefined || value === null) return 0;
-          
-          // Wenn bereits eine Zahl, keine Konvertierung nötig
-          if (typeof value === 'number') return value;
-          
-          if (typeof value === 'string') {
-            // Entferne alle nicht-numerischen Zeichen außer Punkt und Minus
-            // z.B. "$837.50" wird zu "837.50", "-$150.25" wird zu "-150.25"
-            let cleanValue = value.trim();
-            
-            // Spezialbehandlung für Werte in Klammern wie "(150.25)" die negative Zahlen repräsentieren
-            if (cleanValue.startsWith('(') && cleanValue.endsWith(')')) {
-              cleanValue = '-' + cleanValue.substring(1, cleanValue.length - 1);
-            }
-            
-            // Spezialbehandlung für Werte mit $ am Anfang
-            if (cleanValue.includes('$')) {
-              // Wert könnte Format wie "$837.50" oder "-$150.25" haben
-              cleanValue = cleanValue.replace('$', '');
-            }
-            
-            // Entferne alle Tausender-Trennzeichen (Kommas)
-            cleanValue = cleanValue.replace(/,/g, '');
-            
-            // Versuche zu parsen
-            const parsedValue = parseFloat(cleanValue);
-            
-            if (!isNaN(parsedValue)) {
-              console.log(`CSV-Import: P/L-Wert '${value}' erfolgreich konvertiert zu ${parsedValue}`);
-              return parsedValue;
-            }
-            console.log(`CSV-Import: P/L-Wert '${value}' konnte nicht konvertiert werden, verwende 0`);
-          }
-          
-          return 0;
-        };
-        
-        convertedFields.profitLoss = cleanAndParseValue(trade.profitLoss);
-        console.log(`P/L-Wert konvertiert zu: ${convertedFields.profitLoss} (ursprünglicher Wert: ${trade.profitLoss})`);
+        dbTrade.profitLoss = this.cleanAndParseValue(trade.profitLoss);
+        console.log(`P/L-Wert konvertiert zu: ${dbTrade.profitLoss} (ursprünglicher Wert: ${trade.profitLoss})`);
       }
       
       // Andere numerische Werte konvertieren
       if (trade.rrAchieved !== undefined && typeof trade.rrAchieved === 'string') {
-        convertedFields.rrAchieved = parseFloat(trade.rrAchieved);
+        dbTrade.actualRrr = parseFloat(trade.rrAchieved);
       }
       
       if (trade.rrPotential !== undefined && typeof trade.rrPotential === 'string') {
-        convertedFields.rrPotential = parseFloat(trade.rrPotential);
+        dbTrade.potentialRrr = parseFloat(trade.rrPotential);
       }
       
       // Füge aktuelle Timestamps hinzu
       const now = new Date();
-      convertedFields.createdAt = now;
-      convertedFields.updatedAt = now;
+      dbTrade.createdAt = now;
+      dbTrade.updatedAt = now;
       
-      // Nutze die konvertierten Felder
-      const tradeWithConvertedFields = {
-        ...trade,
-        ...convertedFields
-      };
-      
-      console.log("TradeData nach Konvertierung:", {
-        date: tradeWithConvertedFields.date,
-        dateType: tradeWithConvertedFields.date ? typeof tradeWithConvertedFields.date : 'undefined',
-        profitLoss: tradeWithConvertedFields.profitLoss,
-        profitLossType: tradeWithConvertedFields.profitLoss !== undefined ? typeof tradeWithConvertedFields.profitLoss : 'undefined'
+      console.log("TradeData nach Konvertierung für DB:", {
+        date: dbTrade.date,
+        dateType: dbTrade.date ? typeof dbTrade.date : 'undefined',
+        profitLoss: dbTrade.profitLoss,
+        profitLossType: dbTrade.profitLoss !== undefined ? typeof dbTrade.profitLoss : 'undefined'
       });
 
-      const [createdTrade] = await db.insert(trades).values(tradeWithConvertedFields).returning();
+      const [createdDbTrade] = await db.insert(trades).values(dbTrade).returning();
       
-      // Stelle sicher, dass die zurückgegebenen Datumswerte auch Date-Objekte sind
-      return {
-        ...createdTrade,
-        date: createdTrade.date ? new Date(createdTrade.date) : null,
-        createdAt: createdTrade.createdAt ? new Date(createdTrade.createdAt) : null,
-        updatedAt: createdTrade.updatedAt ? new Date(createdTrade.updatedAt) : null
-      };
+      // Wandle das gespeicherte DB-Trade-Objekt zurück ins Frontend-Format mit zentraler Mapping-Funktion
+      return this.mapDbTradeToFrontend(createdDbTrade);
     } catch (error) {
       console.error('Error creating trade:', error);
       throw error;
     }
   }
 
-  async updateTrade(id: number, tradeData: Partial<Trade>): Promise<Trade | undefined> {
+  async updateTrade(id: number, frontendTradeData: Partial<Trade>): Promise<Trade | undefined> {
     try {
-      // WICHTIG: Stelle sicher, dass alle Werte korrekt konvertiert werden
+      // Debug-Logging der Eingangsdaten
       console.log("updateTrade - Daten vor Konvertierung:", {
         id,
-        date: tradeData.date,
-        dateType: tradeData.date ? typeof tradeData.date : 'undefined',
-        profitLoss: tradeData.profitLoss,
-        profitLossType: tradeData.profitLoss !== undefined ? typeof tradeData.profitLoss : 'undefined',
-        rrAchieved: tradeData.rrAchieved,
-        rrPotential: tradeData.rrPotential
+        date: frontendTradeData.date,
+        dateType: frontendTradeData.date ? typeof frontendTradeData.date : 'undefined',
+        profitLoss: frontendTradeData.profitLoss,
+        rrAchieved: frontendTradeData.rrAchieved,
+        rrPotential: frontendTradeData.rrPotential
       });
       
-      // Konvertiere Felder falls nötig
-      const convertedFields: Partial<Trade> = {};
+      // Konvertiere Frontend-Felder in Datenbankfelder mit zentraler Mapping-Funktion
+      const dbTradeData = this.mapFrontendTradeToDb(frontendTradeData);
       
-      // Datumskonvertierung
-      if (tradeData.date) {
-        if (typeof tradeData.date === 'string') {
-          convertedFields.date = new Date(tradeData.date);
-          console.log("Datum konvertiert von String zu Date-Objekt beim Update");
-        }
-      }
-      
-      // P/L-Wert-Konvertierung - VERBESSERT: erweiterte Konvertierungslogik
-      if (tradeData.profitLoss !== undefined) {
-        // Funktion zur verbesserten Konvertierung von P/L-Werten (identisch zu createTrade)
-        const cleanAndParseValue = (value: any): number => {
-          if (value === undefined || value === null) return 0;
-          
-          // Wenn bereits eine Zahl, keine Konvertierung nötig
-          if (typeof value === 'number') return value;
-          
-          if (typeof value === 'string') {
-            // Entferne alle nicht-numerischen Zeichen außer Punkt und Minus
-            // z.B. "$837.50" wird zu "837.50", "-$150.25" wird zu "-150.25"
-            let cleanValue = value.trim();
-            
-            // Spezialbehandlung für Werte in Klammern wie "(150.25)" die negative Zahlen repräsentieren
-            if (cleanValue.startsWith('(') && cleanValue.endsWith(')')) {
-              cleanValue = '-' + cleanValue.substring(1, cleanValue.length - 1);
-            }
-            
-            // Spezialbehandlung für Werte mit $ am Anfang
-            if (cleanValue.includes('$')) {
-              // Wert könnte Format wie "$837.50" oder "-$150.25" haben
-              cleanValue = cleanValue.replace('$', '');
-            }
-            
-            // Entferne alle Tausender-Trennzeichen (Kommas)
-            cleanValue = cleanValue.replace(/,/g, '');
-            
-            // Versuche zu parsen
-            const parsedValue = parseFloat(cleanValue);
-            
-            if (!isNaN(parsedValue)) {
-              console.log(`Aktualisierung: P/L-Wert '${value}' erfolgreich konvertiert zu ${parsedValue}`);
-              return parsedValue;
-            }
-            console.log(`Aktualisierung: P/L-Wert '${value}' konnte nicht konvertiert werden, verwende 0`);
-          }
-          
-          return 0;
-        };
-        
-        const numericValue = cleanAndParseValue(tradeData.profitLoss);
-        
-        // Nur zuweisen, wenn es eine gültige Zahl ist
-        if (!isNaN(numericValue)) {
-          convertedFields.profitLoss = numericValue;
-          console.log(`P/L-Wert konvertiert zu Zahl: ${numericValue} (ursprünglicher Wert: ${tradeData.profitLoss})`);
-        } else {
-          console.warn(`Warnung: Ungültiger P/L-Wert konnte nicht konvertiert werden: "${tradeData.profitLoss}"`);
-        }
-      }
-      
-      // Andere numerische Werte konvertieren - VERBESSERT: striktere Konvertierung
-      const numericFields = ['rrAchieved', 'rrPotential', 'positionSize', 'takeProfit', 'stopLoss', 
-        'exitLevel', 'potentialRrr', 'actualRrr', 'riskSum', 'riskPoints'];
+      // Numerische Werte konvertieren für die Datenbank
+      const numericFields = ['profitLoss', 'positionSize', 'takeProfit', 'stopLoss', 
+        'exitLevel', 'potentialRrr', 'actualRrr', 'riskPoints'];
         
       numericFields.forEach(field => {
-        if (tradeData[field] !== undefined) {
+        if (dbTradeData[field] !== undefined) {
           // Immer als Zahl speichern, unabhängig vom eingehenden Typ
-          const numericValue = typeof tradeData[field] === 'string' 
-            ? parseFloat(tradeData[field]) 
-            : Number(tradeData[field]);
+          const numericValue = typeof dbTradeData[field] === 'string' 
+            ? parseFloat(dbTradeData[field]) 
+            : Number(dbTradeData[field]);
             
           // Nur zuweisen, wenn es eine gültige Zahl ist
           if (!isNaN(numericValue)) {
-            convertedFields[field] = numericValue;
-            console.log(`${field} konvertiert zu Zahl: ${numericValue} (ursprünglicher Typ: ${typeof tradeData[field]})`);
+            dbTradeData[field] = numericValue;
+            console.log(`${field} konvertiert zu Zahl: ${numericValue}`);
           } else {
-            console.warn(`Warnung: Ungültiger Wert für ${field} konnte nicht konvertiert werden: "${tradeData[field]}"`);
+            console.warn(`Warnung: Ungültiger Wert für ${field} konnte nicht konvertiert werden: "${dbTradeData[field]}"`);
           }
         }
       });
       
       // Boolean-Konvertierung für isWin
-      if (tradeData.isWin !== undefined) {
-        // Sicherstellen, dass isWin immer als boolean gespeichert wird
-        convertedFields.isWin = Boolean(tradeData.isWin);
-        console.log(`isWin konvertiert zu Boolean: ${convertedFields.isWin}`);
+      if (frontendTradeData.isWin !== undefined) {
+        dbTradeData.isWin = Boolean(frontendTradeData.isWin);
+        console.log(`isWin konvertiert zu Boolean: ${dbTradeData.isWin}`);
       }
       
-      // Aktualisiere den Timestamp für die Aktualisierung
-      convertedFields.updatedAt = new Date();
+      // Aktualisiere den Timestamp
+      dbTradeData.updatedAt = new Date();
       
-      // Kombiniere die ursprünglichen Daten mit den konvertierten Feldern
-      // WICHTIG: Die konvertierten Felder müssen Vorrang haben
-      const tradeWithConvertedFields = {
-        ...tradeData,
-        ...convertedFields
-      };
-      
-      console.log("updateTrade - Daten nach Konvertierung:", {
-        date: tradeWithConvertedFields.date,
-        dateType: tradeWithConvertedFields.date ? typeof tradeWithConvertedFields.date : 'undefined',
-        profitLoss: tradeWithConvertedFields.profitLoss,
-        profitLossType: tradeWithConvertedFields.profitLoss !== undefined ? typeof tradeWithConvertedFields.profitLoss : 'undefined'
+      console.log("TradeData nach Konvertierung für DB-Update:", {
+        id,
+        liquidationLevel: dbTradeData.liquidationLevel,
+        liquidityLevel: dbTradeData.liquidityLevel,
+        positionSize: dbTradeData.positionSize,
+        actualRrr: dbTradeData.actualRrr,
+        potentialRrr: dbTradeData.potentialRrr,
+        profitLoss: dbTradeData.profitLoss
       });
 
-      const [updatedTrade] = await db
+      const [updatedDbTrade] = await db
         .update(trades)
-        .set(tradeWithConvertedFields)
+        .set(dbTradeData)
         .where(eq(trades.id, id))
         .returning();
         
-      // Stelle sicher, dass die zurückgegebenen Datumswerte auch Date-Objekte sind
-      return {
-        ...updatedTrade,
-        date: updatedTrade.date ? new Date(updatedTrade.date) : null,
-        createdAt: updatedTrade.createdAt ? new Date(updatedTrade.createdAt) : null,
-        updatedAt: updatedTrade.updatedAt ? new Date(updatedTrade.updatedAt) : null
-      };
+      // Wandle das aktualisierte DB-Trade-Objekt zurück ins Frontend-Format mit zentraler Mapping-Funktion
+      return this.mapDbTradeToFrontend(updatedDbTrade);
     } catch (error) {
       console.error(`Error updating trade with id ${id}:`, error);
       return undefined;
