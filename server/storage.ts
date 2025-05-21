@@ -1413,74 +1413,48 @@ export class DatabaseStorage implements IStorage {
     return dbTrade as Trade;
   }
   
+  // Hilfsfunktion: Übersetzt camelCase-Namen in PostgreSQL-konforme Spaltennamen (kleinbuchstaben ohne Unterstriche)
+  private mapColumnNameToPostgres(camelCaseName: string): string {
+    // Umwandlung von camelCase zu lowercase ohne Unterstriche
+    // z.B. mainTrendM15 -> maintrendm15
+    return camelCaseName.toLowerCase();
+  }
+  
   // Hilfsfunktion: Übersetze Frontend-Filter in DB-Filter
   private mapFrontendFilterToDb(filters: Partial<Trade>): any {
     if (!filters) return {};
     
     const dbFilters: any = {};
     
-    // Vollständiges Mapping für alle Felder (Frontend-Name -> DB-Spaltenname)
-    const fieldMapping = {
-      // Spezielle Frontend-spezifische Felder
-      'liquidation': 'liquidation_level',
-      'location': 'liquidity_level',
-      'riskSum': 'position_size',
-      'rrAchieved': 'rr_achieved',
-      'rrPotential': 'rr_potential',
-      'chartImage': 'chart_image_url',
-      
-      // Standard Datenbankfelder in camelCase -> snake_case Mapping
-      'mainTrendM15': 'main_trend_m15',
-      'internalTrendM5': 'internal_trend_m5',
-      'entryType': 'entry_type',
-      'entryLevel': 'entry_level',
-      'positionSize': 'position_size',
-      'takeProfit': 'take_profit',
-      'stopLoss': 'stop_loss',
-      'exitLevel': 'exit_level',
-      'potentialRrr': 'potential_rrr',
-      'actualRrr': 'actual_rrr',
-      'tradeDuration': 'trade_duration',
-      'tradeResult': 'trade_result',
-      'chartImageUrl': 'chart_image_url',
-      'liquidityLevel': 'liquidity_level',
-      'sessionNyc': 'session_nyc',
-      'sessionLondon': 'session_london',
-      'sessionAsia': 'session_asia',
-      'sessionTime': 'session_time',
-      'trendAlignment': 'trend_alignment',
-      'smartMoneyConcept': 'smart_money_concept',
-      'marketStructure': 'market_structure',
-      'advancedPattern': 'advanced_pattern',
-      'chartPattern': 'chart_pattern',
-      'fundamentalNews': 'fundamental_news',
-      'wickFill': 'wick_fill',
-      'spreadSize': 'spread_size',
-      'psychologicalLevel': 'psychological_level',
-      'tradeManagement': 'trade_management',
-      'exitReason': 'exit_reason',
-      'advancedExit': 'advanced_exit',
-      'liquidationLevel': 'liquidation_level',
-      'liquidationEntry': 'liquidation_entry',
-      'profitLoss': 'profit_loss',
-      'isWin': 'is_win',
-      'createdAt': 'created_at',
-      'updatedAt': 'updated_at',
-      'userId': 'user_id'
+    // Mapping für besondere Frontend-Felder
+    const specialFieldMapping: Record<string, string> = {
+      'liquidation': 'liquidationlevel',
+      'location': 'liquiditylevel',
+      'chartImage': 'chartimageurl',
+      'riskSum': 'positionsize',
+      'mainTrendM15': 'main_trend_m15', // Spezielles Feld, das unverändert geblieben ist
+      'rrAchieved': 'rr_achieved',      // Spezielles Feld mit Unterstrich
+      'rrPotential': 'rrpotential'      // Ohne Unterstrich in der DB
     };
     
+    // Kopiere alle Frontend-Felder und wandle sie in PostgreSQL-Format um
     Object.entries(filters).forEach(([key, value]) => {
       if (value === undefined || value === null) return;
       
-      // Spezielle Behandlung für bekannte gemappte Felder
-      if (key in fieldMapping) {
-        dbFilters[fieldMapping[key]] = value;
+      // Spezielle Behandlung für bekannte besondere Felder
+      if (key in specialFieldMapping) {
+        const dbFieldName = specialFieldMapping[key];
+        dbFilters[dbFieldName] = value;
+        console.log(`Frontend-Feld "${key}" → DB-Feld "${dbFieldName}": ${value}`);
       } else {
-        // Feldnamen, die keiner Umwandlung bedürfen (z.B. 'id', 'symbol', 'setup', 'notes', 'date')
-        dbFilters[key] = value;
+        // Alle anderen Felder werden automatisch zu Kleinbuchstaben ohne Unterstriche umgewandelt
+        const dbFieldName = this.mapColumnNameToPostgres(key);
+        dbFilters[dbFieldName] = value;
+        console.log(`Frontend-Feld "${key}" → DB-Feld "${dbFieldName}": ${value}`);
       }
     });
     
+    console.log("Übersetzte DB-Filter:", dbFilters);
     return dbFilters;
   }
 
@@ -1500,58 +1474,11 @@ export class DatabaseStorage implements IStorage {
 
   // Hilfsfunktion: Übersetzt Frontend-Trade-Objekt in Datenbank-Format
   private mapFrontendTradeToDb(frontendTrade: Partial<InsertTrade>): any {
-    // Leeres DB-Objekt erstellen
-    const dbTrade: any = {};
+    // Da die Datenbank jetzt camelCase verwendet wie das Frontend,
+    // können wir das Objekt direkt übernehmen und müssen nur Typenkonvertierungen durchführen
     
-    // Vollständiges Mapping für alle Felder (Frontend-Name -> DB-Spaltenname)
-    const fieldMapping = {
-      // Spezielle Frontend-spezifische Felder - diese Felder haben eigene Namen im Frontend
-      'liquidation': 'liquidation_level',
-      'location': 'liquidity_level',
-      'riskSum': 'position_size',
-      'rrAchieved': 'rr_achieved',
-      'rrPotential': 'rr_potential',
-      'chartImage': 'chart_image_url',
-      
-      // Standard Datenbankfelder in camelCase -> snake_case Mapping
-      'mainTrendM15': 'main_trend_m15',
-      'internalTrendM5': 'internal_trend_m5',
-      'entryType': 'entry_type',
-      'entryLevel': 'entry_level',
-      'positionSize': 'position_size',
-      'takeProfit': 'take_profit',
-      'stopLoss': 'stop_loss',
-      'exitLevel': 'exit_level',
-      'potentialRrr': 'potential_rrr',
-      'actualRrr': 'actual_rrr',
-      'tradeDuration': 'trade_duration',
-      'tradeResult': 'trade_result',
-      'chartImageUrl': 'chart_image_url',
-      'liquidityLevel': 'liquidity_level',
-      'sessionNyc': 'session_nyc',
-      'sessionLondon': 'session_london',
-      'sessionAsia': 'session_asia',
-      'sessionTime': 'session_time',
-      'trendAlignment': 'trend_alignment',
-      'smartMoneyConcept': 'smart_money_concept',
-      'marketStructure': 'market_structure',
-      'advancedPattern': 'advanced_pattern',
-      'chartPattern': 'chart_pattern',
-      'fundamentalNews': 'fundamental_news',
-      'wickFill': 'wick_fill',
-      'spreadSize': 'spread_size',
-      'psychologicalLevel': 'psychological_level',
-      'tradeManagement': 'trade_management',
-      'exitReason': 'exit_reason',
-      'advancedExit': 'advanced_exit',
-      'liquidationLevel': 'liquidation_level',
-      'liquidationEntry': 'liquidation_entry',
-      'profitLoss': 'profit_loss',
-      'isWin': 'is_win',
-      'createdAt': 'created_at',
-      'updatedAt': 'updated_at',
-      'userId': 'user_id'
-    };
+    // Klonen des Trade-Objekts, damit wir das Original nicht verändern
+    const dbTrade: any = { ...frontendTrade };
     
     // Debug-Ausgabe für eingehende Frontend-Daten
     console.log("Eingehende Frontend-Daten:", 
@@ -1561,21 +1488,24 @@ export class DatabaseStorage implements IStorage {
                  profitLoss: frontendTrade.profitLoss,
                  isWin: frontendTrade.isWin });
     
-    // Kopiere alle Frontend-Felder ins DB-Format mit korrektem Mapping
-    Object.entries(frontendTrade).forEach(([key, value]) => {
-      if (value === undefined) return;
-      
-      if (key in fieldMapping) {
-        // Verwende gemappten Feldnamen für die Datenbank
-        const dbFieldName = fieldMapping[key];
-        dbTrade[dbFieldName] = value;
-        console.log(`Frontend-Feld "${key}" → DB-Feld "${dbFieldName}": ${value}`);
-      } else {
-        // Feldnamen, die keiner Umwandlung bedürfen (z.B. 'id', 'symbol', 'setup', 'notes', 'date')
-        dbTrade[key] = value;
-        console.log(`Direkte Übernahme von Feld "${key}": ${value}`);
-      }
-    });
+    // Behandlung der besonderen Frontend-Felder, die andere Namen haben als in der Datenbank
+    if (frontendTrade.liquidation !== undefined) {
+      dbTrade.liquidationLevel = frontendTrade.liquidation;
+      delete dbTrade.liquidation; // Lösche das ursprüngliche Feld
+      console.log(`Spezielles Feld 'liquidation' → 'liquidationLevel': ${dbTrade.liquidationLevel}`);
+    }
+    
+    if (frontendTrade.location !== undefined) {
+      dbTrade.liquidityLevel = frontendTrade.location;
+      delete dbTrade.location; // Lösche das ursprüngliche Feld
+      console.log(`Spezielles Feld 'location' → 'liquidityLevel': ${dbTrade.liquidityLevel}`);
+    }
+    
+    if (frontendTrade.chartImage !== undefined) {
+      dbTrade.chartImageUrl = frontendTrade.chartImage;
+      delete dbTrade.chartImage; // Lösche das ursprüngliche Feld
+      console.log(`Spezielles Feld 'chartImage' → 'chartImageUrl': ${dbTrade.chartImageUrl}`);
+    }
     
     // Datum-Konvertierung
     if (dbTrade.date && typeof dbTrade.date === 'string') {
@@ -1583,30 +1513,24 @@ export class DatabaseStorage implements IStorage {
       console.log(`Datum konvertiert zu Date-Objekt: ${dbTrade.date}`);
     }
     
-    // Debug-Ausgabe der DB-Felder nach Mapping
-    console.log("DB-Felder nach Mapping:", Object.keys(dbTrade));
-    
     // Numerische Werte konvertieren
-    if (dbTrade.profit_loss !== undefined) {
-      if (typeof dbTrade.profit_loss === 'string') {
-        dbTrade.profit_loss = this.cleanAndParseValue(dbTrade.profit_loss);
-      }
-      console.log(`Profit/Loss als numerischer Wert: ${dbTrade.profit_loss}`);
+    if (dbTrade.profitLoss !== undefined && typeof dbTrade.profitLoss === 'string') {
+      dbTrade.profitLoss = this.cleanAndParseValue(dbTrade.profitLoss);
+      console.log(`profitLoss als numerischer Wert: ${dbTrade.profitLoss}`);
     }
     
-    if (dbTrade.rr_achieved !== undefined) {
-      if (typeof dbTrade.rr_achieved === 'string') {
-        dbTrade.rr_achieved = parseFloat(dbTrade.rr_achieved);
-      }
-      console.log(`RR Achieved als numerischer Wert: ${dbTrade.rr_achieved}`);
+    if (dbTrade.rrAchieved !== undefined && typeof dbTrade.rrAchieved === 'string') {
+      dbTrade.rrAchieved = parseFloat(dbTrade.rrAchieved);
+      console.log(`rrAchieved als numerischer Wert: ${dbTrade.rrAchieved}`);
     }
     
-    if (dbTrade.rr_potential !== undefined) {
-      if (typeof dbTrade.rr_potential === 'string') {
-        dbTrade.rr_potential = parseFloat(dbTrade.rr_potential);
-      }
-      console.log(`RR Potential als numerischer Wert: ${dbTrade.rr_potential}`);
+    if (dbTrade.rrPotential !== undefined && typeof dbTrade.rrPotential === 'string') {
+      dbTrade.rrPotential = parseFloat(dbTrade.rrPotential);
+      console.log(`rrPotential als numerischer Wert: ${dbTrade.rrPotential}`);
     }
+    
+    // Debug-Ausgabe der DB-Felder nach Verarbeitung
+    console.log("DB-Felder nach Verarbeitung:", Object.keys(dbTrade).sort());
     
     return dbTrade;
   }
