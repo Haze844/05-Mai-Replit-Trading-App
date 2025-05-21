@@ -739,7 +739,7 @@ export default function TradeCompare() {
           id: `jasper-${trade.id}`, // Eindeutige ID für die Tabelle
           originalId: trade.id,    // Original-ID für API-Anfragen beibehalten
           userColor: USER_COLORS.jasper,
-          userName: 'Jasper'
+          userId: 1 // Konsistente Benutzer-ID verwenden anstatt userName
         }));
 
       // Mo-Trades Farbmarkierung und Benutzerinfo hinzufügen
@@ -752,7 +752,7 @@ export default function TradeCompare() {
           id: `mo-${trade.id}`,    // Eindeutige ID für die Tabelle
           originalId: trade.id,    // Original-ID für API-Anfragen beibehalten
           userColor: USER_COLORS.mo,
-          userName: 'Mo'
+          userId: 2 // Konsistente Benutzer-ID verwenden anstatt userName
         }));
 
       console.log("TradeCompare - Formatierte Trades nach Filterung:", { 
