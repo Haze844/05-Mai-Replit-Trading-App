@@ -1332,17 +1332,29 @@ export class DatabaseStorage implements IStorage {
       
       // Mapping von DB-Struktur auf Frontend-Struktur
       const result = dbResult.map(trade => {
+        // Debug-Ausgabe für jedes Trade-Objekt
+        console.log(`Verarbeite Trade ID ${trade.id}, Symbol: ${trade.symbol}, Setup: ${trade.setup}`);
+        
+        // Berechne dynamisch profitLoss und isWin
+        const profitLoss = trade.exitLevel && trade.entryLevel 
+          ? parseFloat((trade.exitLevel - trade.entryLevel).toFixed(2)) 
+          : 0;
+          
+        const isWin = trade.tradeResult 
+          ? trade.tradeResult.toLowerCase() === 'win' 
+          : profitLoss > 0;
+        
         return {
           ...trade,
           // Übersetzung der Spaltennamen für das Frontend
-          liquidation: trade.liquidationLevel,
-          location: trade.liquidityLevel,
-          riskSum: trade.positionSize,
-          rrAchieved: trade.actualRrr,
-          rrPotential: trade.potentialRrr,
-          profitLoss: trade.exitLevel ? (trade.exitLevel - trade.entryLevel) : 0,
-          isWin: trade.tradeResult === 'win',
-          chartImage: trade.chartImageUrl
+          liquidation: trade.liquidationLevel || "",
+          location: trade.liquidityLevel || "",
+          riskSum: trade.positionSize || 0,
+          rrAchieved: trade.actualRrr || 0,
+          rrPotential: trade.potentialRrr || 0,
+          profitLoss: profitLoss,
+          isWin: isWin,
+          chartImage: trade.chartImageUrl || null
         };
       });
       
@@ -1360,17 +1372,26 @@ export class DatabaseStorage implements IStorage {
       
       if (!dbTrade) return undefined;
       
+      // Berechne dynamisch profitLoss und isWin (konsistent mit getTrades)
+      const profitLoss = dbTrade.exitLevel && dbTrade.entryLevel 
+        ? parseFloat((dbTrade.exitLevel - dbTrade.entryLevel).toFixed(2)) 
+        : 0;
+        
+      const isWin = dbTrade.tradeResult 
+        ? dbTrade.tradeResult.toLowerCase() === 'win' 
+        : profitLoss > 0;
+      
       // Übersetzung der Spaltennamen analog zu getTrades
       const trade = {
         ...dbTrade,
-        liquidation: dbTrade.liquidationLevel,
-        location: dbTrade.liquidityLevel,
-        riskSum: dbTrade.positionSize,
-        rrAchieved: dbTrade.actualRrr,
-        rrPotential: dbTrade.potentialRrr,
-        profitLoss: dbTrade.exitLevel ? (dbTrade.exitLevel - dbTrade.entryLevel) : 0,
-        isWin: dbTrade.tradeResult === 'win',
-        chartImage: dbTrade.chartImageUrl
+        liquidation: dbTrade.liquidationLevel || "",
+        location: dbTrade.liquidityLevel || "",
+        riskSum: dbTrade.positionSize || 0,
+        rrAchieved: dbTrade.actualRrr || 0,
+        rrPotential: dbTrade.potentialRrr || 0,
+        profitLoss: profitLoss,
+        isWin: isWin,
+        chartImage: dbTrade.chartImageUrl || null
       };
       
       return trade;
