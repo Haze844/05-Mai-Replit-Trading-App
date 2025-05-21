@@ -1781,42 +1781,64 @@ export class DatabaseStorage implements IStorage {
       // Konvertiere Frontend-Felder in Datenbankfelder mit konsistenter Mapping-Logik
       const dbTrade = this.mapFrontendTradeToDb(trade);
       
-      // Zusätzliche P/L-Wert-Konvertierung mit korrektem Feldnamen
+      // Wichtig: korrigiere die Feldnamen für PostgreSQL
+      // profitloss (alles Kleinbuchstaben) statt profit_loss
       if (trade.profitLoss !== undefined) {
-        dbTrade.profit_loss = this.cleanAndParseValue(trade.profitLoss);
-        console.log(`P/L-Wert konvertiert zu: ${dbTrade.profit_loss} (ursprünglicher Wert: ${trade.profitLoss})`);
+        dbTrade.profitloss = this.cleanAndParseValue(trade.profitLoss);
+        delete dbTrade.profit_loss; // Falls dieses Feld existiert, entfernen
+        console.log(`P/L-Wert konvertiert zu: ${dbTrade.profitloss} (ursprünglicher Wert: ${trade.profitLoss})`);
       }
       
-      // Andere numerische Werte konvertieren mit korrekten Feldnamen
-      if (trade.rrAchieved !== undefined && typeof trade.rrAchieved === 'string') {
-        dbTrade.rr_achieved = parseFloat(trade.rrAchieved);
-        console.log(`RR Achieved konvertiert zu: ${dbTrade.rr_achieved}`);
-      }
+      // Korrekter Feldname für rrAchieved ist rr_achieved (mit Unterstrich)
+      // Wird bereits im mapFrontendTradeToDb richtig gemappt
       
-      if (trade.rrPotential !== undefined && typeof trade.rrPotential === 'string') {
-        dbTrade.rr_potential = parseFloat(trade.rrPotential);
-        console.log(`RR Potential konvertiert zu: ${dbTrade.rr_potential}`);
-      }
+      // Korrekter Feldname für rrPotential ist rrpotential (kein Unterstrich)
+      // Wird bereits im mapFrontendTradeToDb richtig gemappt
       
-      // Füge aktuelle Timestamps hinzu mit korrekten Feldnamen
+      // Füge aktuelle Timestamps hinzu mit korrekten Feldnamen in Kleinbuchstaben
       const now = new Date();
-      dbTrade.created_at = now;
-      dbTrade.updated_at = now;
+      dbTrade.createdat = now;
+      dbTrade.updatedat = now;
+      delete dbTrade.created_at; // Falls diese Felder existieren, entfernen
+      delete dbTrade.updated_at;
       
-      // Stelle sicher, dass die User-ID korrekt gesetzt ist
-      dbTrade.user_id = trade.userId;
+      // Stelle sicher, dass die User-ID korrekt gesetzt ist (userid statt user_id)
+      dbTrade.userid = trade.userId;
+      delete dbTrade.user_id; // Falls dieses Feld existiert, entfernen
       
       console.log("TradeData nach Konvertierung für DB:", {
         date: dbTrade.date,
         dateType: dbTrade.date ? typeof dbTrade.date : 'undefined',
-        profit_loss: dbTrade.profit_loss,
-        profitLossType: dbTrade.profit_loss !== undefined ? typeof dbTrade.profit_loss : 'undefined'
+        profitloss: dbTrade.profitloss,
+        profitlossType: dbTrade.profitloss !== undefined ? typeof dbTrade.profitloss : 'undefined'
       });
-
-      const [createdDbTrade] = await db.insert(trades).values(dbTrade).returning();
+      
+      // Verwende Raw SQL anstelle von Drizzle ORM, um das Problem mit den Spaltennamen zu umgehen
+      const columns = Object.keys(dbTrade);
+      const placeholders = columns.map((_, i) => `$${i+1}`);
+      const values = Object.values(dbTrade);
+      
+      const queryStr = `
+        INSERT INTO trades (${columns.join(', ')})
+        VALUES (${placeholders.join(', ')})
+        RETURNING *
+      `;
+      
+      console.log("SQL-Abfrage zum Erstellen eines Trades:", queryStr);
+      console.log("Inserting values:", values.slice(0, 5), "...");
+      
+      const result = await db.execute(queryStr, values);
+      const createdDbTrade = result.rows?.[0];
+      
+      if (!createdDbTrade) {
+        throw new Error("Fehler beim Erstellen des Trades: Kein Ergebnis zurückgegeben");
+      }
+      
+      // Wandle die PostgreSQL-Namen in Frontend-Namen um
+      const frontendTrade = this.convertPostgresFieldsToFrontend(createdDbTrade);
       
       // Wandle das gespeicherte DB-Trade-Objekt zurück ins Frontend-Format mit zentraler Mapping-Funktion
-      return this.mapDbTradeToFrontend(createdDbTrade);
+      return this.mapDbTradeToFrontend(frontendTrade);
     } catch (error) {
       console.error('Error creating trade:', error);
       throw error;
