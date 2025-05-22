@@ -1,7 +1,5 @@
-// @ts-nocheck
-import fs from 'fs';
-import pg from 'pg';
-const { Pool } = pg;
+const fs = require('fs');
+const { Pool } = require('pg');
 
 // Lese die SQL-Datei ein
 const sqlScript = fs.readFileSync('./reset_database_to_snake_case.sql', 'utf8');

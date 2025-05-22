@@ -1,20 +1,22 @@
 -- Skript zum Zurücksetzen der Datenbank auf konsistente snake_case-Spaltennamen
 -- Löschen aller vorhandenen Tabellen für einen Neuanfang
 
--- DROP TABELLEN in umgekehrter Reihenfolge der Abhängigkeiten
-DROP TABLE IF EXISTS strategy_comments;
-DROP TABLE IF EXISTS trading_strategies;
-DROP TABLE IF EXISTS macro_economic_events;
-DROP TABLE IF EXISTS trading_streaks;
-DROP TABLE IF EXISTS coaching_feedback;
-DROP TABLE IF EXISTS coaching_goals;
-DROP TABLE IF EXISTS setup_win_rates;
-DROP TABLE IF EXISTS performance_data;
-DROP TABLE IF EXISTS weekly_summaries;
-DROP TABLE IF EXISTS trades;
-DROP TABLE IF EXISTS app_settings;
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS sessions;
+-- Löschen aller existierenden Tabellen mit CASCADE, um Fremdschlüsselabhängigkeiten zu berücksichtigen
+DROP TABLE IF EXISTS strategy_comments CASCADE;
+DROP TABLE IF EXISTS trading_strategies CASCADE;
+DROP TABLE IF EXISTS macro_economic_events CASCADE;
+DROP TABLE IF EXISTS trading_streaks CASCADE;
+DROP TABLE IF EXISTS coaching_feedback CASCADE;
+DROP TABLE IF EXISTS coaching_goals CASCADE;
+DROP TABLE IF EXISTS setup_win_rates CASCADE;
+DROP TABLE IF EXISTS performance_data CASCADE;
+DROP TABLE IF EXISTS weekly_summaries CASCADE;
+DROP TABLE IF EXISTS trades CASCADE;
+DROP TABLE IF EXISTS app_settings CASCADE;
+DROP TABLE IF EXISTS settings CASCADE; -- Alte Tabellennamen berücksichtigen
+DROP TABLE IF EXISTS weekly_summary CASCADE; -- Alte Tabellennamen berücksichtigen
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS sessions CASCADE;
 
 -- Erstellen der Tabellen mit konsistenten snake_case-Namen
 
