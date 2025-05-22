@@ -792,9 +792,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // P/L-Wert korrekt als Zahl konvertieren mit spezieller Behandlung für verschiedene Formate
           let profitLoss = 0;
+          let plValue = 0; // Initialisiere plValue für den gesamten Import-Prozess
+          
           if (tradeData.profitLoss !== undefined) {
             if (typeof tradeData.profitLoss === 'number') {
               profitLoss = tradeData.profitLoss;
+              plValue = profitLoss; // Setze plValue
             } else if (typeof tradeData.profitLoss === 'string') {
               let cleanValue = tradeData.profitLoss.trim();
               
@@ -918,12 +921,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Suche nach dem ersten nicht-leeren P/L-Feld
-          let plValue = undefined;
+          // Bereits vorhandenes plValue nutzen, wenn verfügbar
           for (const field of plFields) {
             if (tradeData[field] !== undefined && tradeData[field] !== null && tradeData[field] !== '') {
-              plValue = cleanAndParseValue(tradeData[field]);
-              console.log(`CSV-Import: Verwende P/L-Wert aus Feld "${field}": ${plValue}`);
-              break;
+              // Aktualisiere plValue mit Wert aus dem gefundenen Feld
+              const newValue = cleanAndParseValue(tradeData[field]);
+              if (newValue !== undefined) {
+                plValue = newValue;
+                console.log(`CSV-Import: Verwende P/L-Wert aus Feld "${field}": ${plValue}`);
+                break;
+              }
             }
           }
           
