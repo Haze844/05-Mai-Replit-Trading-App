@@ -793,6 +793,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // P/L-Wert korrekt als Zahl konvertieren mit spezieller Behandlung für verschiedene Formate
           let profitLoss = 0;
           let plValue = 0; // Initialisiere plValue für den gesamten Import-Prozess
+          console.log("IMPORT: P/L-DEBUGGING - START");
+          console.log("IMPORT: Initialisiert plValue =", plValue);
           
           if (tradeData.profitLoss !== undefined) {
             if (typeof tradeData.profitLoss === 'number') {
