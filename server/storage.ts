@@ -1615,57 +1615,51 @@ export class DatabaseStorage implements IStorage {
     // WICHTIG: Nach der Datenbankumstellung von snake_case zu camelCase müssen wir die korrekten Spaltennamen verwenden
     const fieldMapping: Record<string, string> = {
       // Frontend-spezifische Felder
-      'liquidation': 'liquidationLevel',  // Aktualisiert auf camelCase
-      'location': 'liquidityLevel',       // Aktualisiert auf camelCase
-      'chartImage': 'chartImageUrl',      // Aktualisiert auf camelCase
-      'riskSum': 'positionSize',          // Aktualisiert auf camelCase
+      'liquidation': 'liquidationLevel',   // Aktualisiert auf camelCase
+      'location': 'liquidityLevel',        // Aktualisiert auf camelCase
+      'chartImage': 'chartImageUrl',       // Aktualisiert auf camelCase
+      'riskSum': 'positionSize',           // Aktualisiert auf camelCase
       
       // Reguläre Felder
-      'mainTrendM15': 'mainTrendM15',     // Aktualisiert auf camelCase (vorher 'main_trend_m15')
-      'internalTrendM5': 'internalTrendM5', // Aktualisiert auf camelCase
-      'entryType': 'entryType',           // Aktualisiert auf camelCase
-      'entryLevel': 'entryLevel',         // Aktualisiert auf camelCase
-      'positionSize': 'positionSize',     // Aktualisiert auf camelCase
-      'takeProfit': 'takeProfit',         // Aktualisiert auf camelCase
-      'stopLoss': 'stopLoss',             // Aktualisiert auf camelCase
-      'exitLevel': 'exitLevel',           // Aktualisiert auf camelCase
-      'entryType': 'entrytype',
-      'entryLevel': 'entrylevel',
-      'positionSize': 'positionsize',
-      'takeProfit': 'takeprofit',
-      'stopLoss': 'stoploss',
-      'exitLevel': 'exitlevel',
-      'potentialRrr': 'potentialrrr',
-      'actualRrr': 'actualrrr',
-      'tradeDuration': 'tradeduration',
-      'tradeResult': 'traderesult',
-      'chartImageUrl': 'chartimageurl',
-      'liquidityLevel': 'liquiditylevel',
-      'sessionNyc': 'sessionnyc',
-      'sessionLondon': 'sessionlondon',
-      'sessionAsia': 'sessionasia',
-      'sessionTime': 'sessiontime',
-      'trendAlignment': 'trendalignment',
-      'smartMoneyConcept': 'smartmoneyconcept',
-      'marketStructure': 'marketstructure',
-      'advancedPattern': 'advancedpattern',
-      'chartPattern': 'chartpattern',
-      'fundamentalNews': 'fundamentalnews',
-      'wickFill': 'wickfill',
-      'spreadSize': 'spreadsize',
-      'psychologicalLevel': 'psychologicallevel',
-      'tradeManagement': 'trademanagement',
-      'exitReason': 'exitreason',
-      'advancedExit': 'advancedexit',
-      'liquidationLevel': 'liquidationlevel',
-      'liquidationEntry': 'liquidationentry',
-      'profitLoss': 'profitloss',
-      'isWin': 'iswin',
-      'createdAt': 'createdat',
-      'updatedAt': 'updatedat',
-      'userId': 'userid',
-      'rrAchieved': 'rr_achieved',       // Beachte den Unterstrich hier!
-      'rrPotential': 'rrpotential'
+      'mainTrendM15': 'mainTrendM15',      // Aktualisiert auf camelCase
+      'internalTrendM5': 'internalTrendM5',// Aktualisiert auf camelCase
+      'entryType': 'entryType',            // Aktualisiert auf camelCase
+      'entryLevel': 'entryLevel',          // Aktualisiert auf camelCase
+      'positionSize': 'positionSize',      // Aktualisiert auf camelCase
+      'takeProfit': 'takeProfit',          // Aktualisiert auf camelCase
+      'stopLoss': 'stopLoss',              // Aktualisiert auf camelCase
+      'exitLevel': 'exitLevel',            // Aktualisiert auf camelCase
+      'potentialRrr': 'potentialRrr',      // Aktualisiert auf camelCase
+      'actualRrr': 'actualRrr',            // Aktualisiert auf camelCase
+      'tradeDuration': 'tradeDuration',    // Aktualisiert auf camelCase
+      'tradeResult': 'tradeResult',        // Aktualisiert auf camelCase
+      'chartImageUrl': 'chartImageUrl',    // Aktualisiert auf camelCase
+      'liquidityLevel': 'liquidityLevel',  // Aktualisiert auf camelCase
+      'sessionNyc': 'sessionNYC',          // Aktualisiert auf camelCase
+      'sessionLondon': 'sessionLondon',    // Aktualisiert auf camelCase
+      'sessionAsia': 'sessionAsia',        // Aktualisiert auf camelCase
+      'sessionTime': 'sessionTime',        // Aktualisiert auf camelCase
+      'trendAlignment': 'trendAlignment',  // Aktualisiert auf camelCase
+      'smartMoneyConcept': 'smartMoneyConcept', // Aktualisiert auf camelCase
+      'marketStructure': 'marketStructure', // Aktualisiert auf camelCase
+      'advancedPattern': 'advancedPattern', // Aktualisiert auf camelCase
+      'chartPattern': 'chartPattern',      // Aktualisiert auf camelCase
+      'fundamentalNews': 'fundamentalNews', // Aktualisiert auf camelCase
+      'wickFill': 'wickFill',              // Aktualisiert auf camelCase
+      'spreadSize': 'spreadSize',          // Aktualisiert auf camelCase
+      'psychologicalLevel': 'psychologicalLevel', // Aktualisiert auf camelCase
+      'tradeManagement': 'tradeManagement',    // Aktualisiert auf camelCase
+      'exitReason': 'exitReason',          // Aktualisiert auf camelCase
+      'advancedExit': 'advancedExit',      // Aktualisiert auf camelCase
+      'liquidationLevel': 'liquidationLevel', // Aktualisiert auf camelCase
+      'liquidationEntry': 'liquidationEntry', // Aktualisiert auf camelCase
+      'profitLoss': 'profitLoss',          // Aktualisiert auf camelCase
+      'isWin': 'isWin',                    // Aktualisiert auf camelCase
+      'createdAt': 'createdAt',            // Aktualisiert auf camelCase
+      'updatedAt': 'updatedAt',            // Aktualisiert auf camelCase
+      'userId': 'userId',                  // Aktualisiert auf camelCase
+      'rrAchieved': 'rrAchieved',          // Aktualisiert auf camelCase (vorher 'rr_achieved')
+      'rrPotential': 'rrPotential'         // Aktualisiert auf camelCase
     };
     
     // Kopiere alle Frontend-Felder und wandle sie in PostgreSQL-Format um
@@ -1726,54 +1720,54 @@ export class DatabaseStorage implements IStorage {
                  profitLoss: frontendTrade.profitLoss,
                  isWin: frontendTrade.isWin });
     
-    // Mapping basierend auf der tatsächlichen Datenbankstruktur
+    // Mapping basierend auf der neuen camelCase-Datenbankstruktur
     const fieldMapping: Record<string, string> = {
       // Frontend-spezifische Felder
-      'liquidation': 'liquidationlevel',
-      'location': 'liquiditylevel',
-      'chartImage': 'chartimageurl',
-      'riskSum': 'positionsize',
+      'liquidation': 'liquidationLevel',   // Aktualisiert auf camelCase
+      'location': 'liquidityLevel',        // Aktualisiert auf camelCase
+      'chartImage': 'chartImageUrl',       // Aktualisiert auf camelCase
+      'riskSum': 'positionSize',           // Aktualisiert auf camelCase
       
       // Reguläre Felder
-      'mainTrendM15': 'main_trend_m15',   // Beachte den Unterstrich hier!
-      'internalTrendM5': 'internaltrendm5',
-      'entryType': 'entrytype',
-      'entryLevel': 'entrylevel',
-      'positionSize': 'positionsize',
-      'takeProfit': 'takeprofit',
-      'stopLoss': 'stoploss',
-      'exitLevel': 'exitlevel',
-      'potentialRrr': 'potentialrrr',
-      'actualRrr': 'actualrrr',
-      'tradeDuration': 'tradeduration',
-      'tradeResult': 'traderesult',
-      'chartImageUrl': 'chartimageurl',
-      'liquidityLevel': 'liquiditylevel',
-      'sessionNyc': 'sessionnyc',
-      'sessionLondon': 'sessionlondon',
-      'sessionAsia': 'sessionasia',
-      'sessionTime': 'sessiontime',
-      'trendAlignment': 'trendalignment',
-      'smartMoneyConcept': 'smartmoneyconcept',
-      'marketStructure': 'marketstructure',
-      'advancedPattern': 'advancedpattern',
-      'chartPattern': 'chartpattern',
-      'fundamentalNews': 'fundamentalnews',
-      'wickFill': 'wickfill',
-      'spreadSize': 'spreadsize',
-      'psychologicalLevel': 'psychologicallevel',
-      'tradeManagement': 'trademanagement',
-      'exitReason': 'exitreason',
-      'advancedExit': 'advancedexit',
-      'liquidationLevel': 'liquidationlevel',
-      'liquidationEntry': 'liquidationentry',
-      'profitLoss': 'profitloss',
-      'isWin': 'iswin',
-      'createdAt': 'createdat',
-      'updatedAt': 'updatedat',
-      'userId': 'userid',
-      'rrAchieved': 'rr_achieved',        // Beachte den Unterstrich hier!
-      'rrPotential': 'rrpotential',
+      'mainTrendM15': 'mainTrendM15',      // Aktualisiert auf camelCase (vorher 'main_trend_m15')
+      'internalTrendM5': 'internalTrendM5', // Aktualisiert auf camelCase
+      'entryType': 'entryType',            // Aktualisiert auf camelCase
+      'entryLevel': 'entryLevel',          // Aktualisiert auf camelCase
+      'positionSize': 'positionSize',      // Aktualisiert auf camelCase
+      'takeProfit': 'takeProfit',          // Aktualisiert auf camelCase
+      'stopLoss': 'stopLoss',              // Aktualisiert auf camelCase
+      'exitLevel': 'exitLevel',            // Aktualisiert auf camelCase
+      'potentialRrr': 'potentialRrr',      // Aktualisiert auf camelCase
+      'actualRrr': 'actualRrr',            // Aktualisiert auf camelCase
+      'tradeDuration': 'tradeDuration',    // Aktualisiert auf camelCase
+      'tradeResult': 'tradeResult',        // Aktualisiert auf camelCase
+      'chartImageUrl': 'chartImageUrl',    // Aktualisiert auf camelCase
+      'liquidityLevel': 'liquidityLevel',  // Aktualisiert auf camelCase
+      'sessionNyc': 'sessionNYC',          // Aktualisiert auf camelCase
+      'sessionLondon': 'sessionLondon',    // Aktualisiert auf camelCase
+      'sessionAsia': 'sessionAsia',        // Aktualisiert auf camelCase
+      'sessionTime': 'sessionTime',        // Aktualisiert auf camelCase
+      'trendAlignment': 'trendAlignment',  // Aktualisiert auf camelCase
+      'smartMoneyConcept': 'smartMoneyConcept', // Aktualisiert auf camelCase
+      'marketStructure': 'marketStructure', // Aktualisiert auf camelCase
+      'advancedPattern': 'advancedPattern', // Aktualisiert auf camelCase
+      'chartPattern': 'chartPattern',      // Aktualisiert auf camelCase
+      'fundamentalNews': 'fundamentalNews', // Aktualisiert auf camelCase
+      'wickFill': 'wickFill',              // Aktualisiert auf camelCase
+      'spreadSize': 'spreadSize',          // Aktualisiert auf camelCase
+      'psychologicalLevel': 'psychologicalLevel', // Aktualisiert auf camelCase
+      'tradeManagement': 'tradeManagement', // Aktualisiert auf camelCase
+      'exitReason': 'exitReason',          // Aktualisiert auf camelCase
+      'advancedExit': 'advancedExit',      // Aktualisiert auf camelCase
+      'liquidationLevel': 'liquidationLevel', // Aktualisiert auf camelCase
+      'liquidationEntry': 'liquidationEntry', // Aktualisiert auf camelCase
+      'profitLoss': 'profitLoss',          // Aktualisiert auf camelCase
+      'isWin': 'isWin',                    // Aktualisiert auf camelCase
+      'createdAt': 'createdAt',            // Aktualisiert auf camelCase
+      'updatedAt': 'updatedAt',            // Aktualisiert auf camelCase
+      'userId': 'userId',                  // Aktualisiert auf camelCase
+      'rrAchieved': 'rrAchieved',          // Aktualisiert auf camelCase (vorher 'rr_achieved')
+      'rrPotential': 'rrPotential',        // Aktualisiert auf camelCase
       'id': 'id',
       'symbol': 'symbol',
       'date': 'date',
