@@ -1911,39 +1911,63 @@ export class DatabaseStorage implements IStorage {
         profitlossType: dbTrade.profitloss !== undefined ? typeof dbTrade.profitloss : 'undefined'
       });
       
-      // Verwende Raw SQL anstelle von Drizzle ORM, um das Problem mit den Spaltennamen zu umgehen
-      const columns = Object.keys(dbTrade);
-      const placeholders = columns.map((_, i) => `$${i+1}`);
-      const values = Object.values(dbTrade);
+      // Verwende direkte Werte-Einbindung statt Parameter-Binding für bessere Kontrolle
+      // Wir erstellen für jedes Feld ein Wertepaar mit korrektem camelCase-Spaltennamen
+      const columnsAndValues: [string, any][] = [];
       
-      // Setze Spaltennamen in Anführungszeichen für camelCase-Unterstützung
+      // Füge alle Felder mit ihren Werten hinzu
+      for (const [key, value] of Object.entries(dbTrade)) {
+        if (value !== undefined) {
+          columnsAndValues.push([key, value]);
+        }
+      }
+      
+      // Extrahiere Spalten und Werte
+      const columns = columnsAndValues.map(([col, _]) => col);
       const quotedColumns = columns.map(col => `"${col}"`);
+      
+      // Formatiere Werte direkt für SQL (ohne Parameter)
+      const formattedValues = columnsAndValues.map(([_, val]) => {
+        if (val === null) return 'NULL';
+        if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`; // Escape single quotes
+        if (val instanceof Date) return `'${val.toISOString()}'`;
+        return val; // Zahlen und Booleans werden direkt eingefügt
+      });
       
       const queryStr = `
         INSERT INTO trades (${quotedColumns.join(', ')})
-        VALUES (${placeholders.join(', ')})
+        VALUES (${formattedValues.join(', ')})
         RETURNING *
       `;
       
       console.log("SQL-Abfrage zum Erstellen eines Trades:", queryStr);
-      console.log("Inserting values:", values.slice(0, 5), "...");
       
-      const result = await db.execute(queryStr, values);
-      const createdDbTrade = result.rows?.[0];
-      
-      if (!createdDbTrade) {
-        throw new Error("Fehler beim Erstellen des Trades: Kein Ergebnis zurückgegeben");
+      // Führe die Abfrage ohne zusätzliche Parameter aus (sie sind bereits in der SQL-Abfrage)
+      try {
+        const result = await db.execute(queryStr);
+        const createdDbTrade = result.rows?.[0];
+        console.log("Trade erfolgreich erstellt:", createdDbTrade?.id);
+        
+        if (!createdDbTrade) {
+          throw new Error("Fehler beim Erstellen des Trades: Kein Ergebnis zurückgegeben");
+        }
+        
+        // Wandle die PostgreSQL-Namen in Frontend-Namen um
+        const frontendTrade = this.convertPostgresFieldsToFrontend(createdDbTrade);
+        
+        // Wandle das gespeicherte DB-Trade-Objekt zurück ins Frontend-Format mit zentraler Mapping-Funktion
+        return this.mapDbTradeToFrontend(frontendTrade);
+      } catch (error) {
+        console.error("Fehler beim Ausführen der Trade-Erstellung:", error);
+        throw error;
       }
       
-      // Wandle die PostgreSQL-Namen in Frontend-Namen um
-      const frontendTrade = this.convertPostgresFieldsToFrontend(createdDbTrade);
-      
-      // Wandle das gespeicherte DB-Trade-Objekt zurück ins Frontend-Format mit zentraler Mapping-Funktion
-      return this.mapDbTradeToFrontend(frontendTrade);
-    } catch (error) {
-      console.error('Error creating trade:', error);
-      throw error;
-    }
+      // Nach erfolgreicher Ausführung zum Frontend-Format konvertieren
+      return this.mapDbTradeToFrontend(createdDbTrade);
+      } catch (error) {
+        console.error("Fehler beim Ausführen der Trade-Erstellung:", error);
+        throw error;
+      }
   }
 
   async updateTrade(id: number, frontendTradeData: Partial<Trade>): Promise<Trade | undefined> {
