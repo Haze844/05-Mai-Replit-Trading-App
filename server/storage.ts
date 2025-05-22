@@ -1310,10 +1310,14 @@ export class DatabaseStorage implements IStorage {
       
       // Verwende eine direkte SQL-Abfrage mit den neuen camelCase-Spaltennamen
       // WICHTIG: Die Anführungszeichen um userId sind notwendig, da PostgreSQL Spaltennamen mit Großbuchstaben sonst nicht erkennt
+      // Nach der Datenbankumstellung auf camelCase müssen wir "userId" mit Anführungszeichen verwenden
       let queryStr = `
         SELECT * FROM trades 
         WHERE "userId" = ${userId}
       `;
+      
+      // Debug-Ausgabe für die initiale Abfrage
+      console.log("Initiale SQL-Abfrage mit camelCase-Spalten:", queryStr);
       
       // Datumsfilter hinzufügen, falls vorhanden
       if (filters.startDate && filters.endDate) {
