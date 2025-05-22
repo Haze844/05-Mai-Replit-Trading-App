@@ -1111,13 +1111,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Wende die Mapping-Funktion an
           const mappedTradeData = mapToDatabaseFormat(tradeData);
           
-          // KRITISCH: Stelle sicher, dass die userId immer gesetzt ist
-          // Verwende entweder die userId aus der Anfrage oder defaulte zu 1
-          const userId = req.body.userId || req.query.userId || 1;
-          mappedTradeData.userId = parseInt(userId as string, 10);
+          // Setze sowohl userId (camelCase) als auch user_id (snake_case), um sicherzustellen,
+          // dass die Datenbank die korrekte Spalte benutzt
+          mappedTradeData.userId = numericUserId;
+          mappedTradeData.user_id = numericUserId;
           
           console.log("CSV-Import: Mappierte Daten für Datenbank mit userId:", 
-            JSON.stringify({...mappedTradeData, userId: mappedTradeData.userId}));
+            JSON.stringify({
+              ...mappedTradeData, 
+              userId: mappedTradeData.userId,
+              user_id: mappedTradeData.user_id
+            }));
           
           // Create trade in database with mapped data
           const newTrade = await storage.createTrade(mappedTradeData);

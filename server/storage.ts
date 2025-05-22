@@ -1958,8 +1958,9 @@ export class DatabaseStorage implements IStorage {
       // Stelle sicher, dass die User-ID korrekt gesetzt ist
       dbTrade.userId = trade.userId;
       
-      // Entferne alte Felder, falls vorhanden
-      delete dbTrade.user_id; 
+      // Wichtig: NICHT user_id entfernen, da wir es für die Datenbank benötigen 
+      // Stelle sicher, dass user_id gesetzt ist, wird später zu snake_case konvertiert
+      // delete dbTrade.user_id;  
       delete dbTrade.userid;
       
       console.log("TradeData nach Konvertierung für DB:", {
