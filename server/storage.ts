@@ -1685,10 +1685,11 @@ export class DatabaseStorage implements IStorage {
 
   async getTradeById(id: number): Promise<Trade | undefined> {
     try {
-      // Verwende Raw SQL anstelle von Drizzle ORM, um das Problem mit den Spaltennamen zu umgehen
+      // Verwende Raw SQL anstelle von Drizzle ORM, mit Anführungszeichen um die Spaltennamen
+      // Nach der Datenbankumstellung auf camelCase müssen wir die Anführungszeichen verwenden
       const queryStr = `
         SELECT * FROM trades 
-        WHERE id = $1
+        WHERE "id" = $1
       `;
       
       const result = await db.execute(queryStr, [id]);
@@ -1954,11 +1955,10 @@ export class DatabaseStorage implements IStorage {
       delete dbTradeData.id;
       
       // Stelle sicher, dass die User-ID nicht geändert wird (mit korrektem Spaltennamen)
-      delete dbTradeData.userid;
+      delete dbTradeData.userId;
       
       // Aktualisiere den Timestamp mit korrektem Spaltennamen
-      dbTradeData.updatedat = new Date();
-      delete dbTradeData.updatedAt; // Falls dieses Feld existiert, entfernen
+      dbTradeData.updatedAt = new Date();
       
       console.log("TradeData nach Konvertierung für DB-Update:", {
         id,
@@ -1979,7 +1979,8 @@ export class DatabaseStorage implements IStorage {
       // Erzeuge UPDATE-Anweisung mit korrekten Spaltennamen
       for (const [key, value] of Object.entries(dbTradeData)) {
         if (value !== undefined) {
-          updateParts.push(`${key} = $${paramIndex}`);
+          // Mit Anführungszeichen für camelCase-Spaltennamen
+          updateParts.push(`"${key}" = $${paramIndex}`);
           values.push(value);
           paramIndex++;
         }
@@ -1995,7 +1996,7 @@ export class DatabaseStorage implements IStorage {
       const queryStr = `
         UPDATE trades
         SET ${updateParts.join(', ')}
-        WHERE id = $${paramIndex}
+        WHERE "id" = $${paramIndex}
         RETURNING *
       `;
       
