@@ -1,0 +1,59 @@
+11:11:59 AM [express] GET /api/trades 304 in 932ms :: []
+isAuthenticated-Check - Session: j4zyl1Ewj68951PgAD-GZzORlmD_gL3X Auth-Status: false Path: /api/trades
+Expliziter userId-Parameter gefunden: 1
+GET Anfrage akzeptiert für nicht-authentifizierten Benutzer mit userId: 1
+DatabaseStorage getTrades - Filters für User 1: {}
+Ausgeführte SQL-Abfrage: 
+        SELECT * FROM trades 
+        WHERE userid = 1
+       ORDER BY date DESC
+Führe SQL-Abfrage ohne Parameter aus...
+Fehler bei der Ausführung der direkten SQL-Abfrage: error: column "userid" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async DatabaseStorage.getTrades (/home/runner/workspace/server/storage.ts:1352:24)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:330:22) {
+  length: 166,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: 'Perhaps you meant to reference the column "trades.userId".',
+  position: '46',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3723',
+  routine: 'errorMissingColumn'
+}
+Versuche einfachere SQL-Abfrage...
+Trades in der Datenbank insgesamt: 84
+Auch einfache SQL-Abfrage fehlgeschlagen: error: column "userid" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async DatabaseStorage.getTrades (/home/runner/workspace/server/storage.ts:1391:32)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:330:22) {
+  length: 166,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: 'Perhaps you meant to reference the column "trades.userId".',
+  position: '28',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3723',
+  routine: 'errorMissingColumn'
+}
+11:12:00 AM [express] GET /api/trades 304 in 935ms :: []

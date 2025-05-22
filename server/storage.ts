@@ -1428,7 +1428,7 @@ export class DatabaseStorage implements IStorage {
     result.id = pgTrade.id;
     result.date = pgTrade.date;
     result.symbol = pgTrade.symbol;
-    result.userId = pgTrade.userid;
+    result.userId = pgTrade.userId;
     
     // Liste der Felder, basierend auf der tatsächlichen Datenbankstruktur
     // Die Namen stammen aus der Abfrage: SELECT column_name FROM information_schema.columns WHERE table_name = 'trades'
