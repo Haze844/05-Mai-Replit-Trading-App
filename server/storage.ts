@@ -1890,16 +1890,19 @@ export class DatabaseStorage implements IStorage {
       // Korrekter Feldname für rrPotential ist rrpotential (kein Unterstrich)
       // Wird bereits im mapFrontendTradeToDb richtig gemappt
       
-      // Füge aktuelle Timestamps hinzu mit korrekten Feldnamen in Kleinbuchstaben
+      // Füge aktuelle Timestamps hinzu mit korrekten camelCase-Feldnamen
       const now = new Date();
-      dbTrade.createdat = now;
-      dbTrade.updatedat = now;
+      dbTrade.createdAt = now;
+      dbTrade.updatedAt = now;
       delete dbTrade.created_at; // Falls diese Felder existieren, entfernen
       delete dbTrade.updated_at;
+      delete dbTrade.createdat; // Falls alte Schreibweise existiert, entfernen
+      delete dbTrade.updatedat;
       
-      // Stelle sicher, dass die User-ID korrekt gesetzt ist (userid statt user_id)
-      dbTrade.userid = trade.userId;
-      delete dbTrade.user_id; // Falls dieses Feld existiert, entfernen
+      // Stelle sicher, dass die User-ID korrekt in camelCase gesetzt ist
+      dbTrade.userId = trade.userId;
+      delete dbTrade.user_id; // Falls diese Felder existieren, entfernen
+      delete dbTrade.userid; // Falls alte Schreibweise existiert, entfernen
       
       console.log("TradeData nach Konvertierung für DB:", {
         date: dbTrade.date,
@@ -1913,8 +1916,11 @@ export class DatabaseStorage implements IStorage {
       const placeholders = columns.map((_, i) => `$${i+1}`);
       const values = Object.values(dbTrade);
       
+      // Setze Spaltennamen in Anführungszeichen für camelCase-Unterstützung
+      const quotedColumns = columns.map(col => `"${col}"`);
+      
       const queryStr = `
-        INSERT INTO trades (${columns.join(', ')})
+        INSERT INTO trades (${quotedColumns.join(', ')})
         VALUES (${placeholders.join(', ')})
         RETURNING *
       `;
