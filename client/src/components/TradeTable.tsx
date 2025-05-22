@@ -1966,12 +1966,9 @@ export default function TradeTable({
                   <td className="p-3 text-xs">{trade.setup}</td>
 
                   <td className="p-3 text-xs">
-                    <div className="flex items-center gap-2">
-                      <BadgeWinLoss isWin={trade.isWin} size="xs" />
-                      <span className={`${trade.profitLoss && Number(trade.profitLoss) > 0 ? 'text-green-500' : trade.profitLoss && Number(trade.profitLoss) < 0 ? 'text-red-500' : ''}`}>
-                        {trade.profitLoss !== undefined && trade.profitLoss !== null ? `${Number(trade.profitLoss) > 0 ? '+' : ''}$${Number(trade.profitLoss).toFixed(2)}` : '-'}
-                      </span>
-                    </div>
+                    <span className={`${trade.profitLoss && Number(trade.profitLoss) > 0 ? 'text-green-500' : trade.profitLoss && Number(trade.profitLoss) < 0 ? 'text-red-500' : ''}`}>
+                      {trade.profitLoss !== undefined && trade.profitLoss !== null ? `${Number(trade.profitLoss) > 0 ? '+' : ''}$${Number(trade.profitLoss).toFixed(2)}` : '-'}
+                    </span>
                   </td>
                   <td className="p-3 text-xs">
                     {trade.internalTrend ? <BadgeTrend trend={trade.internalTrend} size="xs" /> : '-'}
@@ -2020,7 +2017,7 @@ export default function TradeTable({
                     {trade.slType || '-'}
                   </td>
                   <td className="p-3 text-xs">
-                    {trade.slPoints || '-'}
+                    <BadgeWinLoss isWin={trade.isWin} size="xs" />
                   </td>
                   <td className="p-3 text-xs">
                     {trade.liquidationEntry || '-'}
