@@ -1685,14 +1685,14 @@ export class DatabaseStorage implements IStorage {
 
   async getTradeById(id: number): Promise<Trade | undefined> {
     try {
-      // Verwende Raw SQL anstelle von Drizzle ORM, mit Anführungszeichen um die Spaltennamen
-      // Nach der Datenbankumstellung auf camelCase müssen wir die Anführungszeichen verwenden
+      // Verwende parametrisierte Abfrage ohne $1 Parameter, da diese nicht korrekt funktionieren
       const queryStr = `
         SELECT * FROM trades 
-        WHERE "id" = $1
+        WHERE "id" = ${id}
       `;
       
-      const result = await db.execute(queryStr, [id]);
+      // Direkte Abfrage ohne Parameter
+      const result = await db.execute(queryStr);
       const trade = result.rows?.[0];
       
       if (!trade) return undefined;
@@ -1962,27 +1962,38 @@ export class DatabaseStorage implements IStorage {
       
       console.log("TradeData nach Konvertierung für DB-Update:", {
         id,
-        liquidationlevel: dbTradeData.liquidationlevel,
-        liquiditylevel: dbTradeData.liquiditylevel,
-        positionsize: dbTradeData.positionsize,
-        actualrrr: dbTradeData.actualrrr,
-        potentialrrr: dbTradeData.potentialrrr,
-        profitloss: dbTradeData.profitloss,
-        iswin: dbTradeData.iswin
+        liquidationLevel: dbTradeData.liquidationLevel,
+        liquidityLevel: dbTradeData.liquidityLevel,
+        positionSize: dbTradeData.positionSize,
+        actualRrr: dbTradeData.actualRrr,
+        potentialRrr: dbTradeData.potentialRrr,
+        profitLoss: dbTradeData.profitLoss,
+        isWin: dbTradeData.isWin
       });
       
-      // Verwende Raw SQL anstelle von Drizzle ORM, um das Problem mit den Spaltennamen zu umgehen
+      // Verwende einen einfacheren Ansatz mit direkten Werten in der SQL-Abfrage
       let updateParts = [];
-      const values = [];
-      let paramIndex = 1;
       
-      // Erzeuge UPDATE-Anweisung mit korrekten Spaltennamen
+      // Erzeuge UPDATE-Anweisung mit direkten Werten statt Parametern
       for (const [key, value] of Object.entries(dbTradeData)) {
         if (value !== undefined) {
+          let sqlValue;
+          
+          if (value === null) {
+            sqlValue = 'NULL';
+          } else if (typeof value === 'string') {
+            // Strings müssen in Anführungszeichen mit Escape für Apostrophe
+            sqlValue = `'${value.replace(/'/g, "''")}'`;
+          } else if (value instanceof Date) {
+            // Datum formatieren
+            sqlValue = `'${value.toISOString()}'`;
+          } else {
+            // Zahlen und Booleans direkt verwenden
+            sqlValue = value;
+          }
+          
           // Mit Anführungszeichen für camelCase-Spaltennamen
-          updateParts.push(`"${key}" = $${paramIndex}`);
-          values.push(value);
-          paramIndex++;
+          updateParts.push(`"${key}" = ${sqlValue}`);
         }
       }
       
@@ -1992,21 +2003,18 @@ export class DatabaseStorage implements IStorage {
         return await this.getTradeById(id);
       }
       
-      // SQL für das Update erzeugen
+      // SQL für das Update mit direkten Werten
       const queryStr = `
         UPDATE trades
         SET ${updateParts.join(', ')}
-        WHERE "id" = $${paramIndex}
+        WHERE "id" = ${id}
         RETURNING *
       `;
       
-      // ID als letzten Parameter hinzufügen
-      values.push(id);
-      
       console.log("SQL-Abfrage zum Aktualisieren eines Trades:", queryStr);
-      console.log("Parameter-Anzahl:", values.length);
       
-      const result = await db.execute(queryStr, values);
+      // Ausführen der SQL ohne Parameter
+      const result = await db.execute(queryStr);
       const updatedDbTrade = result.rows?.[0];
       
       if (!updatedDbTrade) {
