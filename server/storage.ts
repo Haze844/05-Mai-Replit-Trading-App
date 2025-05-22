@@ -1550,58 +1550,107 @@ export class DatabaseStorage implements IStorage {
 
   // Hilfsfunktion: Transformiere DB-Trade-Objekt in Frontend-Format
   private mapDbTradeToFrontend(dbTrade: any): Trade {
-    // Da die Datenbank jetzt in camelCase ist, müssen wir nicht mehr mappen
-    // Wir müssen nur noch einige Typenkonvertierungen durchführen
+    // Die Datenbank verwendet jetzt snake_case, wir müssen in camelCase umwandeln
+    const frontendTrade: any = {
+      id: dbTrade.id
+    };
     
-    // Datum-Konvertierung
-    if (dbTrade.date && typeof dbTrade.date !== 'object') {
-      dbTrade.date = new Date(dbTrade.date);
+    // Snake_case zu camelCase Mapping
+    if (dbTrade.user_id !== undefined) frontendTrade.userId = dbTrade.user_id;
+    if (dbTrade.symbol !== undefined) frontendTrade.symbol = dbTrade.symbol;
+    if (dbTrade.date !== undefined) {
+      frontendTrade.date = typeof dbTrade.date === 'object' ? dbTrade.date : new Date(dbTrade.date);
+    }
+    if (dbTrade.setup !== undefined) frontendTrade.setup = dbTrade.setup;
+    if (dbTrade.main_trend_m15 !== undefined) frontendTrade.mainTrendM15 = dbTrade.main_trend_m15;
+    if (dbTrade.internal_trend_m5 !== undefined) frontendTrade.internalTrendM5 = dbTrade.internal_trend_m5;
+    if (dbTrade.entry_type !== undefined) frontendTrade.entryType = dbTrade.entry_type;
+    if (dbTrade.entry_level !== undefined) frontendTrade.entryLevel = dbTrade.entry_level;
+    if (dbTrade.position_size !== undefined) frontendTrade.positionSize = dbTrade.position_size;
+    if (dbTrade.take_profit !== undefined) frontendTrade.takeProfit = dbTrade.take_profit;
+    if (dbTrade.stop_loss !== undefined) frontendTrade.stopLoss = dbTrade.stop_loss;
+    if (dbTrade.exit_level !== undefined) frontendTrade.exitLevel = dbTrade.exit_level;
+    if (dbTrade.potential_rrr !== undefined) frontendTrade.potentialRrr = dbTrade.potential_rrr;
+    if (dbTrade.actual_rrr !== undefined) frontendTrade.actualRrr = dbTrade.actual_rrr;
+    if (dbTrade.trade_duration !== undefined) frontendTrade.tradeDuration = dbTrade.trade_duration;
+    if (dbTrade.trade_result !== undefined) frontendTrade.tradeResult = dbTrade.trade_result;
+    if (dbTrade.chart_image_url !== undefined) frontendTrade.chartImageUrl = dbTrade.chart_image_url;
+    if (dbTrade.liquidity_level !== undefined) frontendTrade.liquidityLevel = dbTrade.liquidity_level;
+    if (dbTrade.session_nyc !== undefined) frontendTrade.sessionNyc = dbTrade.session_nyc;
+    if (dbTrade.session_london !== undefined) frontendTrade.sessionLondon = dbTrade.session_london;
+    if (dbTrade.session_asia !== undefined) frontendTrade.sessionAsia = dbTrade.session_asia;
+    if (dbTrade.session_time !== undefined) frontendTrade.sessionTime = dbTrade.session_time;
+    if (dbTrade.trend_alignment !== undefined) frontendTrade.trendAlignment = dbTrade.trend_alignment;
+    if (dbTrade.smart_money_concept !== undefined) frontendTrade.smartMoneyConcept = dbTrade.smart_money_concept;
+    if (dbTrade.market_structure !== undefined) frontendTrade.marketStructure = dbTrade.market_structure;
+    if (dbTrade.advanced_pattern !== undefined) frontendTrade.advancedPattern = dbTrade.advanced_pattern;
+    if (dbTrade.chart_pattern !== undefined) frontendTrade.chartPattern = dbTrade.chart_pattern;
+    if (dbTrade.fundamental_news !== undefined) frontendTrade.fundamentalNews = dbTrade.fundamental_news;
+    if (dbTrade.wick_fill !== undefined) frontendTrade.wickFill = dbTrade.wick_fill;
+    if (dbTrade.spread_size !== undefined) frontendTrade.spreadSize = dbTrade.spread_size;
+    if (dbTrade.psychological_level !== undefined) frontendTrade.psychologicalLevel = dbTrade.psychological_level;
+    if (dbTrade.trade_management !== undefined) frontendTrade.tradeManagement = dbTrade.trade_management;
+    if (dbTrade.exit_reason !== undefined) frontendTrade.exitReason = dbTrade.exit_reason;
+    if (dbTrade.advanced_exit !== undefined) frontendTrade.advancedExit = dbTrade.advanced_exit;
+    if (dbTrade.liquidation_level !== undefined) frontendTrade.liquidationLevel = dbTrade.liquidation_level;
+    if (dbTrade.liquidation_entry !== undefined) frontendTrade.liquidationEntry = dbTrade.liquidation_entry;
+    
+    // Profit/Loss
+    if (dbTrade.profit_loss !== undefined) {
+      frontendTrade.profitLoss = typeof dbTrade.profit_loss === 'string' 
+        ? parseFloat(dbTrade.profit_loss) 
+        : dbTrade.profit_loss;
     }
     
-    // Zeitstempel-Konvertierungen
-    if (dbTrade.createdAt && typeof dbTrade.createdAt !== 'object') {
-      dbTrade.createdAt = new Date(dbTrade.createdAt);
+    // RR-Werte
+    if (dbTrade.rr_achieved !== undefined) {
+      frontendTrade.rrAchieved = typeof dbTrade.rr_achieved === 'string' 
+        ? parseFloat(dbTrade.rr_achieved) 
+        : dbTrade.rr_achieved;
     }
     
-    if (dbTrade.updatedAt && typeof dbTrade.updatedAt !== 'object') {
-      dbTrade.updatedAt = new Date(dbTrade.updatedAt);
+    if (dbTrade.rr_potential !== undefined) {
+      frontendTrade.rrPotential = typeof dbTrade.rr_potential === 'string' 
+        ? parseFloat(dbTrade.rr_potential) 
+        : dbTrade.rr_potential;
     }
     
-    // Numerische Werte sicherstellen
-    if (dbTrade.profitLoss !== undefined && typeof dbTrade.profitLoss === 'string') {
-      dbTrade.profitLoss = parseFloat(dbTrade.profitLoss);
+    // Boolean-Werte
+    if (dbTrade.is_win !== undefined) {
+      frontendTrade.isWin = Boolean(dbTrade.is_win);
     }
     
-    if (dbTrade.rrAchieved !== undefined && typeof dbTrade.rrAchieved === 'string') {
-      dbTrade.rrAchieved = parseFloat(dbTrade.rrAchieved);
+    // Zeitstempel
+    if (dbTrade.created_at !== undefined) {
+      frontendTrade.createdAt = typeof dbTrade.created_at === 'object' 
+        ? dbTrade.created_at 
+        : new Date(dbTrade.created_at);
     }
     
-    if (dbTrade.rrPotential !== undefined && typeof dbTrade.rrPotential === 'string') {
-      dbTrade.rrPotential = parseFloat(dbTrade.rrPotential);
-    }
-    
-    // Boolean-Werte sicherstellen
-    if (dbTrade.isWin !== undefined) {
-      dbTrade.isWin = Boolean(dbTrade.isWin);
+    if (dbTrade.updated_at !== undefined) {
+      frontendTrade.updatedAt = typeof dbTrade.updated_at === 'object' 
+        ? dbTrade.updated_at 
+        : new Date(dbTrade.updated_at);
     }
 
-    // Stelle für Kompatibilität sicher, dass die besonderen Frontend-Felder existieren
-    if (dbTrade.liquidation === undefined && dbTrade.liquidationLevel !== undefined) {
-      dbTrade.liquidation = dbTrade.liquidationLevel || "";
+    // Kompatibilitätsfelder für das Frontend
+    if (frontendTrade.liquidation === undefined && frontendTrade.liquidationLevel !== undefined) {
+      frontendTrade.liquidation = frontendTrade.liquidationLevel || "";
     }
     
-    if (dbTrade.location === undefined && dbTrade.liquidityLevel !== undefined) {
-      dbTrade.location = dbTrade.liquidityLevel || "";
+    if (frontendTrade.location === undefined && frontendTrade.liquidityLevel !== undefined) {
+      frontendTrade.location = frontendTrade.liquidityLevel || "";
     }
 
-    if (dbTrade.chartImage === undefined && dbTrade.chartImageUrl !== undefined) {
-      dbTrade.chartImage = dbTrade.chartImageUrl || null;
+    if (frontendTrade.chartImage === undefined && frontendTrade.chartImageUrl !== undefined) {
+      frontendTrade.chartImage = frontendTrade.chartImageUrl || null;
     }
     
     // Debug-Ausgabe zum Überprüfen der Felder
     console.log("Datenbankfelder:", Object.keys(dbTrade).sort());
+    console.log("Frontend-Felder:", Object.keys(frontendTrade).sort());
     
-    return dbTrade as Trade;
+    return frontendTrade as Trade;
   }
   
   // Hilfsfunktion: Übersetze Frontend-Filter in DB-Filter
@@ -1648,17 +1697,17 @@ export class DatabaseStorage implements IStorage {
       'spreadSize': 'spread_size',          // Aktualisiert auf snake_case
       'psychologicalLevel': 'psychological_level', // Aktualisiert auf snake_case
       'tradeManagement': 'trade_management', // Aktualisiert auf snake_case
-      'exitReason': 'exitReason',          // Aktualisiert auf camelCase
-      'advancedExit': 'advancedExit',      // Aktualisiert auf camelCase
-      'liquidationLevel': 'liquidationLevel', // Aktualisiert auf camelCase
-      'liquidationEntry': 'liquidationEntry', // Aktualisiert auf camelCase
-      'profitLoss': 'profitLoss',          // Aktualisiert auf camelCase
-      'isWin': 'isWin',                    // Aktualisiert auf camelCase
-      'createdAt': 'createdAt',            // Aktualisiert auf camelCase
-      'updatedAt': 'updatedAt',            // Aktualisiert auf camelCase
-      'userId': 'userId',                  // Aktualisiert auf camelCase
-      'rrAchieved': 'rrAchieved',          // Aktualisiert auf camelCase (vorher 'rr_achieved')
-      'rrPotential': 'rrPotential'         // Aktualisiert auf camelCase
+      'exitReason': 'exit_reason',          // Aktualisiert auf snake_case
+      'advancedExit': 'advanced_exit',      // Aktualisiert auf snake_case
+      'liquidationLevel': 'liquidation_level', // Aktualisiert auf snake_case
+      'liquidationEntry': 'liquidation_entry', // Aktualisiert auf snake_case
+      'profitLoss': 'profit_loss',          // Aktualisiert auf snake_case
+      'isWin': 'is_win',                    // Aktualisiert auf snake_case
+      'createdAt': 'created_at',            // Aktualisiert auf snake_case
+      'updatedAt': 'updated_at',            // Aktualisiert auf snake_case
+      'userId': 'user_id',                  // Aktualisiert auf snake_case
+      'rrAchieved': 'rr_achieved',          // Aktualisiert auf snake_case
+      'rrPotential': 'rr_potential'         // Aktualisiert auf snake_case
     };
     
     // Kopiere alle Frontend-Felder und wandle sie in PostgreSQL-Format um
