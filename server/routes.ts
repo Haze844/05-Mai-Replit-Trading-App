@@ -1031,11 +1031,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Erstelle eine einheitliche Funktion zur Umwandlung von Frontend-Namen zu Datenbank-Namen
           const mapToDatabaseFormat = (tradeData) => {
-            // Basis-Mapping mit allen übertragbaren Feldern
-            const databaseData = {...tradeData};
+            // Basis-Mapping mit allen übertragbaren Feldern, aber mit snake_case Feldnamen
+            const databaseData = {};
             
             // Setze Standardwerte
             databaseData.date = tradeData.date || new Date().toISOString();
+            
+            // Direkte Übertragung bekannter Felder mit korrekter snake_case Benennung
+            if (tradeData.symbol !== undefined) databaseData.symbol = tradeData.symbol;
+            if (tradeData.setup !== undefined) databaseData.setup = tradeData.setup;
             
             // Feldnamen-Mapping (Frontend camelCase -> DB snake_case)
             databaseData.user_id = userId;
@@ -1044,21 +1048,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
             databaseData.rr_achieved = rrAchieved !== undefined ? rrAchieved : 0;
             databaseData.rr_potential = rrPotential !== undefined ? rrPotential : 0;
             
+            // camelCase zu snake_case Konvertierung für alle handelsrelevanten Felder
+            if (tradeData.mainTrendM15 !== undefined) databaseData.main_trend_m15 = tradeData.mainTrendM15;
+            if (tradeData.internalTrendM5 !== undefined) databaseData.internal_trend_m5 = tradeData.internalTrendM5;
+            if (tradeData.entryType !== undefined) databaseData.entry_type = tradeData.entryType;
+            if (tradeData.entryLevel !== undefined) databaseData.entry_level = tradeData.entryLevel;
+            if (tradeData.positionSize !== undefined) databaseData.position_size = tradeData.positionSize;
+            if (tradeData.takeProfit !== undefined) databaseData.take_profit = tradeData.takeProfit;
+            if (tradeData.stopLoss !== undefined) databaseData.stop_loss = tradeData.stopLoss;
+            if (tradeData.exitLevel !== undefined) databaseData.exit_level = tradeData.exitLevel;
+            if (tradeData.potentialRrr !== undefined) databaseData.potential_rrr = tradeData.potentialRrr;
+            if (tradeData.actualRrr !== undefined) databaseData.actual_rrr = tradeData.actualRrr;
+            if (tradeData.tradeDuration !== undefined) databaseData.trade_duration = tradeData.tradeDuration;
+            if (tradeData.tradeResult !== undefined) databaseData.trade_result = tradeData.tradeResult;
+            if (tradeData.chartImageUrl !== undefined) databaseData.chart_image_url = tradeData.chartImageUrl;
+            if (tradeData.sessionNyc !== undefined) databaseData.session_nyc = tradeData.sessionNyc;
+            if (tradeData.sessionLondon !== undefined) databaseData.session_london = tradeData.sessionLondon;
+            if (tradeData.sessionAsia !== undefined) databaseData.session_asia = tradeData.sessionAsia;
+            if (tradeData.sessionTime !== undefined) databaseData.session_time = tradeData.sessionTime;
+            if (tradeData.trendAlignment !== undefined) databaseData.trend_alignment = tradeData.trendAlignment;
+            if (tradeData.smartMoneyConcept !== undefined) databaseData.smart_money_concept = tradeData.smartMoneyConcept;
+            if (tradeData.marketStructure !== undefined) databaseData.market_structure = tradeData.marketStructure;
+            if (tradeData.advancedPattern !== undefined) databaseData.advanced_pattern = tradeData.advancedPattern;
+            if (tradeData.chartPattern !== undefined) databaseData.chart_pattern = tradeData.chartPattern;
+            if (tradeData.fundamentalNews !== undefined) databaseData.fundamental_news = tradeData.fundamentalNews;
+            if (tradeData.wickFill !== undefined) databaseData.wick_fill = tradeData.wickFill;
+            if (tradeData.spreadSize !== undefined) databaseData.spread_size = tradeData.spreadSize;
+            if (tradeData.psychologicalLevel !== undefined) databaseData.psychological_level = tradeData.psychologicalLevel;
+            if (tradeData.tradeManagement !== undefined) databaseData.trade_management = tradeData.tradeManagement;
+            if (tradeData.exitReason !== undefined) databaseData.exit_reason = tradeData.exitReason;
+            if (tradeData.advancedExit !== undefined) databaseData.advanced_exit = tradeData.advancedExit;
+            
             // Spezielle Feld-Mappings für Frontend-spezifische Felder
             databaseData.liquidation_level = tradeData.liquidation || tradeData.liquidationLevel || '';
             databaseData.liquidity_level = tradeData.location || tradeData.liquidityLevel || '';
             
-            // Entferne Frontend-spezifische Felder, die nicht in der Datenbank existieren
-            delete databaseData.profitLoss;
-            delete databaseData.isWin;
-            delete databaseData.rrAchieved;
-            delete databaseData.rrPotential;
-            delete databaseData.userId;
-            delete databaseData.liquidation;
-            delete databaseData.location;
-            delete databaseData.riskSum;
-            delete databaseData.chartImage;
-            delete databaseData.gptFeedback; // Kein direkt korrespondierendes Feld in der Datenbank
+            // Notes-Feld direkt übernehmen
+            if (tradeData.notes !== undefined) databaseData.notes = tradeData.notes;
+            
+            // Debug-Ausgabe zur Überprüfung der Feldnamen
+            console.log("CSV-Import: Finale Felder für Datenbank:", Object.keys(databaseData).join(", "));
             
             return databaseData;
           };
