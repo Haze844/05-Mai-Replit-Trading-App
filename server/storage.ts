@@ -1413,53 +1413,81 @@ export class DatabaseStorage implements IStorage {
   
   // Hilfsfunktion: Konvertiert PostgreSQL-Feldnamen zurück in Frontend-Format
   private convertPostgresFieldsToFrontend(pgTrade: any): any {
-    const result: any = { ...pgTrade };
+    if (!pgTrade) {
+      console.error("ConvertPostgresFieldsToFrontend: Null oder undefined pgTrade übergeben");
+      return {};
+    }
+    
+    // Debug-Ausgabe für die wichtigsten Felder
+    console.log("ConvertPostgresFieldsToFrontend Input:", {
+      id: pgTrade.id, 
+      date: pgTrade.date,
+      symbol: pgTrade.symbol,
+      profitloss: pgTrade.profitloss,
+      iswin: pgTrade.iswin,
+      setup: pgTrade.setup
+    });
+    
+    // Erstelle ein neues Objekt statt das Original zu modifizieren
+    const result: any = {};
+    
+    // Basis-Felder direkt übernehmen
+    result.id = pgTrade.id;
+    result.date = pgTrade.date;
+    result.symbol = pgTrade.symbol;
+    result.userId = pgTrade.userid;
     
     // Liste der Felder, basierend auf der tatsächlichen Datenbankstruktur
     // Die Namen stammen aus der Abfrage: SELECT column_name FROM information_schema.columns WHERE table_name = 'trades'
     const fieldMapping: Record<string, string> = {
-      'actualrrr': 'actualRrr',
-      'advancedexit': 'advancedExit',
-      'advancedpattern': 'advancedPattern',
-      'chartimageurl': 'chartImageUrl',
-      'chartpattern': 'chartPattern',
-      'createdat': 'createdAt',
-      'entrylevel': 'entryLevel',
-      'entrytype': 'entryType',
-      'exitlevel': 'exitLevel',
-      'exitreason': 'exitReason',
-      'fundamentalnews': 'fundamentalNews',
+      'id': 'id',
+      'symbol': 'symbol',
+      'date': 'date',
+      'setup': 'setup',
+      'main_trend_m15': 'mainTrendM15',
       'internaltrendm5': 'internalTrendM5',
-      'iswin': 'isWin',
-      'liquidationentry': 'liquidationEntry',
-      'liquidationlevel': 'liquidationLevel',
-      'liquiditylevel': 'liquidityLevel',
-      'main_trend_m15': 'mainTrendM15',   // Beachte den Unterstrich hier!
-      'marketstructure': 'marketStructure',
+      'entrytype': 'entryType',
+      'entrylevel': 'entryLevel',
       'positionsize': 'positionSize',
-      'potentialrrr': 'potentialRrr',
-      'profitloss': 'profitLoss',
-      'psychologicallevel': 'psychologicalLevel',
-      'rr_achieved': 'rrAchieved',        // Beachte den Unterstrich hier!
-      'rrpotential': 'rrPotential',
-      'sessionasia': 'sessionAsia',
-      'sessionlondon': 'sessionLondon',
-      'sessionnyc': 'sessionNyc',
-      'sessiontime': 'sessionTime',
-      'smartmoneyconcept': 'smartMoneyConcept',
-      'spreadsize': 'spreadSize',
-      'stoploss': 'stopLoss',
       'takeprofit': 'takeProfit',
+      'stoploss': 'stopLoss',
+      'exitlevel': 'exitLevel',
+      'potentialrrr': 'potentialRrr',
+      'actualrrr': 'actualRrr',
       'tradeduration': 'tradeDuration',
-      'trademanagement': 'tradeManagement',
       'traderesult': 'tradeResult',
+      'notes': 'notes',
+      'chartimageurl': 'chartImageUrl',
+      'liquiditylevel': 'liquidityLevel',
+      'deviation': 'deviation',
+      'sessionnyc': 'sessionNYC',
+      'sessionlondon': 'sessionLondon',
+      'sessionasia': 'sessionAsia',
+      'sessiontime': 'sessionTime',
       'trendalignment': 'trendAlignment',
-      'updatedat': 'updatedAt',
+      'smartmoneyconcept': 'smartMoneyConcept',
+      'marketstructure': 'marketStructure',
+      'advancedpattern': 'advancedPattern',
+      'chartpattern': 'chartPattern',
+      'fundamentalnews': 'fundamentalNews',
+      'wickfill': 'wickFill',
+      'spreadsize': 'spreadSize',
+      'psychologicallevel': 'psychologicalLevel',
+      'trademanagement': 'tradeManagement',
+      'exitreason': 'exitReason',
+      'advancedexit': 'advancedExit',
+      'liquidationlevel': 'liquidationLevel',
+      'liquidationentry': 'liquidationEntry',
       'userid': 'userId',
-      'wickfill': 'wickFill'
+      'createdat': 'createdAt',
+      'updatedat': 'updatedAt',
+      'profitloss': 'profitLoss',
+      'iswin': 'isWin',
+      'rr_achieved': 'rrAchieved',
+      'rrpotential': 'rrPotential'
     };
     
-    // Erstelle zusätzliche Frontend-spezifische Felder
+    // Erstelle zusätzliche Frontend-spezifische Felder (ohne Originaldaten zu ändern)
     if (pgTrade.liquidationlevel !== undefined) {
       result.liquidation = pgTrade.liquidationlevel;
     }
@@ -1476,12 +1504,49 @@ export class DatabaseStorage implements IStorage {
       result.riskSum = pgTrade.positionsize;
     }
     
-    // Wandle PostgreSQL-Feldnamen in Frontend-Namen um
+    // Wandle alle anderen PostgreSQL-Feldnamen in Frontend-Namen um
     for (const [pgField, frontendField] of Object.entries(fieldMapping)) {
-      if (pgTrade[pgField] !== undefined) {
+      // Nur wenn das PostgreSQL-Feld existiert und noch nicht verarbeitet wurde
+      if (pgTrade.hasOwnProperty(pgField) && !result.hasOwnProperty(frontendField)) {
         result[frontendField] = pgTrade[pgField];
       }
     }
+    
+    // Stelle sicher, dass date-Feld korrekt als Date-Objekt vorliegt
+    if (result.date && typeof result.date === 'string') {
+      try {
+        result.date = new Date(result.date);
+      } catch (error) {
+        console.error("Fehler beim Konvertieren des Datums:", error);
+      }
+    }
+    
+    // Stelle sicher, dass createdAt und updatedAt korrekt als Date-Objekte vorliegen
+    if (result.createdAt && typeof result.createdAt === 'string') {
+      try {
+        result.createdAt = new Date(result.createdAt);
+      } catch (error) {
+        console.error("Fehler beim Konvertieren von createdAt:", error);
+      }
+    }
+    
+    if (result.updatedAt && typeof result.updatedAt === 'string') {
+      try {
+        result.updatedAt = new Date(result.updatedAt);
+      } catch (error) {
+        console.error("Fehler beim Konvertieren von updatedAt:", error);
+      }
+    }
+    
+    // Debug-Ausgabe für die wichtigsten konvertierten Felder
+    console.log("ConvertPostgresFieldsToFrontend Output:", {
+      id: result.id, 
+      date: result.date,
+      symbol: result.symbol,
+      profitLoss: result.profitLoss,
+      isWin: result.isWin,
+      setup: result.setup
+    });
     
     return result;
   }
