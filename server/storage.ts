@@ -1949,12 +1949,21 @@ export class DatabaseStorage implements IStorage {
       delete dbTrade.createdat; // Falls alte Schreibweise existiert, entfernen
       delete dbTrade.updatedat;
       
-      // Stelle sicher, dass die User-ID korrekt in camelCase gesetzt ist
+      // WICHTIG: Stelle sicher, dass die User-ID IMMER gesetzt ist
+      if (!trade.userId) {
+        console.log("WARNUNG: userId ist nicht gesetzt! Setze standardmäßig auf 1");
+        trade.userId = 1; // Fallback, wenn keine userId gesetzt ist
+      }
+      
+      // Stelle sicher, dass die User-ID korrekt gesetzt ist
       dbTrade.userId = trade.userId;
-      delete dbTrade.user_id; // Falls diese Felder existieren, entfernen
-      delete dbTrade.userid; // Falls alte Schreibweise existiert, entfernen
+      
+      // Entferne alte Felder, falls vorhanden
+      delete dbTrade.user_id; 
+      delete dbTrade.userid;
       
       console.log("TradeData nach Konvertierung für DB:", {
+        userId: dbTrade.userId,
         date: dbTrade.date,
         dateType: dbTrade.date ? typeof dbTrade.date : 'undefined',
         profitloss: dbTrade.profitloss,

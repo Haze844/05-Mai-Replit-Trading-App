@@ -1104,7 +1104,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Wende die Mapping-Funktion an
           const mappedTradeData = mapToDatabaseFormat(tradeData);
           
-          console.log("CSV-Import: Mappierte Daten für Datenbank:", JSON.stringify(mappedTradeData));
+          // KRITISCH: Stelle sicher, dass die userId immer gesetzt ist
+          // Verwende entweder die userId aus der Anfrage oder defaulte zu 1
+          const userId = req.body.userId || req.query.userId || 1;
+          mappedTradeData.userId = parseInt(userId as string, 10);
+          
+          console.log("CSV-Import: Mappierte Daten für Datenbank mit userId:", 
+            JSON.stringify({...mappedTradeData, userId: mappedTradeData.userId}));
           
           // Create trade in database with mapped data
           const newTrade = await storage.createTrade(mappedTradeData);
