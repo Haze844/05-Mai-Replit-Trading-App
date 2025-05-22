@@ -1316,7 +1316,7 @@ export class DatabaseStorage implements IStorage {
       `;
       
       // Debug-Ausgabe für die initiale Abfrage
-      console.log("Initiale SQL-Abfrage mit camelCase-Spalten:", queryStr);
+      console.log("Initiale SQL-Abfrage mit snake_case-Spalten:", queryStr);
       
       // Datumsfilter hinzufügen, falls vorhanden
       if (filters.startDate && filters.endDate) {
@@ -1351,7 +1351,7 @@ export class DatabaseStorage implements IStorage {
       
       // Führe die Abfrage aus
       try {
-        console.log("Führe SQL-Abfrage mit camelCase-Spaltennamen aus...");
+        console.log("Führe SQL-Abfrage mit snake_case-Spaltennamen aus...");
         const result = await db.execute(queryStr);
         const dbResult = result.rows || [];
         
@@ -1362,7 +1362,7 @@ export class DatabaseStorage implements IStorage {
             Object.keys(dbResult[0]).map(key => `${key}: ${typeof dbResult[0][key]}`).join(', '));
         }
         
-        // Da die Datenbank jetzt in camelCase ist, brauchen wir weniger Mapping
+        // Da die Datenbank jetzt in snake_case ist, müssen wir zwischen Datenbank und Frontend mappen
         const trades = dbResult.map(trade => {
           // Debug-Ausgabe für jedes Trade-Objekt mit Nullcheck
           const tradeId = trade.id || 'unbekannt';
@@ -1610,44 +1610,44 @@ export class DatabaseStorage implements IStorage {
     
     const dbFilters: any = {};
     
-    // Mapping basierend auf der neuen camelCase-Datenbankstruktur nach der Spaltenumbenennung
-    // WICHTIG: Nach der Datenbankumstellung von snake_case zu camelCase müssen wir die korrekten Spaltennamen verwenden
+    // Mapping von Frontend camelCase zu Datenbank snake_case
+    // WICHTIG: Die Datenbank verwendet jetzt snake_case für alle Spalten
     const fieldMapping: Record<string, string> = {
       // Frontend-spezifische Felder
-      'liquidation': 'liquidationLevel',   // Aktualisiert auf camelCase
-      'location': 'liquidityLevel',        // Aktualisiert auf camelCase
-      'chartImage': 'chartImageUrl',       // Aktualisiert auf camelCase
-      'riskSum': 'positionSize',           // Aktualisiert auf camelCase
+      'liquidation': 'liquidation_level',   // Aktualisiert auf snake_case
+      'location': 'liquidity_level',        // Aktualisiert auf snake_case
+      'chartImage': 'chart_image_url',      // Aktualisiert auf snake_case
+      'riskSum': 'position_size',           // Aktualisiert auf snake_case
       
       // Reguläre Felder
-      'mainTrendM15': 'mainTrendM15',      // Aktualisiert auf camelCase
-      'internalTrendM5': 'internalTrendM5',// Aktualisiert auf camelCase
-      'entryType': 'entryType',            // Aktualisiert auf camelCase
-      'entryLevel': 'entryLevel',          // Aktualisiert auf camelCase
-      'positionSize': 'positionSize',      // Aktualisiert auf camelCase
-      'takeProfit': 'takeProfit',          // Aktualisiert auf camelCase
-      'stopLoss': 'stopLoss',              // Aktualisiert auf camelCase
-      'exitLevel': 'exitLevel',            // Aktualisiert auf camelCase
-      'potentialRrr': 'potentialRrr',      // Aktualisiert auf camelCase
-      'actualRrr': 'actualRrr',            // Aktualisiert auf camelCase
-      'tradeDuration': 'tradeDuration',    // Aktualisiert auf camelCase
-      'tradeResult': 'tradeResult',        // Aktualisiert auf camelCase
-      'chartImageUrl': 'chartImageUrl',    // Aktualisiert auf camelCase
-      'liquidityLevel': 'liquidityLevel',  // Aktualisiert auf camelCase
-      'sessionNyc': 'sessionNYC',          // Aktualisiert auf camelCase
-      'sessionLondon': 'sessionLondon',    // Aktualisiert auf camelCase
-      'sessionAsia': 'sessionAsia',        // Aktualisiert auf camelCase
-      'sessionTime': 'sessionTime',        // Aktualisiert auf camelCase
-      'trendAlignment': 'trendAlignment',  // Aktualisiert auf camelCase
-      'smartMoneyConcept': 'smartMoneyConcept', // Aktualisiert auf camelCase
-      'marketStructure': 'marketStructure', // Aktualisiert auf camelCase
-      'advancedPattern': 'advancedPattern', // Aktualisiert auf camelCase
-      'chartPattern': 'chartPattern',      // Aktualisiert auf camelCase
-      'fundamentalNews': 'fundamentalNews', // Aktualisiert auf camelCase
-      'wickFill': 'wickFill',              // Aktualisiert auf camelCase
-      'spreadSize': 'spreadSize',          // Aktualisiert auf camelCase
-      'psychologicalLevel': 'psychologicalLevel', // Aktualisiert auf camelCase
-      'tradeManagement': 'tradeManagement',    // Aktualisiert auf camelCase
+      'mainTrendM15': 'main_trend_m15',     // Aktualisiert auf snake_case
+      'internalTrendM5': 'internal_trend_m5',// Aktualisiert auf snake_case
+      'entryType': 'entry_type',            // Aktualisiert auf snake_case
+      'entryLevel': 'entry_level',          // Aktualisiert auf snake_case
+      'positionSize': 'position_size',      // Aktualisiert auf snake_case
+      'takeProfit': 'take_profit',          // Aktualisiert auf snake_case
+      'stopLoss': 'stop_loss',              // Aktualisiert auf snake_case
+      'exitLevel': 'exit_level',            // Aktualisiert auf snake_case
+      'potentialRrr': 'potential_rrr',      // Aktualisiert auf snake_case
+      'actualRrr': 'actual_rrr',            // Aktualisiert auf snake_case
+      'tradeDuration': 'trade_duration',    // Aktualisiert auf snake_case
+      'tradeResult': 'trade_result',        // Aktualisiert auf snake_case
+      'chartImageUrl': 'chart_image_url',   // Aktualisiert auf snake_case
+      'liquidityLevel': 'liquidity_level',  // Aktualisiert auf snake_case
+      'sessionNyc': 'session_nyc',          // Aktualisiert auf snake_case
+      'sessionLondon': 'session_london',    // Aktualisiert auf snake_case
+      'sessionAsia': 'session_asia',        // Aktualisiert auf snake_case
+      'sessionTime': 'session_time',        // Aktualisiert auf snake_case
+      'trendAlignment': 'trend_alignment',  // Aktualisiert auf snake_case
+      'smartMoneyConcept': 'smart_money_concept', // Aktualisiert auf snake_case
+      'marketStructure': 'market_structure', // Aktualisiert auf snake_case
+      'advancedPattern': 'advanced_pattern', // Aktualisiert auf snake_case
+      'chartPattern': 'chart_pattern',      // Aktualisiert auf snake_case
+      'fundamentalNews': 'fundamental_news', // Aktualisiert auf snake_case
+      'wickFill': 'wick_fill',              // Aktualisiert auf snake_case
+      'spreadSize': 'spread_size',          // Aktualisiert auf snake_case
+      'psychologicalLevel': 'psychological_level', // Aktualisiert auf snake_case
+      'tradeManagement': 'trade_management', // Aktualisiert auf snake_case
       'exitReason': 'exitReason',          // Aktualisiert auf camelCase
       'advancedExit': 'advancedExit',      // Aktualisiert auf camelCase
       'liquidationLevel': 'liquidationLevel', // Aktualisiert auf camelCase
