@@ -2019,6 +2019,19 @@ export class DatabaseStorage implements IStorage {
       return this.mapDbTradeToFrontend(frontendTrade);
     } catch (error) {
       console.error("Fehler beim Ausführen der Trade-Erstellung:", error);
+      
+      // Detailliertes Error-Logging für SQL-Fehler
+      if (error.code) {
+        console.error(`SQL-Fehlercode: ${error.code}, Details: ${error.detail}`);
+        
+        // Bei NOT-NULL constraint Problemen zusätzliche Infos ausgeben
+        if (error.code === '23502') {
+          console.error(`NULL-Constraint-Fehler: Spalte '${error.column}' in Tabelle '${error.table}' darf nicht null sein.`);
+          console.error(`Betroffene Zeile: ${error.detail}`);
+        }
+      }
+      
+      // Originalen Fehler weiterwerfen
       throw error;
     }
   }

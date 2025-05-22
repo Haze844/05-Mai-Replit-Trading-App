@@ -1118,6 +1118,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           importedTrades.push(newTrade);
         } catch (error) {
           console.error("Error importing trade:", error);
+          console.error("Detaillierter Fehler:", {
+            message: error.message,
+            stack: error.stack,
+            code: error.code,
+            detail: error.detail
+          });
+          importErrors++;
           // Continue with next trade even if one fails
         }
       }
@@ -1133,9 +1140,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error updating statistics:", error);
       }
       
+      // Variable für Fehler initialisieren, falls nicht deklariert
+      if (typeof importErrors === 'undefined') {
+        var importErrors = 0;
+      }
+      
+      console.log(`CSV-Import Ergebnis: ${importedTrades.length} erfolgreich, ${importErrors} fehlgeschlagen`);
       res.status(200).json({ 
-        message: `${importedTrades.length} Trades erfolgreich importiert`, 
-        count: importedTrades.length 
+        message: `${importedTrades.length} Trades erfolgreich importiert${importErrors > 0 ? ` (${importErrors} fehlgeschlagen)` : ''}`, 
+        count: importedTrades.length,
+        errors: importErrors
       });
     } catch (error) {
       console.error("CSV import error:", error);
