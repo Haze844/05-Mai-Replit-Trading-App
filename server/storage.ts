@@ -1769,54 +1769,55 @@ export class DatabaseStorage implements IStorage {
                  profitLoss: frontendTrade.profitLoss,
                  isWin: frontendTrade.isWin });
     
-    // Mapping basierend auf der neuen camelCase-Datenbankstruktur
+    // Mapping basierend auf konsistenter snake_case-Struktur für die Datenbank
     const fieldMapping: Record<string, string> = {
       // Frontend-spezifische Felder
-      'liquidation': 'liquidationLevel',   // Aktualisiert auf camelCase
-      'location': 'liquidityLevel',        // Aktualisiert auf camelCase
-      'chartImage': 'chartImageUrl',       // Aktualisiert auf camelCase
-      'riskSum': 'positionSize',           // Aktualisiert auf camelCase
+      'liquidation': 'liquidation_level',
+      'location': 'liquidity_level',
+      'chartImage': 'chart_image_url',
+      'riskSum': 'position_size',
       
-      // Reguläre Felder
-      'mainTrendM15': 'mainTrendM15',      // Aktualisiert auf camelCase (vorher 'main_trend_m15')
-      'internalTrendM5': 'internalTrendM5', // Aktualisiert auf camelCase
-      'entryType': 'entryType',            // Aktualisiert auf camelCase
-      'entryLevel': 'entryLevel',          // Aktualisiert auf camelCase
-      'positionSize': 'positionSize',      // Aktualisiert auf camelCase
-      'takeProfit': 'takeProfit',          // Aktualisiert auf camelCase
-      'stopLoss': 'stopLoss',              // Aktualisiert auf camelCase
-      'exitLevel': 'exitLevel',            // Aktualisiert auf camelCase
-      'potentialRrr': 'potentialRrr',      // Aktualisiert auf camelCase
-      'actualRrr': 'actualRrr',            // Aktualisiert auf camelCase
-      'tradeDuration': 'tradeDuration',    // Aktualisiert auf camelCase
-      'tradeResult': 'tradeResult',        // Aktualisiert auf camelCase
-      'chartImageUrl': 'chartImageUrl',    // Aktualisiert auf camelCase
-      'liquidityLevel': 'liquidityLevel',  // Aktualisiert auf camelCase
-      'sessionNyc': 'sessionNYC',          // Aktualisiert auf camelCase
-      'sessionLondon': 'sessionLondon',    // Aktualisiert auf camelCase
-      'sessionAsia': 'sessionAsia',        // Aktualisiert auf camelCase
-      'sessionTime': 'sessionTime',        // Aktualisiert auf camelCase
-      'trendAlignment': 'trendAlignment',  // Aktualisiert auf camelCase
-      'smartMoneyConcept': 'smartMoneyConcept', // Aktualisiert auf camelCase
-      'marketStructure': 'marketStructure', // Aktualisiert auf camelCase
-      'advancedPattern': 'advancedPattern', // Aktualisiert auf camelCase
-      'chartPattern': 'chartPattern',      // Aktualisiert auf camelCase
-      'fundamentalNews': 'fundamentalNews', // Aktualisiert auf camelCase
-      'wickFill': 'wickFill',              // Aktualisiert auf camelCase
-      'spreadSize': 'spreadSize',          // Aktualisiert auf camelCase
-      'psychologicalLevel': 'psychologicalLevel', // Aktualisiert auf camelCase
-      'tradeManagement': 'tradeManagement', // Aktualisiert auf camelCase
-      'exitReason': 'exitReason',          // Aktualisiert auf camelCase
-      'advancedExit': 'advancedExit',      // Aktualisiert auf camelCase
-      'liquidationLevel': 'liquidationLevel', // Aktualisiert auf camelCase
-      'liquidationEntry': 'liquidationEntry', // Aktualisiert auf camelCase
-      'profitLoss': 'profitLoss',          // Aktualisiert auf camelCase
-      'isWin': 'isWin',                    // Aktualisiert auf camelCase
-      'createdAt': 'createdAt',            // Aktualisiert auf camelCase
-      'updatedAt': 'updatedAt',            // Aktualisiert auf camelCase
-      'userId': 'userId',                  // Aktualisiert auf camelCase
-      'rrAchieved': 'rrAchieved',          // Aktualisiert auf camelCase (vorher 'rr_achieved')
-      'rrPotential': 'rrPotential',        // Aktualisiert auf camelCase
+      // Reguläre Felder - konvertiere alle zu snake_case
+      'mainTrendM15': 'main_trend_m15',
+      'internalTrendM5': 'internal_trend_m5',
+      'entryType': 'entry_type',
+      'entryLevel': 'entry_level',
+      'positionSize': 'position_size',
+      'takeProfit': 'take_profit',
+      'stopLoss': 'stop_loss',
+      'exitLevel': 'exit_level',
+      'potentialRrr': 'potential_rrr',
+      'actualRrr': 'actual_rrr',
+      'tradeDuration': 'trade_duration',
+      'tradeResult': 'trade_result',
+      'chartImageUrl': 'chart_image_url',
+      'liquidityLevel': 'liquidity_level',
+      'sessionNyc': 'session_nyc',
+      'sessionLondon': 'session_london',
+      'sessionAsia': 'session_asia',
+      'sessionTime': 'session_time',
+      'trendAlignment': 'trend_alignment',
+      'smartMoneyConcept': 'smart_money_concept',
+      'marketStructure': 'market_structure',
+      'advancedPattern': 'advanced_pattern',
+      'chartPattern': 'chart_pattern',
+      'fundamentalNews': 'fundamental_news',
+      'wickFill': 'wick_fill',
+      'spreadSize': 'spread_size',
+      'psychologicalLevel': 'psychological_level',
+      'tradeManagement': 'trade_management',
+      'exitReason': 'exit_reason',
+      'advancedExit': 'advanced_exit',
+      'liquidationLevel': 'liquidation_level',
+      'liquidationEntry': 'liquidation_entry',
+      'profitLoss': 'profit_loss', 
+      'isWin': 'is_win',
+      'createdAt': 'created_at',
+      'updatedAt': 'updated_at',
+      'userId': 'user_id',
+      'rrAchieved': 'rr_achieved',
+      'rrPotential': 'rr_potential',
+      // Einfache Felder, die nicht umgewandelt werden müssen
       'id': 'id',
       'symbol': 'symbol',
       'date': 'date',
@@ -1861,8 +1862,8 @@ export class DatabaseStorage implements IStorage {
         if (key === 'gptFeedback') {
           console.log(`Ignoriere Feld "${key}", da es nicht in der Datenbank existiert`);
         } else {
-          // Behalte den Feldnamen bei, da die Datenbank nun camelCase ist
-          const dbFieldName = key;
+          // Konvertiere camelCase zu snake_case für konsistente Datenbankbenennung
+          const dbFieldName = key.replace(/([A-Z])/g, '_$1').toLowerCase();
           dbTrade[dbFieldName] = value;
           console.log(`Unbekanntes Frontend-Feld "${key}" → DB-Feld "${dbFieldName}": ${value}`);
         }
@@ -1870,7 +1871,20 @@ export class DatabaseStorage implements IStorage {
     });
     
     // Debug-Ausgabe der DB-Felder nach Verarbeitung
-    console.log("DB-Felder nach Verarbeitung:", Object.keys(dbTrade).sort());
+    console.log("DB-Felder nach Verarbeitung (snake_case):", Object.keys(dbTrade).sort());
+    
+    // Zusätzliche Debug-Ausgabe für ausgewählte snake_case Felder
+    if (dbTrade.user_id) {
+      console.log("Datenbank Trade Output:", {
+        id: dbTrade.id,
+        symbol: dbTrade.symbol,
+        user_id: dbTrade.user_id,
+        profit_loss: dbTrade.profit_loss,
+        is_win: dbTrade.is_win,
+        entry_level: dbTrade.entry_level,
+        exit_level: dbTrade.exit_level
+      });
+    }
     
     return dbTrade;
   }
