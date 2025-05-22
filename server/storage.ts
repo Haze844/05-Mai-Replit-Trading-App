@@ -1947,17 +1947,22 @@ export class DatabaseStorage implements IStorage {
       const dbTrade = this.mapFrontendTradeToDb(trade);
       
       // Wichtig: korrigiere die Feldnamen für PostgreSQL
-      // profitloss (alles Kleinbuchstaben) statt profit_loss
+      // Konsistente Verwendung von snake_case
       if (trade.profitLoss !== undefined) {
-        dbTrade.profitloss = this.cleanAndParseValue(trade.profitLoss);
-        delete dbTrade.profit_loss; // Falls dieses Feld existiert, entfernen
-        console.log(`P/L-Wert konvertiert zu: ${dbTrade.profitloss} (ursprünglicher Wert: ${trade.profitLoss})`);
+        dbTrade.profit_loss = this.cleanAndParseValue(trade.profitLoss);
+        console.log(`P/L-Wert konvertiert zu: ${dbTrade.profit_loss} (ursprünglicher Wert: ${trade.profitLoss})`);
       }
       
-      // Füge aktuelle Timestamps hinzu mit korrekten camelCase-Feldnamen
+      // Füge aktuelle Timestamps hinzu mit korrekten snake_case-Feldnamen
       const now = new Date();
-      dbTrade.createdAt = now;
-      dbTrade.updatedAt = now;
+      dbTrade.created_at = now;
+      dbTrade.updated_at = now;
+      
+      // Stelle sicher, dass die userId korrekt als user_id gespeichert wird
+      if (trade.userId) {
+        dbTrade.user_id = trade.userId;
+        delete dbTrade.userId; // Falls es doch existiert
+      }
       delete dbTrade.created_at; // Falls diese Felder existieren, entfernen
       delete dbTrade.updated_at;
       delete dbTrade.createdat; // Falls alte Schreibweise existiert, entfernen
@@ -1982,8 +1987,8 @@ export class DatabaseStorage implements IStorage {
         user_id: dbTrade.user_id,
         date: dbTrade.date,
         dateType: dbTrade.date ? typeof dbTrade.date : 'undefined',
-        profitloss: dbTrade.profitloss,
-        profitlossType: dbTrade.profitloss !== undefined ? typeof dbTrade.profitloss : 'undefined'
+        profit_loss: dbTrade.profit_loss,
+        profitlossType: dbTrade.profit_loss !== undefined ? typeof dbTrade.profit_loss : 'undefined'
       });
       
       // Verwende direkte Werte-Einbindung statt Parameter-Binding für bessere Kontrolle
