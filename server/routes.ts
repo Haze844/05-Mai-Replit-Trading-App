@@ -1109,17 +1109,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
           
           // Wende die Mapping-Funktion an
-          const mappedTradeData = mapToDatabaseFormat(tradeData);
+          const mappedTradeData: any = mapToDatabaseFormat(tradeData);
           
-          // Setze sowohl userId (camelCase) als auch user_id (snake_case), um sicherzustellen,
-          // dass die Datenbank die korrekte Spalte benutzt
-          mappedTradeData.userId = numericUserId;
+          // Setze NUR user_id für die Datenbank
+          // userId würde zu user_id konvertiert und zu einem Duplikat führen
           mappedTradeData.user_id = numericUserId;
+          
+          // Kein mappedTradeData.userId setzen, um Duplikate zu vermeiden
           
           console.log("CSV-Import: Mappierte Daten für Datenbank mit userId:", 
             JSON.stringify({
               ...mappedTradeData, 
-              userId: mappedTradeData.userId,
               user_id: mappedTradeData.user_id
             }));
           
