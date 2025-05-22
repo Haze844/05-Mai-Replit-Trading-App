@@ -1308,11 +1308,10 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`DatabaseStorage getTrades - Filters für User ${userId}:`, filters);
       
-      // Verwende eine direkte SQL-Abfrage ohne Anführungszeichen und Parameter
-      // Da wir gesehen haben, dass die $-Parameter Probleme verursachen
+      // Verwende eine direkte SQL-Abfrage mit den neuen camelCase-Spaltennamen
       let queryStr = `
         SELECT * FROM trades 
-        WHERE userid = ${userId}
+        WHERE "userId" = ${userId}
       `;
       
       // Datumsfilter hinzufügen, falls vorhanden
@@ -1337,7 +1336,7 @@ export class DatabaseStorage implements IStorage {
       
       // isWin-Filter hinzufügen, falls vorhanden
       if (filters.isWin !== undefined) {
-        queryStr += ` AND iswin = ${filters.isWin}`;
+        queryStr += ` AND "isWin" = ${filters.isWin}`;
         console.log(`isWin-Filter angewendet: ${filters.isWin}`);
       }
       
@@ -1348,7 +1347,7 @@ export class DatabaseStorage implements IStorage {
       
       // Führe die Abfrage aus
       try {
-        console.log("Führe SQL-Abfrage ohne Parameter aus...");
+        console.log("Führe SQL-Abfrage mit camelCase-Spaltennamen aus...");
         const result = await db.execute(queryStr);
         const dbResult = result.rows || [];
         
@@ -1359,7 +1358,7 @@ export class DatabaseStorage implements IStorage {
             Object.keys(dbResult[0]).map(key => `${key}: ${typeof dbResult[0][key]}`).join(', '));
         }
         
-        // Wende die zentrale Mapping-Funktion auf alle Ergebnisse an
+        // Da die Datenbank jetzt in camelCase ist, brauchen wir weniger Mapping
         const trades = dbResult.map(trade => {
           // Debug-Ausgabe für jedes Trade-Objekt mit Nullcheck
           const tradeId = trade.id || 'unbekannt';
@@ -1367,11 +1366,8 @@ export class DatabaseStorage implements IStorage {
           const tradeSetup = trade.setup || 'k.A.';
           console.log(`Verarbeite Trade ID ${tradeId}, Symbol: ${tradeSymbol}, Setup: ${tradeSetup}`);
           
-          // Wandle die PostgreSQL-Namen in Frontend-Namen um
-          const frontendTrade = this.convertPostgresFieldsToFrontend(trade);
-          
-          // Verwende die zentrale Mapping-Funktion
-          return this.mapDbTradeToFrontend(frontendTrade);
+          // Direkt die mapDbTradeToFrontend-Funktion verwenden, da die Namen bereits passen
+          return this.mapDbTradeToFrontend(trade);
         });
         
         console.log(`DatabaseStorage getTrades - Retrieved ${trades.length} trades for userId ${userId}`);
@@ -1388,15 +1384,12 @@ export class DatabaseStorage implements IStorage {
           
           // Wenn Trades vorhanden sind, versuche nur die für diesen Benutzer abzufragen
           if (parseInt(count) > 0) {
-            const userResult = await db.execute(`SELECT * FROM trades WHERE userid = ${userId}`);
+            const userResult = await db.execute(`SELECT * FROM trades WHERE "userId" = ${userId}`);
             const userTrades = userResult.rows || [];
             console.log(`Einfache Abfrage ergab ${userTrades.length} Trades für Benutzer ${userId}`);
             
-            // Konvertiere zu Frontend-Format
-            return userTrades.map(trade => {
-              const frontendTrade = this.convertPostgresFieldsToFrontend(trade);
-              return this.mapDbTradeToFrontend(frontendTrade);
-            });
+            // Direkt zur Frontend-Format mappen, da camelCase bereits stimmt
+            return userTrades.map(trade => this.mapDbTradeToFrontend(trade));
           }
         } catch (simpleError) {
           console.error("Auch einfache SQL-Abfrage fehlgeschlagen:", simpleError);
