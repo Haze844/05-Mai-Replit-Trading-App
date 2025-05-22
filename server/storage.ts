@@ -2096,9 +2096,23 @@ export class DatabaseStorage implements IStorage {
       // Verwende einen einfacheren Ansatz mit direkten Werten in der SQL-Abfrage
       let updateParts = [];
       
+      // Liste der tatsächlich existierenden Spalten in der trades-Tabelle
+      const validTradeColumns = [
+        'id', 'user_id', 'symbol', 'date', 'setup', 'main_trend_m15', 'internal_trend_m5',
+        'entry_type', 'entry_level', 'position_size', 'take_profit', 'stop_loss',
+        'exit_level', 'potential_rrr', 'actual_rrr', 'trade_duration', 'trade_result',
+        'chart_image_url', 'liquidity_level', 'session_nyc', 'session_london', 'session_asia',
+        'session_time', 'trend_alignment', 'smart_money_concept', 'market_structure',
+        'advanced_pattern', 'chart_pattern', 'fundamental_news', 'wick_fill', 'spread_size',
+        'psychological_level', 'trade_management', 'exit_reason', 'advanced_exit',
+        'liquidation_level', 'liquidation_entry', 'profit_loss', 'is_win', 'created_at', 'updated_at',
+        'notes', 'deviation', 'rr_achieved', 'rr_potential'
+      ];
+      
       // Erzeuge UPDATE-Anweisung mit direkten Werten statt Parametern
       for (const [key, value] of Object.entries(dbTradeData)) {
-        if (value !== undefined) {
+        // Prüfe, ob diese Spalte tatsächlich in der Datenbank existiert
+        if (value !== undefined && validTradeColumns.includes(key)) {
           let sqlValue;
           
           if (value === null) {
@@ -2114,8 +2128,10 @@ export class DatabaseStorage implements IStorage {
             sqlValue = value;
           }
           
-          // Mit Anführungszeichen für camelCase-Spaltennamen
+          // Mit Anführungszeichen für Spaltennamen
           updateParts.push(`"${key}" = ${sqlValue}`);
+        } else if (value !== undefined && !validTradeColumns.includes(key)) {
+          console.log(`Warnung: Überspringe nicht existierende Spalte "${key}" in der trades-Tabelle`);
         }
       }
       
