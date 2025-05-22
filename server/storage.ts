@@ -1962,13 +1962,15 @@ export class DatabaseStorage implements IStorage {
       });
       
       // Verwende direkte Werte-Einbindung statt Parameter-Binding für bessere Kontrolle
-      // Wir erstellen für jedes Feld ein Wertepaar mit korrektem camelCase-Spaltennamen
+      // Wir erstellen für jedes Feld ein Wertepaar mit korrektem snake_case-Spaltennamen
       const columnsAndValues: [string, any][] = [];
       
-      // Füge alle Felder mit ihren Werten hinzu
+      // Füge alle Felder mit ihren Werten hinzu, konvertiere die Feldnamen zu snake_case
       for (const [key, value] of Object.entries(dbTrade)) {
         if (value !== undefined) {
-          columnsAndValues.push([key, value]);
+          // Konvertiere camelCase zu snake_case
+          const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+          columnsAndValues.push([snakeKey, value]);
         }
       }
       
