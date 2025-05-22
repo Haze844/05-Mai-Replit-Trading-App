@@ -1611,17 +1611,18 @@ export class DatabaseStorage implements IStorage {
     
     const dbFilters: any = {};
     
-    // Mapping basierend auf der tatsächlichen Datenbankstruktur
+    // Mapping basierend auf der neuen camelCase-Datenbankstruktur nach der Spaltenumbenennung
+    // WICHTIG: Nach der Datenbankumstellung von snake_case zu camelCase müssen wir die korrekten Spaltennamen verwenden
     const fieldMapping: Record<string, string> = {
       // Frontend-spezifische Felder
-      'liquidation': 'liquidationlevel',
-      'location': 'liquiditylevel',
-      'chartImage': 'chartimageurl',
-      'riskSum': 'positionsize',
+      'liquidation': 'liquidationLevel',  // Aktualisiert auf camelCase
+      'location': 'liquidityLevel',       // Aktualisiert auf camelCase
+      'chartImage': 'chartImageUrl',      // Aktualisiert auf camelCase
+      'riskSum': 'positionSize',          // Aktualisiert auf camelCase
       
       // Reguläre Felder
-      'mainTrendM15': 'main_trend_m15',   // Beachte den Unterstrich hier!
-      'internalTrendM5': 'internaltrendm5',
+      'mainTrendM15': 'mainTrendM15',     // Aktualisiert auf camelCase (vorher 'main_trend_m15')
+      'internalTrendM5': 'internalTrendM5', // Aktualisiert auf camelCase
       'entryType': 'entrytype',
       'entryLevel': 'entrylevel',
       'positionSize': 'positionsize',
