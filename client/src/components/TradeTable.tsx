@@ -1966,7 +1966,12 @@ export default function TradeTable({
                   <td className="p-3 text-xs">{trade.setup}</td>
 
                   <td className="p-3 text-xs">
-                    {trade.trend ? <BadgeTrend trend={trade.trend} size="xs" /> : '-'}
+                    <div className="flex items-center gap-2">
+                      <BadgeWinLoss isWin={trade.isWin} size="xs" />
+                      <span className={`${trade.profitLoss && Number(trade.profitLoss) > 0 ? 'text-green-500' : trade.profitLoss && Number(trade.profitLoss) < 0 ? 'text-red-500' : ''}`}>
+                        {trade.profitLoss !== undefined && trade.profitLoss !== null ? `${Number(trade.profitLoss) > 0 ? '+' : ''}$${Number(trade.profitLoss).toFixed(2)}` : '-'}
+                      </span>
+                    </div>
                   </td>
                   <td className="p-3 text-xs">
                     {trade.internalTrend ? <BadgeTrend trend={trade.internalTrend} size="xs" /> : '-'}
@@ -1999,12 +2004,8 @@ export default function TradeTable({
                     {trade.entryType ? <BadgeTrend trend={trade.entryType} size="xs" /> : '-'}
                   </td>
                   <td className="p-3 text-xs">
-                    <div className="flex items-center gap-2">
-                      <BadgeWinLoss isWin={trade.isWin} size="xs" />
-                      <span className={`${trade.profitLoss && Number(trade.profitLoss) > 0 ? 'text-green-500' : trade.profitLoss && Number(trade.profitLoss) < 0 ? 'text-red-500' : ''}`}>
-                        {trade.profitLoss !== undefined && trade.profitLoss !== null ? `${Number(trade.profitLoss) > 0 ? '+' : ''}$${Number(trade.profitLoss).toFixed(2)}` : '-'}
-                      </span>
-                    </div>
+                    {/* P/L wurde an richtige Position (Zeile 1968) verschoben */}
+                    -
                   </td>
                   <td className="p-3 text-xs">{trade.riskSum ? `${trade.riskSum}$` : '-'}</td>
                   <td className="p-3 text-xs">
