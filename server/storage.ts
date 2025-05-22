@@ -1623,6 +1623,12 @@ export class DatabaseStorage implements IStorage {
       // Reguläre Felder
       'mainTrendM15': 'mainTrendM15',     // Aktualisiert auf camelCase (vorher 'main_trend_m15')
       'internalTrendM5': 'internalTrendM5', // Aktualisiert auf camelCase
+      'entryType': 'entryType',           // Aktualisiert auf camelCase
+      'entryLevel': 'entryLevel',         // Aktualisiert auf camelCase
+      'positionSize': 'positionSize',     // Aktualisiert auf camelCase
+      'takeProfit': 'takeProfit',         // Aktualisiert auf camelCase
+      'stopLoss': 'stopLoss',             // Aktualisiert auf camelCase
+      'exitLevel': 'exitLevel',           // Aktualisiert auf camelCase
       'entryType': 'entrytype',
       'entryLevel': 'entrylevel',
       'positionSize': 'positionsize',
