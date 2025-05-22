@@ -2001,13 +2001,16 @@ export default function TradeTable({
                     {trade.marketPhase || '-'}
                   </td>
                   <td className="p-3 text-xs">
-                    {trade.entryType ? <BadgeTrend trend={trade.entryType} size="xs" /> : '-'}
+                    {/* Ursprünglich entryType, jetzt leer */}
+                    -
                   </td>
                   <td className="p-3 text-xs">
                     {/* P/L wurde an richtige Position (Zeile 1968) verschoben */}
                     -
                   </td>
-                  <td className="p-3 text-xs">{trade.riskSum ? `${trade.riskSum}$` : '-'}</td>
+                  <td className="p-3 text-xs">
+                    {trade.entryType ? <BadgeTrend trend={trade.entryType} size="xs" /> : (trade.riskSum ? `${trade.riskSum}$` : '-')}
+                  </td>
                   <td className="p-3 text-xs">
                     {trade.rrAchieved !== undefined && trade.rrAchieved !== null 
                       ? Number(trade.rrAchieved).toFixed(2) 
