@@ -1955,16 +1955,17 @@ export class DatabaseStorage implements IStorage {
         trade.userId = 1; // Fallback, wenn keine userId gesetzt ist
       }
       
-      // Stelle sicher, dass die User-ID korrekt gesetzt ist
-      dbTrade.userId = trade.userId;
+      // Setze ENTWEDER userId ODER user_id, aber NICHT beide!
+      // Wir bevorzugen user_id für die direkte Verwendung in der Datenbank
+      dbTrade.user_id = trade.userId;
       
-      // Wichtig: NICHT user_id entfernen, da wir es für die Datenbank benötigen 
-      // Stelle sicher, dass user_id gesetzt ist, wird später zu snake_case konvertiert
-      // delete dbTrade.user_id;  
+      // Entferne alle anderen Schreibweisen, um Duplikate zu vermeiden
+      delete dbTrade.userId;
       delete dbTrade.userid;
       
       console.log("TradeData nach Konvertierung für DB:", {
-        userId: dbTrade.userId,
+        userId: trade.userId,
+        user_id: dbTrade.user_id,
         date: dbTrade.date,
         dateType: dbTrade.date ? typeof dbTrade.date : 'undefined',
         profitloss: dbTrade.profitloss,
