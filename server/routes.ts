@@ -1038,6 +1038,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           console.log(`Berechnete Werte für Trade: entryType=${entryType}, profitLoss=${plValue}, isWin=${isWin}, rrAchieved=${rrAchieved}, rrPotential=${rrPotential}`);
           
+          // Hole userId entweder aus Query-Parameter, Body oder setze Standard-Wert 1
+          const userIdToUse = req.query.userId || req.body.userId || 1;
+          const numericUserId = parseInt(userIdToUse as string, 10);
+          
+          console.log(`CSV-Import: Verwende userId=${numericUserId} für Trade-Import`);
+          
           // Erstelle eine einheitliche Funktion zur Umwandlung von Frontend-Namen zu Datenbank-Namen
           const mapToDatabaseFormat = (tradeData) => {
             // Basis-Mapping mit allen übertragbaren Feldern, aber mit snake_case Feldnamen
@@ -1050,8 +1056,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (tradeData.symbol !== undefined) databaseData.symbol = tradeData.symbol;
             if (tradeData.setup !== undefined) databaseData.setup = tradeData.setup;
             
-            // Feldnamen-Mapping (Frontend camelCase -> DB snake_case)
-            databaseData.user_id = userId;
+            // WICHTIG: Stelle sicher, dass user_id immer gesetzt ist
+            console.log(`Setze user_id auf ${numericUserId} für Trade-Import`);
+            databaseData.user_id = numericUserId;
             databaseData.profit_loss = plValue !== undefined ? plValue : 0;
             databaseData.is_win = isWin !== undefined ? isWin : false;
             databaseData.rr_achieved = rrAchieved !== undefined ? rrAchieved : 0;
