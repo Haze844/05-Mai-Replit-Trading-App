@@ -1993,18 +1993,18 @@ export default function TradeTable({
                     {trade.rangePoints || '-'}
                   </td>
                   <td className="p-3 text-xs">
+                    {trade.marketPhase || '-'}
+                  </td>
+                  <td className="p-3 text-xs">
+                    {trade.entryType ? <BadgeTrend trend={trade.entryType} size="xs" /> : '-'}
+                  </td>
+                  <td className="p-3 text-xs">
                     <div className="flex items-center gap-2">
                       <BadgeWinLoss isWin={trade.isWin} size="xs" />
                       <span className={`${trade.profitLoss && Number(trade.profitLoss) > 0 ? 'text-green-500' : trade.profitLoss && Number(trade.profitLoss) < 0 ? 'text-red-500' : ''}`}>
                         {trade.profitLoss !== undefined && trade.profitLoss !== null ? `${Number(trade.profitLoss) > 0 ? '+' : ''}$${Number(trade.profitLoss).toFixed(2)}` : '-'}
                       </span>
                     </div>
-                  </td>
-                  <td className="p-3 text-xs">
-                    {trade.entryType ? <BadgeTrend trend={trade.entryType} size="xs" /> : '-'}
-                  </td>
-                  <td className="p-3 text-xs">
-                    {trade.marketPhase || '-'}
                   </td>
                   <td className="p-3 text-xs">{trade.riskSum ? `${trade.riskSum}$` : '-'}</td>
                   <td className="p-3 text-xs">
