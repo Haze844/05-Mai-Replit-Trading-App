@@ -1308,84 +1308,56 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`DatabaseStorage getTrades - Filters für User ${userId}:`, filters);
       
-      // Überprüfe zuerst, ob die Tabelle existiert
-      try {
-        const tableCheck = await db.execute(
-          `SELECT EXISTS (
-            SELECT FROM information_schema.tables 
-            WHERE table_schema = 'public' 
-            AND table_name = 'trades'
-          )`
-        );
-        
-        if (!tableCheck.rows?.[0]?.exists) {
-          console.error("Die Tabelle 'trades' existiert nicht in der Datenbank!");
-          return [];
-        }
-      } catch (tableCheckError) {
-        console.error("Fehler bei der Überprüfung der Tabelle:", tableCheckError);
-        // Wir machen trotzdem weiter, um zu sehen, ob der Hauptquery funktioniert
-      }
-      
-      // Verwende Raw SQL mit Anführungszeichen für Tabellen- und Spaltennamen
+      // Verwende eine direkte SQL-Abfrage ohne Anführungszeichen und Parameter
+      // Da wir gesehen haben, dass die $-Parameter Probleme verursachen
       let queryStr = `
-        SELECT * FROM "trades" 
-        WHERE "userid" = $1
+        SELECT * FROM trades 
+        WHERE userid = ${userId}
       `;
       
-      // Parameter für die Abfrage
-      const queryParams: any[] = [userId];
-      let paramIndex = 2;
-      
-      // Datumsfilter hinzufügen
+      // Datumsfilter hinzufügen, falls vorhanden
       if (filters.startDate && filters.endDate) {
-        queryStr += ` AND "date" >= $${paramIndex} AND "date" <= $${paramIndex+1}`;
-        queryParams.push(new Date(filters.startDate));
-        queryParams.push(new Date(filters.endDate));
-        paramIndex += 2;
-        
-        console.log(`Datums-Filter angewendet: ${new Date(filters.startDate).toISOString()} bis ${new Date(filters.endDate).toISOString()}`);
+        const startDate = new Date(filters.startDate).toISOString();
+        const endDate = new Date(filters.endDate).toISOString();
+        queryStr += ` AND date >= '${startDate}' AND date <= '${endDate}'`;
+        console.log(`Datums-Filter angewendet: ${startDate} bis ${endDate}`);
       }
       
-      // Wandle Frontend-Filter in PostgreSQL-kompatible Spaltennamen um
-      const dbFilters: Record<string, any> = {};
+      // Symbol-Filter hinzufügen, falls vorhanden
+      if (filters.symbol) {
+        queryStr += ` AND symbol = '${filters.symbol}'`;
+        console.log(`Symbol-Filter angewendet: ${filters.symbol}`);
+      }
       
-      // Spezielle Felder mappen
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value === undefined || value === null || key === 'startDate' || key === 'endDate') return;
-        
-        // Für alle anderen Felder: Umwandlung in Kleinbuchstaben
-        const dbFieldName = key.toLowerCase();
-        dbFilters[dbFieldName] = value;
-      });
+      // Setup-Filter hinzufügen, falls vorhanden
+      if (filters.setup) {
+        queryStr += ` AND setup = '${filters.setup}'`;
+        console.log(`Setup-Filter angewendet: ${filters.setup}`);
+      }
       
-      // Weitere Filter hinzufügen
-      for (const [key, value] of Object.entries(dbFilters)) {
-        if (value !== undefined && key !== 'userid') {
-          try {
-            // Verwende Anführungszeichen für Spaltennamen
-            queryStr += ` AND "${key}" = $${paramIndex}`;
-            queryParams.push(value);
-            paramIndex++;
-            console.log(`Filter für Feld ${key} = ${value} hinzugefügt`);
-          } catch (filterError) {
-            console.warn(`Filter für Feld ${key} konnte nicht angewendet werden:`, filterError);
-          }
-        }
+      // isWin-Filter hinzufügen, falls vorhanden
+      if (filters.isWin !== undefined) {
+        queryStr += ` AND iswin = ${filters.isWin}`;
+        console.log(`isWin-Filter angewendet: ${filters.isWin}`);
       }
       
       // Sortierung nach Datum absteigend hinzufügen
-      queryStr += ` ORDER BY "date" DESC`;
+      queryStr += ` ORDER BY date DESC`;
       
       console.log("Ausgeführte SQL-Abfrage:", queryStr);
-      console.log("Abfrageparameter:", queryParams);
       
       // Führe die Abfrage aus
       try {
-        const result = await db.execute(queryStr, queryParams);
+        console.log("Führe SQL-Abfrage ohne Parameter aus...");
+        const result = await db.execute(queryStr);
         const dbResult = result.rows || [];
         
         console.log(`Datenbankabfrage ergab ${dbResult.length} Ergebnisse für Benutzer ${userId}`);
+        
+        if (dbResult.length > 0) {
+          console.log("Beispiel für ersten Trade in der Datenbank:", 
+            Object.keys(dbResult[0]).map(key => `${key}: ${typeof dbResult[0][key]}`).join(', '));
+        }
         
         // Wende die zentrale Mapping-Funktion auf alle Ergebnisse an
         const trades = dbResult.map(trade => {
@@ -1405,16 +1377,33 @@ export class DatabaseStorage implements IStorage {
         console.log(`DatabaseStorage getTrades - Retrieved ${trades.length} trades for userId ${userId}`);
         return trades;
       } catch (queryError) {
-        console.error("Fehler bei der Ausführung der SQL-Abfrage:", queryError);
+        console.error("Fehler bei der Ausführung der direkten SQL-Abfrage:", queryError);
         
-        // Versuche einen alternativen Ansatz mit Drizzle ORM
-        console.log("Versuche alternative Abfrage mit Drizzle ORM...");
-        const result = await db.select().from(trades).where(eq(trades.userId, userId));
+        // Versuche eine einfachere Abfrage
+        console.log("Versuche einfachere SQL-Abfrage...");
+        try {
+          const simpleResult = await db.execute(`SELECT COUNT(*) FROM trades`);
+          const count = simpleResult.rows?.[0]?.count || 0;
+          console.log(`Trades in der Datenbank insgesamt: ${count}`);
+          
+          // Wenn Trades vorhanden sind, versuche nur die für diesen Benutzer abzufragen
+          if (parseInt(count) > 0) {
+            const userResult = await db.execute(`SELECT * FROM trades WHERE userid = ${userId}`);
+            const userTrades = userResult.rows || [];
+            console.log(`Einfache Abfrage ergab ${userTrades.length} Trades für Benutzer ${userId}`);
+            
+            // Konvertiere zu Frontend-Format
+            return userTrades.map(trade => {
+              const frontendTrade = this.convertPostgresFieldsToFrontend(trade);
+              return this.mapDbTradeToFrontend(frontendTrade);
+            });
+          }
+        } catch (simpleError) {
+          console.error("Auch einfache SQL-Abfrage fehlgeschlagen:", simpleError);
+        }
         
-        console.log(`Alternative Abfrage ergab ${result.length} Ergebnisse`);
-        
-        // Wende die zentrale Mapping-Funktion auf alle Ergebnisse an
-        return result.map(trade => this.mapDbTradeToFrontend(trade));
+        // Wenn alles fehlschlägt, leere Liste zurückgeben
+        return [];
       }
     } catch (error) {
       console.error(`Error fetching trades for user ${userId}:`, error);
