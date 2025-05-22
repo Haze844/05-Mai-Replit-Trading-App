@@ -1308,12 +1308,11 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`DatabaseStorage getTrades - Filters für User ${userId}:`, filters);
       
-      // Verwende eine direkte SQL-Abfrage mit den neuen camelCase-Spaltennamen
-      // WICHTIG: Die Anführungszeichen um userId sind notwendig, da PostgreSQL Spaltennamen mit Großbuchstaben sonst nicht erkennt
-      // Nach der Datenbankumstellung auf camelCase müssen wir "userId" mit Anführungszeichen verwenden
+      // Verwende eine direkte SQL-Abfrage mit den Spaltennamen im snake_case-Format
+      // WICHTIG: Die Datenbank verwendet jetzt snake_case für alle Spalten
       let queryStr = `
         SELECT * FROM trades 
-        WHERE "userId" = ${userId}
+        WHERE user_id = ${userId}
       `;
       
       // Debug-Ausgabe für die initiale Abfrage
@@ -1341,7 +1340,7 @@ export class DatabaseStorage implements IStorage {
       
       // isWin-Filter hinzufügen, falls vorhanden
       if (filters.isWin !== undefined) {
-        queryStr += ` AND "isWin" = ${filters.isWin}`;
+        queryStr += ` AND is_win = ${filters.isWin}`;
         console.log(`isWin-Filter angewendet: ${filters.isWin}`);
       }
       
@@ -1389,11 +1388,11 @@ export class DatabaseStorage implements IStorage {
           
           // Wenn Trades vorhanden sind, versuche nur die für diesen Benutzer abzufragen
           if (parseInt(count) > 0) {
-            const userResult = await db.execute(`SELECT * FROM trades WHERE "userId" = ${userId}`);
+            const userResult = await db.execute(`SELECT * FROM trades WHERE user_id = ${userId}`);
             const userTrades = userResult.rows || [];
             console.log(`Einfache Abfrage ergab ${userTrades.length} Trades für Benutzer ${userId}`);
             
-            // Direkt zur Frontend-Format mappen, da camelCase bereits stimmt
+            // Mappen vom snake_case zum Frontend camelCase-Format
             return userTrades.map(trade => this.mapDbTradeToFrontend(trade));
           }
         } catch (simpleError) {
@@ -2077,9 +2076,9 @@ export class DatabaseStorage implements IStorage {
   // App Settings operations
   async getAppSettings(userId: number): Promise<AppSettings | undefined> {
     try {
-      // Verwende Raw SQL, um das Problem mit camelCase vs. lowercase zu umgehen
+      // Verwende Raw SQL mit snake_case Feldnamen, wie sie in der Datenbank existieren
       const result = await db.execute(
-        `SELECT * FROM app_settings WHERE "userId" = $1`,
+        `SELECT * FROM app_settings WHERE user_id = $1`,
         [userId]
       );
       
@@ -2093,15 +2092,39 @@ export class DatabaseStorage implements IStorage {
       const mappedSettings: any = {};
       
       for (const [key, value] of Object.entries(settings)) {
-        // Konvertiere lowercase zu camelCase für bestimmte Felder
-        if (key === 'userid') {
+        // Konvertiere snake_case zu camelCase für Frontend-Kompatibilität
+        if (key === 'user_id') {
           mappedSettings.userId = value;
-        } else if (key === 'deviceid') {
+        } else if (key === 'device_id') {
           mappedSettings.deviceId = value;
-        } else if (key === 'createdat') {
+        } else if (key === 'created_at') {
           mappedSettings.createdAt = value;
-        } else if (key === 'updatedat') {
+        } else if (key === 'updated_at') {
           mappedSettings.updatedAt = value;
+        } else if (key === 'last_synced_at') {
+          mappedSettings.lastSyncedAt = value;
+        } else if (key === 'account_balance') {
+          mappedSettings.accountBalance = value;
+        } else if (key === 'eva_account_balance') {
+          mappedSettings.evaAccountBalance = value;
+        } else if (key === 'ek_account_balance') {
+          mappedSettings.ekAccountBalance = value;
+        } else if (key === 'goal_balance') {
+          mappedSettings.goalBalance = value;
+        } else if (key === 'eva_goal_balance') {
+          mappedSettings.evaGoalBalance = value;
+        } else if (key === 'ek_goal_balance') {
+          mappedSettings.ekGoalBalance = value;
+        } else if (key === 'account_type') {
+          mappedSettings.accountType = value;
+        } else if (key === 'device_name') {
+          mappedSettings.deviceName = value;
+        } else if (key === 'device_type') {
+          mappedSettings.deviceType = value;
+        } else if (key === 'offline_mode_enabled') {
+          mappedSettings.offlineModeEnabled = value;
+        } else if (key === 'sync_enabled') {
+          mappedSettings.syncEnabled = value;
         } else {
           // Für andere Felder, behalte den Originalnamen bei
           mappedSettings[key] = value;
