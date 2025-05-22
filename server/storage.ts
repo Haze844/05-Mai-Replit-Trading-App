@@ -1809,10 +1809,15 @@ export class DatabaseStorage implements IStorage {
         
         console.log(`Frontend-Feld "${key}" → DB-Feld "${dbFieldName}": ${value}`);
       } else {
-        // Für unbekannte Felder: Umwandlung in Kleinbuchstaben
-        const dbFieldName = key.toLowerCase();
-        dbTrade[dbFieldName] = value;
-        console.log(`Unbekanntes Frontend-Feld "${key}" → DB-Feld "${dbFieldName}": ${value}`);
+        // Für unbekannte Felder: Prüfen, ob es sich um ein ignoriertes Feld handelt
+        if (key === 'gptFeedback') {
+          console.log(`Ignoriere Feld "${key}", da es nicht in der Datenbank existiert`);
+        } else {
+          // Behalte den Feldnamen bei, da die Datenbank nun camelCase ist
+          const dbFieldName = key;
+          dbTrade[dbFieldName] = value;
+          console.log(`Unbekanntes Frontend-Feld "${key}" → DB-Feld "${dbFieldName}": ${value}`);
+        }
       }
     });
     

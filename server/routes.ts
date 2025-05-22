@@ -599,7 +599,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Trade not found" });
       }
       
-      // Wenn relevante Handelsfelder aktualisiert wurden, generiere neues GPT-Feedback
+      // Deaktiviere GPT-Feedback temporär, bis die Datenbank aktualisiert ist
+      // und die OpenAI Rate Limits behoben sind
+      /* 
       if (
         tradeUpdate.symbol || 
         tradeUpdate.setup || 
@@ -615,6 +617,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateTrade(tradeId, { gptFeedback });
         updatedTrade.gptFeedback = gptFeedback;
       }
+      */
+      
+      // Setze statisches Feedback für die Client-Antwort
+      updatedTrade.gptFeedback = "GPT-Feedback temporär deaktiviert";
       
       res.status(200).json(updatedTrade);
     } catch (error) {
