@@ -1309,6 +1309,7 @@ export class DatabaseStorage implements IStorage {
       console.log(`DatabaseStorage getTrades - Filters für User ${userId}:`, filters);
       
       // Verwende eine direkte SQL-Abfrage mit den neuen camelCase-Spaltennamen
+      // WICHTIG: Die Anführungszeichen um userId sind notwendig, da PostgreSQL Spaltennamen mit Großbuchstaben sonst nicht erkennt
       let queryStr = `
         SELECT * FROM trades 
         WHERE "userId" = ${userId}
@@ -1471,7 +1472,7 @@ export class DatabaseStorage implements IStorage {
       'advancedexit': 'advancedExit',
       'liquidationlevel': 'liquidationLevel',
       'liquidationentry': 'liquidationEntry',
-      'userid': 'userId',
+      // 'userid': 'userId', // Alte Mapping - nicht mehr benötigt nach Umstellung auf camelCase
       'createdat': 'createdAt',
       'updatedat': 'updatedAt',
       'profitloss': 'profitLoss',
@@ -2035,7 +2036,7 @@ export class DatabaseStorage implements IStorage {
     try {
       // Verwende Raw SQL, um das Problem mit camelCase vs. lowercase zu umgehen
       const result = await db.execute(
-        `SELECT * FROM app_settings WHERE userid = $1`,
+        `SELECT * FROM app_settings WHERE "userId" = $1`,
         [userId]
       );
       
@@ -2078,7 +2079,7 @@ export class DatabaseStorage implements IStorage {
       
       // Konvertiere Frontend-Feldnamen zu Datenbank-Feldnamen
       const dbSettings: any = {
-        userid: settings.userId
+        userId: settings.userId
       };
       
       // Kopiere alle anderen Einstellungen
@@ -2120,7 +2121,7 @@ export class DatabaseStorage implements IStorage {
         const query = `
           UPDATE app_settings
           SET ${updateFields}
-          WHERE userid = $1
+          WHERE "userId" = $1
           RETURNING *
         `;
         
