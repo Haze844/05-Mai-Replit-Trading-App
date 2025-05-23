@@ -2022,7 +2022,7 @@ export default function TradeTable({
                   <td className="p-3 text-xs">
                     {trade.liquidationEntry || '-'}
                   </td>
-                  <td className="p-3 text-xs">
+                  <td className="p-3 text-xs text-center">
                     <Button 
                       variant="ghost" 
                       size="icon" 
