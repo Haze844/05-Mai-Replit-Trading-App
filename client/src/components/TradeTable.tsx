@@ -1964,6 +1964,20 @@ export default function TradeTable({
                   <td className="p-3 text-xs">{trade.session || '-'}</td>
                   <td className="p-3 text-xs">{trade.symbol}</td>
                   <td className="p-3 text-xs">{trade.setup}</td>
+                  <td className="p-3 text-xs text-center">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Verhindert, dass der Trade ausgewählt wird
+                        setTradeToDelete(trade);
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </td>
                   <td className="p-3 text-xs">
                     <span className={`${trade.profitLoss && Number(trade.profitLoss) > 0 ? 'text-green-500' : trade.profitLoss && Number(trade.profitLoss) < 0 ? 'text-red-500' : ''}`}>
                       {trade.profitLoss !== undefined && trade.profitLoss !== null ? `${Number(trade.profitLoss) > 0 ? '+' : ''}$${Number(trade.profitLoss).toFixed(2)}` : '-'}
@@ -2020,20 +2034,6 @@ export default function TradeTable({
                   </td>
                   <td className="p-3 text-xs">
                     {trade.liquidationEntry || '-'}
-                  </td>
-                  <td className="p-3 text-xs text-center">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Verhindert, dass der Trade ausgewählt wird
-                        setTradeToDelete(trade);
-                        setDeleteDialogOpen(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </td>
                 </tr>
               ))
